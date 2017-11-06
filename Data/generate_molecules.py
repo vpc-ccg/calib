@@ -8,10 +8,10 @@ molecule_size_sig = 20
 number_of_molecules = 100
 random_seed = 42
 output_file_path = "molecules.fa"
-genome = Fasta("Escherichia_coli_str_k_12_substr_mg1655.ASM584v2.dna.chromosome.Chromosome.fa.gz")
-
 
 random.seed(random_seed)
+
+genome = Fasta("e_coli.fa.gz")
 
 genome_length = len(genome[0])
 with open(output_file_path, 'w+') as output_file:
