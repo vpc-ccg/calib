@@ -3,6 +3,7 @@ import rstr
 import sys
 import random
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Generates whitelist of barcodes")

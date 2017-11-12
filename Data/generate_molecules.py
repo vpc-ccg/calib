@@ -8,11 +8,18 @@ import math
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Generates molecules/amplicons")
-    parser.add_argument("-r", "--reference", type=str, help="Reference genome from which to generate molecules")
+    parser.add_argument("-r", "--reference", type=str, help="Reference genome from which to generate molecules",
+                        required=True)
     parser.add_argument("-m", "--molecules", type=str, help="Output molecules/amplicons fasta file (default: stdout)",
                         default=None)
     parser.add_argument("-s", "--random-seed", type=int, help="Define a seed (default: no seed)",
                         default=None)
+    parser.add_argument("-u", "--molecule-size-mean", type=int,
+                        help="Mean size of molecules (taken on standard dist. default: 150", default=150)
+    parser.add_argument("-d", "--molecule-size-sig", type=int,
+                        help="Molecule size stdev (default: 20)", default=20)
+    parser.add_argument("-n", "--number-of-mol", type=int,
+                        help="Number of molecules. (default: 100)", default=100)
     args = parser.parse_args()
     return args
 
@@ -34,7 +41,7 @@ def generate_molecule(genome_file_path,
     for i in range(number_of_molecules):
         start = random.randrange(0, genome_length)
         end = min(
-            [start + math.floor(random.normalvariate(mu=molecule_size_mu, sigma=molecule_size_sig)),
+            [start + abs(math.floor(random.normalvariate(mu=molecule_size_mu, sigma=molecule_size_sig))),
              genome_length])
         print('>'+str(i)+':'+str(start)+'-'+str(end), file=output_file)
         print(genome[0][start:end], file=output_file)
@@ -42,7 +49,11 @@ def generate_molecule(genome_file_path,
 
 def main():
     args = parse_args()
-    generate_molecule(args.reference, args.molecules, random_seed=args.random_seed)
+    generate_molecule(args.reference, args.molecules,
+                      molecule_size_mu=args.molecule_size_mean,
+                      molecule_size_sig=args.molecule_size_sig,
+                      number_of_molecules=args.number_of_mol,
+                      random_seed=args.random_seed)
 
 
 if __name__ == "__main__":
