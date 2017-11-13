@@ -7,7 +7,7 @@
 
              Amplicon paired-end sequencing simulation
 
-Total CPU time used: 0.12041
+Total CPU time used: 1.15268
 
 The random seed for the run: 42
 
