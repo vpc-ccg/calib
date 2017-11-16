@@ -1,5 +1,5 @@
 import sys
-from itertools import islice, combinations
+from itertools import combinations
 _complements = {'A': 'T',
                 'T': 'A',
                 'G': 'C',
@@ -22,25 +22,29 @@ def reverse_complement(sequence):
     return new_seq
 
 
+def get_barcodes(fastq_file, barcode_length):
+    fastq = open(fastq_file)
+    barcodes = []
+    EOF = False
+    read_is_next = False
+    while not EOF:
+        line = fastq.readline()
+        if read_is_next:
+            barcodes.append(line[0:barcode_length])
+            read_is_next = False
+        if line.startswith("@"):
+            read_is_next = True
+        if line == "":
+            EOF = True
+    fastq.close()
+    return barcodes
+
+
 def main():
     _barcode_length = 10
     _error_tolerance = 2
-    barcodes_1 = []
-    barcodes_2 = []
-    reads1_file = open(sys.argv[1])
-    while True:
-        lines = [line for line in islice(reads1_file, 4)]
-        if len(lines) < 4:
-            break
-        barcodes_1.append(lines[1][0:_barcode_length])
-    reads1_file.close()
-    reads2_file = open(sys.argv[2])
-    while True:
-        lines = [line for line in islice(reads2_file, 4)]
-        if len(lines) < 4:
-            break
-        barcodes_2.append(lines[1][0:_barcode_length])
-    reads2_file.close()
+    barcodes_1 = get_barcodes(sys.argv[1], _barcode_length)
+    barcodes_2 = get_barcodes(sys.argv[2], _barcode_length)
     if not len(barcodes_1) == len(barcodes_2):
         print('You messed up; the read files are not the same length')
         sys.exit(42)
@@ -48,21 +52,15 @@ def main():
     lsh = {}
     for barcode_num in range(len(barcodes_1)):
         for template, template_id in template_generator(_barcode_length, _error_tolerance):
-            barcode_1 = barcodes_1[barcode_num]
-            barcode_1_rev = reverse_complement(barcode_1)
-            barcode_2 = barcodes_2[barcode_num]
-            barcode_2_rev = reverse_complement(barcode_2)
-            barcode_1 = template(barcode_1)
-            barcode_1_rev = template(barcode_1_rev)
-            barcode_2 = template(barcode_2)
-            barcode_2_rev = template(barcode_2_rev)
+            barcode_1 = template(barcodes_1[barcode_num])
+            barcode_1_rev = template(reverse_complement(barcodes_1[barcode_num]))
+            barcode_2 = template(barcodes_2[barcode_num])
+            barcode_2_rev = template(reverse_complement(barcodes_2[barcode_num]))
 
             new_key = str(template_id) + barcode_1 + barcode_2
             lsh[new_key] = lsh.get(new_key, {barcode_num}).union({barcode_num})
             new_key = str(template_id) + barcode_2_rev + barcode_1_rev
             lsh[new_key] = lsh.get(new_key, {barcode_num}).union({barcode_num})
-
-
 
     barcode_clusters = [{i} for i in range(len(barcodes_1))]
     for barcode_set in lsh.values():
@@ -75,8 +73,6 @@ def main():
     id_dict = {}
     for _set in barcode_clusters:
         id_dict[id(_set)] = _set
-    lines_1 = open(sys.argv[1]).readlines()
-    lines_2 = open(sys.argv[2]).readlines()
     print(len(id_dict))
     for _set in id_dict.values():
         if len(_set) > 0:
