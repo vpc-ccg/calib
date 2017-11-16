@@ -1,6 +1,4 @@
 import sys
-import pprint
-import numpy as np
 from itertools import islice, combinations
 _complements = {'A': 'T',
                 'T': 'A',
@@ -47,12 +45,9 @@ def main():
         print('You messed up; the read files are not the same length')
         sys.exit(42)
 
-    # lsh_1 = {}
-    # lsh_2 = {}
     lsh = {}
     for barcode_num in range(len(barcodes_1)):
         for template, template_id in template_generator(_barcode_length, _error_tolerance):
-            # TODO: Figure out if barcode list number should be attached to barcode number before inserting as a key
             barcode_1 = barcodes_1[barcode_num]
             barcode_1_rev = reverse_complement(barcode_1)
             barcode_2 = barcodes_2[barcode_num]
@@ -69,30 +64,13 @@ def main():
 
 
 
-    # for key, value in lsh_2.items():
-    #     print(key, len(value), sep='\t')
     barcode_clusters = [{i} for i in range(len(barcodes_1))]
-    # barcode_clusters_2 = [{i} for i in range(len(barcodes_2))]
     for barcode_set in lsh.values():
         union_set = set()
         for barcode in barcode_set:
             union_set.update(barcode_clusters[barcode])
         for barcode in union_set:
             barcode_clusters[barcode] = union_set
-    # for barcode_set in lsh_2.values():
-    #     union_set = set()
-    #     for barcode in barcode_set:
-    #         union_set.update(barcode_clusters_2[barcode])
-    #     for barcode in union_set:
-    #         barcode_clusters_2[barcode] = union_set
-    # barcode_intersect_cluster = [{i} for i in range(len(barcodes_1))]
-    # for barcode_num in range(len(barcode_intersect_cluster)):
-    #     union_set = barcode_clusters_1[barcode_num].intersection(barcode_clusters_2[barcode_num])
-    #     union_set.update(barcode_intersect_cluster[barcode_num])
-    #     for barcode in union_set:
-    #         barcode_intersect_cluster[barcode] = union_set
-    # for barcode in range(len(barcode_intersect_cluster)):
-    #     barcode_intersect_cluster[barcode] = barcode_clusters_1[barcode].intersection(barcode_clusters_2[barcode])
 
     id_dict = {}
     for _set in barcode_clusters:
@@ -102,9 +80,6 @@ def main():
     print(len(id_dict))
     for _set in id_dict.values():
         if len(_set) > 0:
-            # reads = sorted(list(_set))
-            # for l in [lines_1[i*4] for i in reads]:
-            #    print(l[0:40])
             print(len(_set), sep='\t')
 
 
