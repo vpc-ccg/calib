@@ -51,17 +51,23 @@ def get_barcode_pair_to_line_mapping(barcode_lines_1, barcode_lines_2):
     return barcode_pair_to_line_dict
 
 def main():
-    _barcode_length = 10
+    _barcode_length = 8
     _error_tolerance = 2
+    log_file = open(sys.argv[3], 'w+')
+    print('Hmmmm. Good morning?!', file=log_file)
+    log_file.close()
     barcode_lines_1 = get_barcodes(sys.argv[1], _barcode_length)
     barcode_lines_2 = get_barcodes(sys.argv[2], _barcode_length)
     if not len(barcode_lines_1) == len(barcode_lines_2):
-        print('You messed up; the read files are not of the same length')
+        log_file = open(sys.argv[3], 'a')
+        print('You messed up; the read files are not of the same length', file=log_file)
+        log_file.close()
         sys.exit(42)
-
+    log_file = open(sys.argv[3], 'a')
+    print('Let\'s start this shit!', file=log_file)
     barcode_pairs_to_lines = get_barcode_pair_to_line_mapping(barcode_lines_1, barcode_lines_2)
 
-    print('Total number of unique barcode pairs:', len(barcode_pairs_to_lines))
+    print('Total number of unique barcode pairs:', len(barcode_pairs_to_lines), file=log_file)
 
     # for p in barcode_pairs_to_lines:
     #     print(p, len(barcode_pairs_to_lines[p]), barcode_pairs_to_lines[p])
@@ -77,10 +83,14 @@ def main():
         barcodes_rev_compl_1[index] = reverse_complement(barcode_pair[0])
         barcodes_rev_compl_2[index] = reverse_complement(barcode_pair[1])
 
-
+    log_file.close()
     lsh = {}
-    for barcode_num in range(len(barcodes_1)):
-        for template, template_id in template_generator(_barcode_length, _error_tolerance):
+    for template, template_id in template_generator(_barcode_length, _error_tolerance):
+        log_file = open(sys.argv[3], 'a')
+        print("Template {} with ID {}".format(template('12345678'), template_id), file=log_file)
+        log_file.close()
+        for barcode_num in range(len(barcodes_1)):
+        #for template, template_id in template_generator(_barcode_length, _error_tolerance):
             barcode_1 = template(barcodes_1[barcode_num])
             barcode_1_rev = template(barcodes_rev_compl_1[barcode_num])
             barcode_2 = template(barcodes_2[barcode_num])
@@ -93,8 +103,17 @@ def main():
 
 
     barcode_graph = dict()
+    log_file = open(sys.argv[3], 'a')
+    print("Building barcode graph", file=log_file)
+    log_file.close()
     barcode_pair_length = _barcode_length*2 - _error_tolerance*2
+    count = 0
     for val in lsh.values():
+        count += 1
+        if count % 100000 == 0:
+            log_file = open(sys.argv[3], 'a')
+            print('Count', count, file=log_file)
+            log_file.close()
         for node in val:
             edges = val#.difference({node})
             if node in barcode_graph:
@@ -107,9 +126,17 @@ def main():
     # for barcode, neighbors in barcode_graph.items():
     #     print(barcode, len(neighbors), neighbors)
 
-
+    log_file = open(sys.argv[3], 'a')
+    print('Building clusters', file=log_file)
+    log_file.close()
+    count = 0
     barcode_clusters = [{i} for i in range(len(barcodes_1))]
     for barcode_set in lsh.values():
+        count += 1
+        if count % 100000 == 0:
+            log_file = open(sys.argv[3], 'a')
+            print('Count', count, file=log_file)
+            log_file.close()
         union_set = set()
         for barcode in barcode_set:
             union_set.update(barcode_clusters[barcode])
@@ -119,12 +146,13 @@ def main():
     id_dict = {}
     for _set in barcode_clusters:
         id_dict[id(_set)] = _set
-
-    print('Total number of clusters is:', len(id_dict))
-    print('len(cluster);', 'mean(d(v)) for v in cluster;', '[(v, edges(v)) for v in cluster]')
+    log_file = open(sys.argv[3], 'a')
+    print('Total number of clusters is:', len(id_dict), file=log_file)
+    print('len(cluster);', 'mean(d(v)) for v in cluster;', '[(v, edges(v)) for v in cluster]', file=log_file)
     for _set in id_dict.values():
         if len(_set) > 0:
-            print(len(_set),statistics.mean((len(barcode_graph[barcode]) for barcode in _set )),  [(barcode, barcode_graph[barcode]) for barcode in _set], sep='\t')
+            print(len(_set),statistics.mean((len(barcode_graph[barcode]) for barcode in _set )),  [(barcode, barcode_graph[barcode]) for barcode in _set], sep='\t', file=log_file)
+    log_file.close()
 
 if __name__ == '__main__':
     main()
