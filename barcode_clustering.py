@@ -1,4 +1,5 @@
 import sys
+import time
 import statistics
 from itertools import combinations
 _complements = {'A': 'T',
@@ -40,6 +41,7 @@ def get_barcodes(fastq_file, barcode_length):
     fastq.close()
     return barcodes
 
+
 def get_barcode_pair_to_line_mapping(barcode_lines_1, barcode_lines_2):
     barcode_pair_to_line_dict = dict()
     for line in range(len(barcode_lines_1)):
@@ -50,8 +52,33 @@ def get_barcode_pair_to_line_mapping(barcode_lines_1, barcode_lines_2):
             barcode_pair_to_line_dict[barcode_pair] = {line}
     return barcode_pair_to_line_dict
 
+
+def breadth_first_traversal(graph, node, cluster):
+    nodes_to_traverse = graph[node] - cluster
+    cluster.update(graph[node])
+    cluster.add(node)
+    for node in nodes_to_traverse:
+        cluster.update(breadth_first_traversal(graph, node, cluster))
+    return cluster
+
+
+def generate_clusters_by_bfs(graph):
+    # graph is a dict, clusters is an array of sets
+    clusters = []
+    for node in graph.keys():
+        node_already_in_clusters = False
+        for cluster in clusters:
+            if node in cluster:
+                node_already_in_clusters = True
+                cluster.update(graph[node])
+                break
+        if not node_already_in_clusters:
+            clusters.append(breadth_first_traversal(graph, node, set()))
+    return clusters
+
+
 def main():
-    _barcode_length = 8
+    _barcode_length = 10
     _error_tolerance = 2
     log_file = open(sys.argv[3], 'w+')
     print('Hmmmm. Good morning?!', file=log_file)
@@ -86,11 +113,10 @@ def main():
     log_file.close()
     lsh = {}
     for template, template_id in template_generator(_barcode_length, _error_tolerance):
-        log_file = open(sys.argv[3], 'a')
-        print("Template {} with ID {}".format(template('12345678'), template_id), file=log_file)
-        log_file.close()
+        # log_file = open(sys.argv[3], 'a')
+        # print("Template {} with ID {}".format(template('12345678'), template_id), file=log_file)
+        # log_file.close()
         for barcode_num in range(len(barcodes_1)):
-        #for template, template_id in template_generator(_barcode_length, _error_tolerance):
             barcode_1 = template(barcodes_1[barcode_num])
             barcode_1_rev = template(barcodes_rev_compl_1[barcode_num])
             barcode_2 = template(barcodes_2[barcode_num])
@@ -115,11 +141,14 @@ def main():
             print('Count', count, file=log_file)
             log_file.close()
         for node in val:
-            edges = val#.difference({node})
+            adjacent_nodes = val#.difference({node})
             if node in barcode_graph:
-                barcode_graph[node].update(edges)
+                barcode_graph[node].update(adjacent_nodes)
             else:
-                barcode_graph[node] = edges
+                barcode_graph[node] = adjacent_nodes
+    clusters = generate_clusters_by_bfs(barcode_graph)
+    print(len(clusters))
+    print([len(cluster) for cluster in clusters])
 
     # print('len of barcode_graph {}'.format(len(barcode_graph)))
     # print('max of barcode_graph {}'.format(statistics.mean((len(val) for val in barcode_graph.values()))))
@@ -138,8 +167,11 @@ def main():
             print('Count', count, file=log_file)
             log_file.close()
         union_set = set()
+        a = time.time
         for barcode in barcode_set:
             union_set.update(barcode_clusters[barcode])
+        b = time.time
+        #print("Time: ", a-b)
         for barcode in union_set:
             barcode_clusters[barcode] = union_set
 
