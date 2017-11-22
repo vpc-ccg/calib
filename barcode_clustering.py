@@ -146,7 +146,10 @@ def main():
                 barcode_graph[node].update(adjacent_nodes)
             else:
                 barcode_graph[node] = adjacent_nodes
+    a = time.time()
     clusters = generate_clusters_by_bfs(barcode_graph)
+    b = time.time()
+    print(b - a)
     print(len(clusters))
     print([len(cluster) for cluster in clusters])
 
@@ -160,6 +163,7 @@ def main():
     log_file.close()
     count = 0
     barcode_clusters = [{i} for i in range(len(barcodes_1))]
+    a = time.time()
     for barcode_set in lsh.values():
         count += 1
         if count % 100000 == 0:
@@ -167,13 +171,13 @@ def main():
             print('Count', count, file=log_file)
             log_file.close()
         union_set = set()
-        a = time.time
         for barcode in barcode_set:
             union_set.update(barcode_clusters[barcode])
-        b = time.time
-        #print("Time: ", a-b)
         for barcode in union_set:
             barcode_clusters[barcode] = union_set
+
+    b = time.time()
+    print("Time: ", b-a)
 
     id_dict = {}
     for _set in barcode_clusters:
@@ -185,6 +189,7 @@ def main():
         if len(_set) > 0:
             print(len(_set),statistics.mean((len(barcode_graph[barcode]) for barcode in _set )),  [(barcode, barcode_graph[barcode]) for barcode in _set], sep='\t', file=log_file)
     log_file.close()
+
 
 if __name__ == '__main__':
     main()
