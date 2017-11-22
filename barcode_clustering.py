@@ -54,9 +54,9 @@ def get_barcode_pair_to_line_mapping(barcode_lines_1, barcode_lines_2):
 
 
 def breadth_first_traversal(graph, node, cluster):
+    cluster.add(node)
     nodes_to_traverse = graph[node] - cluster
     cluster.update(graph[node])
-    cluster.add(node)
     for node in nodes_to_traverse:
         cluster.update(breadth_first_traversal(graph, node, cluster))
     return cluster
