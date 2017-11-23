@@ -4,11 +4,26 @@ import statistics
 import math
 from itertools import combinations
 from igraph import Graph, summary, InternalError
+import argparse
 
 _complements = {'A': 'T',
                 'T': 'A',
                 'G': 'C',
                 'C': 'G'}
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Clusters barcodes by locality sensitive hashing.")
+    parser.add_argument("-f", "--forward-reads", type=str, help="Forward read file path.", required=True)
+    parser.add_argument("-r", "--reverse-reads", type=str, help="Reverse read file path.", required=True)
+    parser.add_argument("-l", "--barcode-length", type=int, default=10,
+                        help="Barcode length (default: 10)")
+    parser.add_argument("-e", "--error-tolerance", type=int, default=2,
+                        help="Error tolerance for barcode clustering (default: 2)")
+    parser.add_argument("-o", "--log-file", help="Log file path.", required=True)
+    args = parser.parse_args()
+    return args
 
 
 def template_generator(barcode_size, error_tolerance):
@@ -85,34 +100,38 @@ def nCr(n,r):
 
 
 def main():
-    _barcode_length = 10
-    _error_tolerance = 2
+    args = parse_args()
 
-    log_file = open(sys.argv[3], 'w+')
+    _barcode_length = args.barcode_length
+    _error_tolerance = args.error_tolerance
+
+    log_file = open(args.log_file, 'a')
     print('Hmmmm. Good morning?!', file=log_file)
     print('Step: Extracting barcodes...', file=log_file)
-    log_file.close()
+    if not log_file == sys.stdout:
+        log_file.close()
     start_time = time.time()
 
-    barcode_lines_1 = get_barcodes(sys.argv[1], _barcode_length)
-    barcode_lines_2 = get_barcodes(sys.argv[2], _barcode_length)
+    barcode_lines_1 = get_barcodes(args.forward_reads, _barcode_length)
+    barcode_lines_2 = get_barcodes(args.reverse_reads, _barcode_length)
     if not len(barcode_lines_1) == len(barcode_lines_2):
-        log_file = open(sys.argv[3], 'a')
+        log_file = open(args.log_file, 'a')
         print('You messed up; the read files are not of the same length', file=log_file)
-        log_file.close()
+        if not log_file == sys.stdout:
+            log_file.close()
         sys.exit(42)
     barcode_pairs_to_lines = get_barcode_pair_to_line_mapping(barcode_lines_1, barcode_lines_2)
 
-    log_file = open(sys.argv[3], 'a')
+    log_file = open(args.log_file, 'a')
     print('Total number of unique barcode pairs:', len(barcode_pairs_to_lines), file=log_file)
-    log_file.close()
-
+    if not log_file == sys.stdout:
+        log_file.close()
 
     finish_time = time.time()
-    log_file = open(sys.argv[3], 'a')
+    log_file = open(args.log_file, 'a')
     print('Last step took {} seconds'.format(finish_time - start_time), file=log_file)
-    log_file.close()
-
+    if not log_file == sys.stdout:
+        log_file.close()
 
 
 
@@ -120,9 +139,10 @@ def main():
     #     print(p, len(barcode_pairs_to_lines[p]), barcode_pairs_to_lines[p])
 
 
-    log_file = open(sys.argv[3], 'a')
+    log_file = open(args.log_file, 'a')
     print('Step: Storing reverse complement of barcodes...', file=log_file)
-    log_file.close()
+    if not log_file == sys.stdout:
+        log_file.close()
     start_time = time.time()
 
 
@@ -138,13 +158,14 @@ def main():
         barcodes_rev_compl_2[index] = reverse_complement(barcode_pair[1])
 
     finish_time = time.time()
-    log_file = open(sys.argv[3], 'a')
+    log_file = open(args.log_file, 'a')
     print('Last step took {} seconds'.format(finish_time - start_time), file=log_file)
-    log_file.close()
-
-    log_file = open(sys.argv[3], 'a')
+    if not log_file == sys.stdout:
+        log_file.close()
+    log_file = open(args.log_file, 'a')
     print('Step: LSH of barcodes...', file=log_file)
-    log_file.close()
+    if not log_file == sys.stdout:
+        log_file.close()
     start_time = time.time()
 
     lsh_list = [{} for _ in range(int(nCr(_barcode_length, _error_tolerance)))]
@@ -152,10 +173,11 @@ def main():
 
 
     for template, template_id in template_generator(_barcode_length, _error_tolerance):
-        log_file = open(sys.argv[3], 'a')
+        log_file = open(args.log_file, 'a')
         lsh = lsh_list[template_id]
         print("Template {} with ID {}".format(template(fake_barcode), template_id), file=log_file)
-        log_file.close()
+        if not log_file == sys.stdout:
+            log_file.close()
         for barcode_num in range(len(barcodes_1)):
             barcode_1 = template(barcodes_1[barcode_num])
             barcode_1_rev = template(barcodes_rev_compl_1[barcode_num])
@@ -167,18 +189,19 @@ def main():
             new_key = barcode_2_rev + barcode_1_rev
             lsh[new_key] = lsh.get(new_key, {barcode_num}).union({barcode_num})
 
-    log_file = open(sys.argv[3], 'a')
+    log_file = open(args.log_file, 'a')
     print('There are {} buckets with values in the LSH dictionaries'.format(sum(( len(lsh.keys()) for lsh in lsh_list))), file=log_file)
-    log_file.close()
-
+    if not log_file == sys.stdout:
+        log_file.close()
     finish_time = time.time()
-    log_file = open(sys.argv[3], 'a')
+    log_file = open(args.log_file, 'a')
     print('Last step took {} seconds'.format(finish_time - start_time), file=log_file)
-    log_file.close()
-
+    if not log_file == sys.stdout:
+        log_file.close()
     log_file = open(sys.argv[3] + '.supp', 'w+')
     print('Step: Counting the size of each set in LSH dictionaries...', file=log_file)
-    log_file.close()
+    if not log_file == sys.stdout:
+        log_file.close()
     start_time = time.time()
 
 
@@ -190,18 +213,20 @@ def main():
             count += 1
             if count == 100000:
                 count = 0
-                log_file.close()
+                if not log_file == sys.stdout:
+                    log_file.close()
                 log_file = open(sys.argv[3] + '.supp', 'a')
-    log_file.close()
-
+    if not log_file == sys.stdout:
+        log_file.close()
     finish_time = time.time()
     log_file = open(sys.argv[3] + '.supp', 'a')
     print('Last step took {} seconds'.format(finish_time - start_time), file=log_file)
-    log_file.close()
-
-    log_file = open(sys.argv[3], 'a')
+    if not log_file == sys.stdout:
+        log_file.close()
+    log_file = open(args.log_file, 'a')
     print("Step: Building barcode graph adjacency sets...", file=log_file)
-    log_file.close()
+    if not log_file == sys.stdout:
+        log_file.close()
     start_time = time.time()
 
     barcode_graph_adjacency_sets = dict()
@@ -210,8 +235,9 @@ def main():
         for val in lsh.values():
             count += 1
             if count % 100000 == 0:
-                log_file = open(sys.argv[3], 'a')
+                log_file = open(args.log_file, 'a')
                 print('Count', count, file=log_file)
+            if not log_file == sys.stdout:
                 log_file.close()
             for node in val:
                 adjacent_nodes = val#.difference({node})
@@ -221,13 +247,14 @@ def main():
                     barcode_graph_adjacency_sets[node] = adjacent_nodes
 
     finish_time = time.time()
-    log_file = open(sys.argv[3], 'a')
+    log_file = open(args.log_file, 'a')
     print('Last step took {} seconds'.format(finish_time - start_time), file=log_file)
-    log_file.close()
-
-    log_file = open(sys.argv[3], 'a')
+    if not log_file == sys.stdout:
+        log_file.close()
+    log_file = open(args.log_file, 'a')
     print("Step: Building barcode graph from adjacency_sets...", file=log_file)
-    log_file.close()
+    if not log_file == sys.stdout:
+        log_file.close()
     start_time = time.time()
 
 
@@ -241,37 +268,39 @@ def main():
         barcode_graph.add_edges([(node, neighbor) for neighbor in barcode_graph_adjacency_sets[node]])
         count += 1
         if count % 100000 == 0:
-            log_file = open(sys.argv[3], 'a')
+            log_file = open(args.log_file, 'a')
             print('Count', count, file=log_file)
-            log_file.close()
+    if not log_file == sys.stdout:
+        log_file.close()
     barcode_graph.simplify()
     finish_time = time.time()
-    log_file = open(sys.argv[3], 'a')
+    log_file = open(args.log_file, 'a')
     print('Last step took {} seconds'.format(finish_time - start_time), file=log_file)
-    log_file.close()
-
-    log_file = open(sys.argv[3], 'a')
+    if not log_file == sys.stdout:
+        log_file.close()
+    log_file = open(args.log_file, 'a')
     print("Step: Getting clusters (connected components) of the barcode graph...", file=log_file)
-    log_file.close()
+    if not log_file == sys.stdout:
+        log_file.close()
     start_time = time.time()
 
     cc_count = 0
     for connected_component in barcode_graph.clusters().subgraphs():
         cc_count += 1
-        log_file = open(sys.argv[3], 'a')
+        log_file = open(args.log_file, 'a')
         print('===\nDensity: {} and vertices:'.format(connected_component.density()), file=log_file)
         for barcode in connected_component.vs['id']:
             print(barcodes_1[barcode], barcodes_2[barcode], file=log_file)
         log_file.close()
-    log_file = open(sys.argv[3], 'a')
+    log_file = open(args.log_file, 'a')
     print('There total of {} connected components'.format(cc_count), file=log_file)
-    log_file.close()
-
+    if not log_file == sys.stdout:
+        log_file.close()
     finish_time = time.time()
-    log_file = open(sys.argv[3], 'a')
+    log_file = open(args.log_file, 'a')
     print('Last step took {} seconds'.format(finish_time - start_time), file=log_file)
-    log_file.close()
-
+    if not log_file == sys.stdout:
+        log_file.close()
     #print([len(cluster) for cluster in clusters])
 
     # print('len of barcode_graph {}'.format(len(barcode_graph)))
@@ -279,7 +308,7 @@ def main():
     # for barcode, neighbors in barcode_graph.items():
     #     print(barcode, len(neighbors), neighbors)
 
-    # log_file = open(sys.argv[3], 'a')
+    # log_file = open(args.log_file, 'a')
     # print('Building clusters', file=log_file)
     # log_file.close()
     # count = 0
@@ -288,7 +317,7 @@ def main():
     # for barcode_set in lsh.values():
     #     count += 1
     #     if count % 100000 == 0:
-    #         log_file = open(sys.argv[3], 'a')
+    #         log_file = open(args.log_file, 'a')
     #         print('Count', count, file=log_file)
     #         log_file.close()
     #     union_set = set()
@@ -303,7 +332,7 @@ def main():
     # id_dict = {}
     # for _set in barcode_clusters:
     #     id_dict[id(_set)] = _set
-    # log_file = open(sys.argv[3], 'a')
+    # log_file = open(args.log_file, 'a')
     # print('Total number of clusters is:', len(id_dict), file=log_file)
     # print('len(cluster);', 'mean(d(v)) for v in cluster;', '[(v, edges(v)) for v in cluster]', file=log_file)
     # for _set in id_dict.values():
