@@ -100,7 +100,7 @@ def main():
 
     finish_time = time.time()
     log_file = open(sys.argv[3], 'a')
-    print('Last step took {} seconds', finish_time - start_time, file=log_file)
+    print('Last step took {} seconds'.format(finish_time - start_time), file=log_file)
     log_file.close()
 
 
