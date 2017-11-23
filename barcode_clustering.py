@@ -164,7 +164,7 @@ def main():
 
             new_key = barcode_1 + barcode_2
             lsh[new_key] = lsh.get(new_key, {barcode_num}).union({barcode_num})
-            new_key = barcode_2_rev + barcode_1_rev + str(template_id)
+            new_key = barcode_2_rev + barcode_1_rev
             lsh[new_key] = lsh.get(new_key, {barcode_num}).union({barcode_num})
 
     log_file = open(sys.argv[3], 'a')
@@ -200,9 +200,36 @@ def main():
     log_file.close()
 
     log_file = open(sys.argv[3], 'a')
-    print("Step: Building barcode graph...", file=log_file)
+    print("Step: Building barcode graph adjacency sets...", file=log_file)
     log_file.close()
     start_time = time.time()
+
+    barcode_graph_adjacency_sets = dict()
+    count = 0
+    for lsh in lsh_list:
+        for val in lsh.values():
+            count += 1
+            if count % 100000 == 0:
+                log_file = open(sys.argv[3], 'a')
+                print('Count', count, file=log_file)
+                log_file.close()
+            for node in val:
+                adjacent_nodes = val#.difference({node})
+                if node in barcode_graph_adjacency_sets:
+                    barcode_graph_adjacency_sets[node].update(adjacent_nodes)
+                else:
+                    barcode_graph_adjacency_sets[node] = adjacent_nodes
+
+    finish_time = time.time()
+    log_file = open(sys.argv[3], 'a')
+    print('Last step took {} seconds'.format(finish_time - start_time), file=log_file)
+    log_file.close()
+
+    log_file = open(sys.argv[3], 'a')
+    print("Step: Building barcode graph from adjacency_sets...", file=log_file)
+    log_file.close()
+    start_time = time.time()
+
 
     barcode_graph = Graph()
     barcode_graph.add_vertices(len(barcode_pairs_to_lines))
@@ -210,29 +237,14 @@ def main():
 
     # barcode_pair_length = _barcode_length*2 - _error_tolerance*2
     count = 0
-    for lsh in lsh_list:
-        for index, val in enumerate(lsh.values()):
-            # print(index, val)
-            neighbors = list(val)
-            for i in range(len(neighbors)):
-                for j in range(i+1, len(neighbors)):
-                    # print('Adding an edge between {} and {}'.format(neighbors[i], neighbors[j]))
-                    try:
-                        barcode_graph.get_eid(v1=neighbors[i], v2=neighbors[j])
-                    except InternalError:
-                        barcode_graph.add_edge(source=neighbors[i], target=neighbors[j])
-            # for node in val:
-            #     adjacent_nodes = val#.difference({node})
-            #     for neighbor in
-            #     if node in barcode_graph:
-            #         barcode_graph[node].update(adjacent_nodes)
-            #     else:
-            #         barcode_graph[node] = adjacent_nodes
-            count += 1
-            if count % 100000 == 0:
-                log_file = open(sys.argv[3], 'a')
-                print('Count', count, file=log_file)
-                log_file.close()
+    for node in barcode_graph_adjacency_sets:
+        barcode_graph.add_edges([(node, neighbor) for neighbor in barcode_graph_adjacency_sets[node]])
+        count += 1
+        if count % 100000 == 0:
+            log_file = open(sys.argv[3], 'a')
+            print('Count', count, file=log_file)
+            log_file.close()
+    barcode_graph.simplify()
     finish_time = time.time()
     log_file = open(sys.argv[3], 'a')
     print('Last step took {} seconds'.format(finish_time - start_time), file=log_file)
@@ -243,12 +255,18 @@ def main():
     log_file.close()
     start_time = time.time()
 
+    cc_count = 0
     for connected_component in barcode_graph.clusters().subgraphs():
-            log_file = open(sys.argv[3], 'a')
-            print('===\nDensity: {} and vertices:'.format(connected_component.density()), file=log_file)
-            for barcode in connected_component.vs['id']:
-                print(barcodes_1[barcode], barcodes_2[barcode], file=log_file)
-            log_file.close()
+        cc_count += 1
+        log_file = open(sys.argv[3], 'a')
+        print('===\nDensity: {} and vertices:'.format(connected_component.density()), file=log_file)
+        for barcode in connected_component.vs['id']:
+            print(barcodes_1[barcode], barcodes_2[barcode], file=log_file)
+        log_file.close()
+    log_file = open(sys.argv[3], 'a')
+    print('There total of {} connected components'.format(cc_count), file=log_file)
+    log_file.close()
+
     finish_time = time.time()
     log_file = open(sys.argv[3], 'a')
     print('Last step took {} seconds'.format(finish_time - start_time), file=log_file)
