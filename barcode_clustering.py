@@ -1,6 +1,7 @@
 import sys
 import time
 import statistics
+import numpy as np
 import math
 from itertools import combinations
 from igraph import Graph, summary, InternalError
@@ -63,7 +64,7 @@ def get_barcodes(fastq_file, barcode_length):
 def get_barcode_pair_to_line_mapping(barcode_lines_1, barcode_lines_2):
     barcode_pair_to_line_dict = dict()
     for line in range(len(barcode_lines_1)):
-        barcode_pair = (barcode_lines_1[line],barcode_lines_2[line])
+        barcode_pair = (barcode_lines_1[line], barcode_lines_2[line])
         if barcode_pair in barcode_pair_to_line_dict:
             barcode_pair_to_line_dict[barcode_pair].add(line)
         else:
@@ -94,9 +95,32 @@ def generate_clusters_by_bfs(graph):
             clusters.append(breadth_first_traversal(graph, node, set()))
     return clusters
 
-def nCr(n,r):
+
+def get_lsh(barcodes, error_tolerance):
+    barcode_length = len(barcodes[0])
+    # From AAAAAAAA, AAAAAAAT, ..., TTTTTTTT, ..., CCCCCCCC, ..., GGGGGGGG
+    # lsh = np.array([set()]*(4**(barcode_length-error_tolerance)))
+    # TODO: Implement this without hashing using the above method
+    lsh = {}
+    for template, template_id in template_generator(barcode_length, error_tolerance):
+        for index in range(len(barcodes)):
+            barcode_word = template(barcodes[index])
+            lsh[barcode_word] = lsh.get(barcode_word, {index}).union({index})
+    return lsh
+
+
+def get_adjacency_set(lsh, num_barcodes):
+    # TODO: Once get_lsh is implemented without hashing, change function to use list instead of dictionary
+    adjacency_sets = np.array([set()] * num_barcodes)
+    for adjacent_elements in lsh.values():
+        for node in adjacent_elements:
+            adjacency_sets[node].update(lsh.values)
+    return adjacency_sets
+
+
+def nCr(n, r):
     f = math.factorial
-    return f(n) / f(r) / f(n-r)
+    return int(f(n) / f(r) / f(n-r))
 
 
 def main():
@@ -133,18 +157,11 @@ def main():
     if not log_file == sys.stdout:
         log_file.close()
 
-
-
-    # for p in barcode_pairs_to_lines:
-    #     print(p, len(barcode_pairs_to_lines[p]), barcode_pairs_to_lines[p])
-
-
     log_file = open(args.log_file, 'a')
     print('Step: Storing reverse complement of barcodes...', file=log_file)
     if not log_file == sys.stdout:
         log_file.close()
     start_time = time.time()
-
 
     barcodes_1 = ['']*len(barcode_pairs_to_lines)
     barcodes_2 = ['']*len(barcode_pairs_to_lines)
@@ -171,7 +188,7 @@ def main():
     lsh_list = [{} for _ in range(int(nCr(_barcode_length, _error_tolerance)))]
     fake_barcode = ''.join([chr(x+65) for x in range(_barcode_length)])
 
-
+    barcode_graph_adjacency_sets_test = [{read_id} for read_id in range(len(barcode_pairs_to_lines))]
     for template, template_id in template_generator(_barcode_length, _error_tolerance):
         log_file = open(args.log_file, 'a')
         lsh = lsh_list[template_id]
@@ -186,11 +203,14 @@ def main():
 
             new_key = barcode_1 + barcode_2
             lsh[new_key] = lsh.get(new_key, {barcode_num}).union({barcode_num})
+            barcode_graph_adjacency_sets_test[barcode_num].update(lsh[new_key])
             new_key = barcode_2_rev + barcode_1_rev
             lsh[new_key] = lsh.get(new_key, {barcode_num}).union({barcode_num})
+            barcode_graph_adjacency_sets_test[barcode_num].update(lsh[new_key])
+
 
     log_file = open(args.log_file, 'a')
-    print('\tThere are {} buckets with values in the LSH dictionaries'.format(sum(( len(lsh.keys()) for lsh in lsh_list))), file=log_file)
+    print('\tThere are {} buckets with values in the LSH dictionaries'.format(sum((len(lsh.keys()) for lsh in lsh_list))), file=log_file)
     if not log_file == sys.stdout:
         log_file.close()
     finish_time = time.time()
@@ -203,7 +223,6 @@ def main():
     if not log_file == sys.stdout:
         log_file.close()
     start_time = time.time()
-
 
     count = 0
     log_file = open(sys.argv[3] + '.supp', 'a')
@@ -241,10 +260,9 @@ def main():
             for node in val:
                 adjacent_nodes = val#.difference({node})
                 barcode_graph_adjacency_sets[node].update(adjacent_nodes)
-                #if node in barcode_graph_adjacency_sets:
-                #    barcode_graph_adjacency_sets[node].update(adjacent_nodes)
-                #else:
-                #    barcode_graph_adjacency_sets[node] = adjacent_nodes
+    for i in range(len(barcode_pairs_to_lines)):
+        if barcode_graph_adjacency_sets[i] != barcode_graph_adjacency_sets_test[i]:
+            print(barcode_graph_adjacency_sets_test[i], barcode_graph_adjacency_sets[i])
 
     finish_time = time.time()
     log_file = open(args.log_file, 'a')
@@ -263,23 +281,12 @@ def main():
     if not log_file == sys.stdout:
         log_file.close()
 
-    # barcode_graph.add_vertices(len(barcode_pairs_to_lines))
     barcode_graph.vs['id'] = [x for x in range(len(barcode_pairs_to_lines))]
     log_file = open(args.log_file, 'a')
     print("\tLabeling vertices on graph is completed", file=log_file)
     if not log_file == sys.stdout:
         log_file.close()
 
-    # barcode_pair_length = _barcode_length*2 - _error_tolerance*2
-    # count = 0
-    # for node in barcode_graph_adjacency_sets:
-    #     barcode_graph.add_edges([(node, neighbor) for neighbor in barcode_graph_adjacency_sets[node]])
-    #     count += 1
-    #     if count % 100000 == 0:
-    #         log_file = open(args.log_file, 'a')
-    #         print('Count', count, file=log_file)
-    # if not log_file == sys.stdout:
-    #     log_file.close()
     barcode_graph.simplify()
     log_file = open(args.log_file, 'a')
     print("\tSimplifying the graph is completed", file=log_file)
@@ -314,44 +321,6 @@ def main():
     print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
     if not log_file == sys.stdout:
         log_file.close()
-    #print([len(cluster) for cluster in clusters])
-
-    # print('len of barcode_graph {}'.format(len(barcode_graph)))
-    # print('max of barcode_graph {}'.format(statistics.mean((len(val) for val in barcode_graph.values()))))
-    # for barcode, neighbors in barcode_graph.items():
-    #     print(barcode, len(neighbors), neighbors)
-
-    # log_file = open(args.log_file, 'a')
-    # print('Building clusters', file=log_file)
-    # log_file.close()
-    # count = 0
-    # barcode_clusters = [{i} for i in range(len(barcodes_1))]
-    # a = time.time()
-    # for barcode_set in lsh.values():
-    #     count += 1
-    #     if count % 100000 == 0:
-    #         log_file = open(args.log_file, 'a')
-    #         print('Count', count, file=log_file)
-    #         log_file.close()
-    #     union_set = set()
-    #     for barcode in barcode_set:
-    #         union_set.update(barcode_clusters[barcode])
-    #     for barcode in union_set:
-    #         barcode_clusters[barcode] = union_set
-    #
-    # b = time.time()
-    # print("Time: ", b-a)
-    #
-    # id_dict = {}
-    # for _set in barcode_clusters:
-    #     id_dict[id(_set)] = _set
-    # log_file = open(args.log_file, 'a')
-    # print('Total number of clusters is:', len(id_dict), file=log_file)
-    # print('len(cluster);', 'mean(d(v)) for v in cluster;', '[(v, edges(v)) for v in cluster]', file=log_file)
-    # for _set in id_dict.values():
-    #     if len(_set) > 0:
-    #         print(len(_set),statistics.mean((len(barcode_graph[barcode]) for barcode in _set )),  [(barcode, barcode_graph[barcode]) for barcode in _set], sep='\t', file=log_file)
-    # log_file.close()
 
 
 if __name__ == '__main__':
