@@ -262,7 +262,7 @@ def main():
                 barcode_graph_adjacency_sets[node].update(adjacent_nodes)
     for i in range(len(barcode_pairs_to_lines)):
         if barcode_graph_adjacency_sets[i] != barcode_graph_adjacency_sets_test[i]:
-            print(barcode_graph_adjacency_sets_test[i], barcode_graph_adjacency_sets[i])
+            pass#print(barcode_graph_adjacency_sets_test[i], barcode_graph_adjacency_sets[i])
 
     finish_time = time.time()
     log_file = open(args.log_file, 'a')
@@ -277,7 +277,7 @@ def main():
 
     barcode_graph = Graph([(node, neighbor) for node, neighbors in enumerate(barcode_graph_adjacency_sets) for neighbor in neighbors])
     log_file = open(args.log_file, 'a')
-    print("\tGraph is building from adjacency lists is completed", file=log_file)
+    print("\tGraph building from adjacency lists is completed", file=log_file)
     if not log_file == sys.stdout:
         log_file.close()
 
@@ -304,18 +304,37 @@ def main():
         log_file.close()
     start_time = time.time()
 
-    cc_count = 0
-    for connected_component in barcode_graph.clusters().subgraphs():
-        cc_count += 1
-        log_file = open(args.log_file, 'a')
-        print('===\nDensity: {} and vertices:'.format(connected_component.density()), file=log_file)
-        for barcode in connected_component.vs['id']:
-            print(barcodes_1[barcode], barcodes_2[barcode], file=log_file)
-        log_file.close()
+    clusters = barcode_graph.clusters()
     log_file = open(args.log_file, 'a')
-    print('\tThere total of {} connected components'.format(cc_count), file=log_file)
+    print('\tThere total of {} connected components'.format(len(clusters)), file=log_file)
     if not log_file == sys.stdout:
         log_file.close()
+
+    log_file = open(args.log_file, 'a')
+    count = 0
+    for index, connected_component in enumerate(clusters):
+        vertices_count = len(connected_component)
+        edges_count = 0
+        for vertex in connected_component:
+            edges_count += len(barcode_graph_adjacency_sets[vertex])
+        edges_count -= vertices_count
+        edges_count /= 2
+        edges_count = int(edges_count)
+        if vertices_count == 1:
+            print('#{}\t{}\t{}\t{}:'.format(index, vertices_count, edges_count, 'nan'), file=log_file)
+        else:
+            print('#{}\t{}\t{}\t{}:'.format(index,  vertices_count, edges_count, 2*edges_count/(vertices_count * (vertices_count-1))), file=log_file)
+        for barcode in connected_component:
+            print(barcodes_1[barcode], barcodes_2[barcode], file=log_file)
+        count += 1
+        if count == 1000:
+            if not log_file == sys.stdout:
+                log_file.close()
+            log_file = open(args.log_file, 'a')
+
+    if not log_file == sys.stdout:
+        log_file.close()
+
     finish_time = time.time()
     log_file = open(args.log_file, 'a')
     print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
