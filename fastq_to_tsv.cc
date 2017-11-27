@@ -15,7 +15,7 @@ uint64_t reverse_complement(uint64_t kmer){
     //printf("%016lx\n", kmer);
     for (int i = 0; i < sizeof(uint64_t); i++){
         unsigned int which_byte = (sizeof(uint64_t) - i - 1);
-        uint8_t  current_byte = kmer >> (8*which_byte) & 0xff;
+        uint8_t  current_byte = (uint8_t)(kmer >> (8*which_byte) & 0xff);
         result |= ((uint64_t) current_byte ^ 0x03) << (8*i);
     }
     return result;
@@ -24,7 +24,7 @@ uint64_t reverse_complement(uint64_t kmer){
 string bitvector_to_DNA(uint64_t kmer){
     char dna[8];
     for (int i = 0; i < sizeof(uint64_t); i++){
-        dna[8-i-1] = (kmer >> (8*i)) & 0xff;
+        dna[8-i-1] = (char) ((kmer >> (8*i)) & 0xff);
         dna[8-i-1] = charize[dna[8-i-1]];
     }
     return string(dna);
@@ -56,16 +56,14 @@ uint64_t minimizer(string seq, int start, int length){
 
 int main(int argc, char** argv) {
 
-    unsigned int barcode_length = 10;
-    unsigned int k_size = 8;
-    string out_filename = argv[2];
-    out_filename = out_filename + ".out";
+    string out_filename = argv[3];
+    unsigned int barcode_length = (unsigned int) atoi(argv[4]);
 
     ifstream fastq1;
     ifstream fastq2;
     fastq1.open (argv[1]);
     fastq2.open (argv[2]);
-    ofstream output("myout");
+    ofstream output(out_filename);
 
     binarize['A'] = 0x00;
     binarize['C'] = 0x01;
@@ -86,16 +84,69 @@ int main(int argc, char** argv) {
         getline(fastq2, trash);
         getline(fastq2, q2);
 
-        output << s1.substr(0, barcode_length) << "\t";
-        output << s2.substr(0, barcode_length) << "\t";
+        unsigned int s1_length = (unsigned int) s1.size();
+        unsigned int s2_length = (unsigned int) s2.size();
+        uint64_t min_kmer;
 
-        uint64_t min_kmer = minimizer(s1, barcode_length, 50);
-        output << bitvector_to_DNA(min_kmer) << "\t";
+        if (s1_length < barcode_length){
+            output << string (barcode_length, 'N') << "\t";
+        } else {
+            output << s1.substr(0, barcode_length) << "\t";
+        }
+        if (s2_length < barcode_length){
+            output << string (barcode_length, 'N') << "\t";
+        } else {
+            output << s2.substr(0, barcode_length) << "\t";
+        }
+        s1_length -= barcode_length;
+        s2_length -= barcode_length;
+
+        if (s1_length >= 50){
+            min_kmer = minimizer(s1, barcode_length, 50);
+            output << bitvector_to_DNA(min_kmer) << "\t";
+        } else {
+            output << "NNNNNNNN" << "\t";
+        }
+
+        s1_length -= 50;
+        if (s1_length >= 50){
+            min_kmer = minimizer(s1, barcode_length + 50, 50);
+            output << bitvector_to_DNA(min_kmer) << "\t";
+        } else {
+            output << "NNNNNNNN" << "\t";
+        }
+
+        s1_length -= 50;
+        if (s1_length >= 8){
+            min_kmer = minimizer(s1, barcode_length + 100, (int)s1.size() -  barcode_length  - 100);
+            output << bitvector_to_DNA(min_kmer) << "\t";
+        } else {
+            output << "NNNNNNNN" << "\t";
+        }
 
 
+        if (s2_length >= 50){
+            min_kmer = minimizer(s2, barcode_length, 50);
+            output << bitvector_to_DNA(min_kmer) << "\t";
+        } else {
+            output << "NNNNNNNN" << "\t";
+        }
 
-        s1 = s1.substr(barcode_length);
-        s2 = s2.substr(barcode_length);
+        s2_length -= 50;
+        if (s2_length >= 50){
+            min_kmer = minimizer(s2, barcode_length + 50, 50);
+            output << bitvector_to_DNA(min_kmer) << "\t";
+        } else {
+            output << "NNNNNNNN" << "\t";
+        }
+
+        s2_length -= 50;
+        if (s2_length >= 8){
+            min_kmer = minimizer(s2, barcode_length + 100, (int)s2.size() -  barcode_length  - 100);
+            output << bitvector_to_DNA(min_kmer) << "\n";
+        } else {
+            output << "NNNNNNNN" << "\n";
+        }
 
     }
 
