@@ -124,8 +124,8 @@ def nCr(n, r):
 
 
 def main():
+    # Parsing args
     args = parse_args()
-
     _barcode_length = args.barcode_length
     _error_tolerance = args.error_tolerance
 
@@ -136,6 +136,7 @@ def main():
         log_file.close()
     start_time = time.time()
 
+    #Extracting barcodes from fastq files
     barcode_lines_1 = get_barcodes(args.forward_reads, _barcode_length)
     barcode_lines_2 = get_barcodes(args.reverse_reads, _barcode_length)
     if not len(barcode_lines_1) == len(barcode_lines_2):
@@ -144,6 +145,7 @@ def main():
         if not log_file == sys.stdout:
             log_file.close()
         sys.exit(42)
+    #Getting a unique representative from each set of set of identical barcodes
     barcode_pairs_to_lines = get_barcode_pair_to_line_mapping(barcode_lines_1, barcode_lines_2)
 
     log_file = open(args.log_file, 'a')
