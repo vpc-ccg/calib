@@ -190,7 +190,6 @@ def main():
     lsh_list = [{} for _ in range(int(nCr(_barcode_length, _error_tolerance)))]
     fake_barcode = ''.join([chr(x+65) for x in range(_barcode_length)])
 
-    barcode_graph_adjacency_sets_test = [{read_id} for read_id in range(len(barcode_pairs_to_lines))]
     for template, template_id in template_generator(_barcode_length, _error_tolerance):
         log_file = open(args.log_file, 'a')
         lsh = lsh_list[template_id]
@@ -205,10 +204,8 @@ def main():
 
             new_key = barcode_1 + barcode_2
             lsh[new_key] = lsh.get(new_key, {barcode_num}).union({barcode_num})
-            barcode_graph_adjacency_sets_test[barcode_num].update(lsh[new_key])
             new_key = barcode_2_rev + barcode_1_rev
             lsh[new_key] = lsh.get(new_key, {barcode_num}).union({barcode_num})
-            barcode_graph_adjacency_sets_test[barcode_num].update(lsh[new_key])
 
 
     log_file = open(args.log_file, 'a')
@@ -262,9 +259,6 @@ def main():
             for node in val:
                 adjacent_nodes = val#.difference({node})
                 barcode_graph_adjacency_sets[node].update(adjacent_nodes)
-    for i in range(len(barcode_pairs_to_lines)):
-        if barcode_graph_adjacency_sets[i] != barcode_graph_adjacency_sets_test[i]:
-            pass#print(barcode_graph_adjacency_sets_test[i], barcode_graph_adjacency_sets[i])
 
     finish_time = time.time()
     log_file = open(args.log_file, 'a')
