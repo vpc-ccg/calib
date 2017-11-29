@@ -104,7 +104,7 @@ def get_lsh(barcodes, error_tolerance):
     lsh = {}
     for template, template_id in template_generator(barcode_length, error_tolerance):
         for index in range(len(barcodes)):
-            barcode_word = template(barcodes[index])
+            barcode_word = template_id + template(barcodes[index])
             lsh[barcode_word] = lsh.get(barcode_word, {index}).union({index})
     return lsh
 
@@ -123,6 +123,31 @@ def nCr(n, r):
     return int(f(n) / f(r) / f(n-r))
 
 
+def ascii_to_phred(ascii):
+    return 10**(-(ord(ascii) - 33)/10)
+
+
+def phred_to_ascii(phred):
+    Q = -10 * math.log10(phred) + 33
+    return chr(int(Q) + 33)
+
+
+def consensus(sequences, qualities):
+    # TODO: Assuming sequences of same length
+    # TODO: Returns numpy chararray. Might have to process for printing.
+    sequence_length = len(sequences[0])
+    consensus_seq = np.chararray(shape=sequence_length)
+    for i in range(sequence_length):
+        probabilities_of_error = {'A': 0, 'C': 0, 'G': 0, 'T': 0, 'N': 0}
+        for sequence, quality in zip(sequences, qualities):
+            nt = sequence[i]
+            ascii_qual = quality[i]
+            # P(error) = P(error in each column)
+            probabilities_of_error[nt] *= ascii_to_phred(ascii_qual)
+        consensus_seq[i] = min(probabilities_of_error.keys(), key=(lambda k: probabilities_of_error[k]))
+    return consensus_seq
+
+
 def main():
     # Parsing args
     args = parse_args()
@@ -136,7 +161,7 @@ def main():
         log_file.close()
     start_time = time.time()
 
-    #Extracting barcodes from fastq files
+    # Extracting barcodes from fastq files
     barcode_lines_1 = get_barcodes(args.forward_reads, _barcode_length)
     barcode_lines_2 = get_barcodes(args.reverse_reads, _barcode_length)
     if not len(barcode_lines_1) == len(barcode_lines_2):
@@ -145,7 +170,7 @@ def main():
         if not log_file == sys.stdout:
             log_file.close()
         sys.exit(42)
-    #Getting a unique representative from each set of set of identical barcodes
+    # Getting a unique representative from each set of set of identical barcodes
     barcode_pairs_to_lines = get_barcode_pair_to_line_mapping(barcode_lines_1, barcode_lines_2)
 
     log_file = open(args.log_file, 'a')
@@ -206,7 +231,6 @@ def main():
             lsh[new_key] = lsh.get(new_key, {barcode_num}).union({barcode_num})
             new_key = barcode_2_rev + barcode_1_rev
             lsh[new_key] = lsh.get(new_key, {barcode_num}).union({barcode_num})
-
 
     log_file = open(args.log_file, 'a')
     print('\tThere are {} buckets with values in the LSH dictionaries'.format(sum((len(lsh.keys()) for lsh in lsh_list))), file=log_file)
