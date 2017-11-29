@@ -104,7 +104,7 @@ def ascii_to_phred(ascii):
 
 
 def phred_to_ascii(phred):
-    Q = -10 * math.log10(phred) + 33
+    Q = -10 * math.log10(phred)
     return chr(int(Q) + 33)
 
 
