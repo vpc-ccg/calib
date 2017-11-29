@@ -72,30 +72,6 @@ def get_barcode_pair_to_line_mapping(barcode_lines_1, barcode_lines_2):
     return barcode_pair_to_line_dict
 
 
-def breadth_first_traversal(graph, node, cluster):
-    cluster.add(node)
-    nodes_to_traverse = graph[node] - cluster
-    cluster.update(graph[node])
-    for node in nodes_to_traverse:
-        cluster.update(breadth_first_traversal(graph, node, cluster))
-    return cluster
-
-
-def generate_clusters_by_bfs(graph):
-    # graph is a dict, clusters is an array of sets
-    clusters = []
-    for node in graph.keys():
-        node_already_in_clusters = False
-        for cluster in clusters:
-            if node in cluster:
-                node_already_in_clusters = True
-                cluster.update(graph[node])
-                break
-        if not node_already_in_clusters:
-            clusters.append(breadth_first_traversal(graph, node, set()))
-    return clusters
-
-
 def get_lsh(barcodes, error_tolerance):
     barcode_length = len(barcodes[0])
     # From AAAAAAAA, AAAAAAAT, ..., TTTTTTTT, ..., CCCCCCCC, ..., GGGGGGGG
