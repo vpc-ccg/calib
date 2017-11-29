@@ -188,12 +188,14 @@ def main():
         log_file.close()
     start_time = time.time()
 
-    lsh_list = [{} for _ in range(int(nCr(_barcode_length, _error_tolerance)))]
+    # lsh_list = [{} for _ in range(int(nCr(_barcode_length, _error_tolerance)))]
     fake_barcode = ''.join([chr(x+65) for x in range(_barcode_length)])
+
+    barcode_graph_adjacency_sets = [{x} for x in range(len(barcode_pairs_to_lines))]
 
     for template, template_id in template_generator(_barcode_length, _error_tolerance):
         log_file = open(args.log_file, 'a')
-        lsh = lsh_list[template_id]
+        lsh = dict() # lsh_list[template_id]
         print("\tTemplate {} with ID {}".format(template(fake_barcode), template_id), file=log_file)
         if not log_file == sys.stdout:
             log_file.close()
@@ -207,55 +209,7 @@ def main():
             lsh[new_key] = lsh.get(new_key, {barcode_num}).union({barcode_num})
             new_key = barcode_2_rev + barcode_1_rev
             lsh[new_key] = lsh.get(new_key, {barcode_num}).union({barcode_num})
-
-    log_file = open(args.log_file, 'a')
-    print('\tThere are {} buckets with values in the LSH dictionaries'.format(sum((len(lsh.keys()) for lsh in lsh_list))), file=log_file)
-    if not log_file == sys.stdout:
-        log_file.close()
-    finish_time = time.time()
-    log_file = open(args.log_file, 'a')
-    print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
-    if not log_file == sys.stdout:
-        log_file.close()
-    log_file = open(sys.argv[3] + '.supp', 'w+')
-    print('Step: Counting the size of each set in LSH dictionaries...', file=log_file)
-    if not log_file == sys.stdout:
-        log_file.close()
-    start_time = time.time()
-
-    count = 0
-    log_file = open(sys.argv[3] + '.supp', 'a')
-    for lsh in lsh_list:
-        for _set in lsh.values():
-            print(len(_set), _set, sep='\t', file=log_file)
-            count += 1
-            if count == 100000:
-                count = 0
-                if not log_file == sys.stdout:
-                    log_file.close()
-                log_file = open(sys.argv[3] + '.supp', 'a')
-    if not log_file == sys.stdout:
-        log_file.close()
-    finish_time = time.time()
-    log_file = open(sys.argv[3] + '.supp', 'a')
-    print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
-    if not log_file == sys.stdout:
-        log_file.close()
-    log_file = open(args.log_file, 'a')
-    print("Step: Building barcode graph adjacency sets...", file=log_file)
-    if not log_file == sys.stdout:
-        log_file.close()
-    start_time = time.time()
-
-    barcode_graph_adjacency_sets = [{x} for x in range(len(barcode_pairs_to_lines))]
-    count = 0
-    for lsh in lsh_list:
         for val in lsh.values():
-            count += 1
-            if count % 100000 == 0:
-                log_file = open(sys.argv[3], 'a')
-                print('Count', count, file=log_file)
-                log_file.close()
             for node in val:
                 adjacent_nodes = val#.difference({node})
                 barcode_graph_adjacency_sets[node].update(adjacent_nodes)
@@ -265,6 +219,60 @@ def main():
     print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
     if not log_file == sys.stdout:
         log_file.close()
+
+
+    # log_file = open(args.log_file, 'a')
+    # print('\tThere are {} buckets with values in the LSH dictionaries'.format(sum((len(lsh.keys()) for lsh in lsh_list))), file=log_file)
+    # if not log_file == sys.stdout:
+    #     log_file.close()
+    # finish_time = time.time()
+    # log_file = open(args.log_file, 'a')
+    # print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
+    # if not log_file == sys.stdout:
+    #     log_file.close()
+    # log_file = open(sys.argv[3] + '.supp', 'w+')
+    # print('Step: Counting the size of each set in LSH dictionaries...', file=log_file)
+    # if not log_file == sys.stdout:
+    #     log_file.close()
+    # start_time = time.time()
+    #
+    # count = 0
+    # log_file = open(sys.argv[3] + '.supp', 'a')
+    # for lsh in lsh_list:
+    #     for _set in lsh.values():
+    #         print(len(_set), _set, sep='\t', file=log_file)
+    #         count += 1
+    #         if count == 100000:
+    #             count = 0
+    #             if not log_file == sys.stdout:
+    #                 log_file.close()
+    #             log_file = open(sys.argv[3] + '.supp', 'a')
+    # if not log_file == sys.stdout:
+    #     log_file.close()
+    # finish_time = time.time()
+    # log_file = open(sys.argv[3] + '.supp', 'a')
+    # print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
+    # if not log_file == sys.stdout:
+    #     log_file.close()
+    # log_file = open(args.log_file, 'a')
+    # print("Step: Building barcode graph adjacency sets...", file=log_file)
+    # if not log_file == sys.stdout:
+    #     log_file.close()
+    # start_time = time.time()
+    #
+    # count = 0
+    # for lsh in lsh_list:
+    #     for val in lsh.values():
+    #         for node in val:
+    #             adjacent_nodes = val#.difference({node})
+    #             barcode_graph_adjacency_sets[node].update(adjacent_nodes)
+    #         count += 1
+    #         if count % 100000 == 0:
+    #             log_file = open(sys.argv[3], 'a')
+    #             print('Count', count, file=log_file)
+    #             log_file.close()
+
+
     log_file = open(args.log_file, 'a')
     print("Step: Building barcode graph from adjacency_sets...", file=log_file)
     if not log_file == sys.stdout:
