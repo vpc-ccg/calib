@@ -192,6 +192,7 @@ def main():
     fake_barcode = ''.join([chr(x+65) for x in range(_barcode_length)])
 
     for template, template_id in template_generator(_barcode_length, _error_tolerance):
+        # TODO: Instead of lsh_list, generate adjacency set from each lsh then remove the lsh.
         log_file = open(args.log_file, 'a')
         lsh = lsh_list[template_id]
         print("\tTemplate {} with ID {}".format(template(fake_barcode), template_id), file=log_file)
