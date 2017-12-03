@@ -7,72 +7,79 @@
 #include <cstdint> // include this header for uint64_t
 
 using namespace std;
-std::map<char, uint8_t> binarize;
-std::map<uint8_t, char> charize ;
+//std::map<char, uint8_t> binarize;
+//std::map<uint8_t, char> charize ;
 
-uint64_t reverse_complement(uint64_t kmer){
-    uint64_t result = 0;
-    //printf("%016lx\n", kmer);
-    for (int i = 0; i < sizeof(uint64_t); i++){
-        unsigned int which_byte = (sizeof(uint64_t) - i - 1);
-        uint8_t  current_byte = (uint8_t)(kmer >> (8*which_byte) & 0xff);
-        result |= ((uint64_t) current_byte ^ 0x03) << (8*i);
-    }
-    return result;
-}
+//uint64_t reverse_complement(uint64_t kmer){
+//    uint64_t result = 0;
+//    //printf("%016lx\n", kmer);
+//    for (int i = 0; i < sizeof(uint64_t); i++){
+//        unsigned int which_byte = (sizeof(uint64_t) - i - 1);
+//        uint8_t  current_byte = (uint8_t)(kmer >> (8*which_byte) & 0xff);
+//        result |= ((uint64_t) current_byte ^ 0x03) << (8*i);
+//    }
+//    return result;
+//}
+//
+string bitvector_to_DNA(uint64_t k_mer, int k_mer_size){
+//    printf("\n");
+//    printf("0x%lx\t", (k_mer));
+    char dna[k_mer_size+1];
+//    k_mer >>= 8*(sizeof(uint64_t) - k_mer_size);
 
-string bitvector_to_DNA(uint64_t kmer){
-    char dna[8];
-    for (int i = 0; i < sizeof(uint64_t); i++){
-        dna[8-i-1] = (char) ((kmer >> (8*i)) & 0xff);
-        dna[8-i-1] = charize[dna[8-i-1]];
+    for (int i = 0; i < k_mer_size; i++){
+        char current_byte = (char) (k_mer >> ((8*(k_mer_size - i - 1)) & 0xff ));
+        dna[i] = current_byte ;
+//        printf("0x%lx\t", (k_mer >> ((8*(k_mer_size - i - 1)) & 0xff )));
     }
+//    printf("\n");
+    dna[k_mer_size] = '\0';
     return string(dna);
 }
 
 
-uint64_t minimizer(string seq, int start, int length){
-    uint64_t current_kmer=0, current_rev_kmer=0, min_kmer= (uint64_t) - 1;
-
-    for (unsigned int i = start; i < start + sizeof(uint64_t); i++){
-        current_kmer <<= 8;
-        current_rev_kmer >>= 8;
-        uint8_t byte = binarize[seq.at(i)];
-        current_kmer |= (uint64_t) byte;
-        current_rev_kmer |= (uint64_t) (byte ^ 0x03 )<< 8*(sizeof(uint64_t) - 1);
+uint64_t minimizer(string seq, int start, int length, int k_mer_size){
+    if (length < k_mer_size){
+        return (uint64_t) - 1;
     }
+    uint64_t current_k_mer = 0;
+    uint64_t min_k_mer = (uint64_t) - 1;
+    uint64_t k_mer_size_mask = (uint64_t) - 1;
+    k_mer_size_mask >>= (sizeof(uint64_t)-k_mer_size)*8;
+//    printf("====\n0x%lx\n===\n", k_mer_size_mask);
 
-    for (int i = start + sizeof(uint64_t); i < start + length; i++){
-        current_kmer <<= 8;
-        current_rev_kmer >>= 8;
-        uint8_t byte = binarize[seq.at(i)];
-        current_kmer |= (uint64_t) byte;
-        current_rev_kmer |= (uint64_t) (byte ^ 0x03 )<< 8*(sizeof(uint64_t) - 1);
-        min_kmer = min_kmer < current_kmer ? min_kmer : current_kmer;
-        min_kmer = min_kmer < current_rev_kmer ? min_kmer : current_rev_kmer;
+    for (int i = start; i < start + k_mer_size; i++){
+        current_k_mer <<= 8;
+        current_k_mer |= (uint64_t) seq.at(i);
     }
-    return min_kmer;
+//    printf("====\n0x%lx\n===\n", current_k_mer);
+    min_k_mer = min_k_mer < current_k_mer ? min_k_mer : current_k_mer;
+
+    for (int i = start + k_mer_size; i < start + length; i++){
+//        printf("====\n0x%lx\n===\n", current_k_mer);
+        current_k_mer <<= 8;
+//        printf("====\n0x%lx\n===\n", current_k_mer);
+        current_k_mer &= k_mer_size_mask;
+//        printf("====\n0x%lx\n===\n", current_k_mer);
+        current_k_mer |= (uint64_t) seq.at(i);
+//        printf("====\n0x%lx\n===\n", current_k_mer);
+        min_k_mer = min_k_mer < current_k_mer ? min_k_mer : current_k_mer;
+    }
+//    printf("====\n0x%lx\n===\n", min_k_mer);
+
+    return min_k_mer;
 }
 
 int main(int argc, char** argv) {
-
-    string out_filename = argv[3];
-    unsigned int barcode_length = (unsigned int) atoi(argv[4]);
-
     ifstream fastq1;
     ifstream fastq2;
     fastq1.open (argv[1]);
     fastq2.open (argv[2]);
-    ofstream output(out_filename);
+    ofstream output(argv[3]);
+    unsigned int barcode_length = (unsigned int) atoi(argv[4]);
+    unsigned int k_mer_size = (unsigned int) atoi(argv[5]);
+    unsigned int minimizers_count = (unsigned int) atoi(argv[6]);
 
-    binarize['A'] = 0x00;
-    binarize['C'] = 0x01;
-    binarize['G'] = 0x02;
-    binarize['T'] = 0x03;
-    charize[0x00] = 'A';
-    charize[0x01] = 'C';
-    charize[0x02] = 'G';
-    charize[0x03] = 'T';
 
     string r1, s1, q1, r2, s2, q2, trash;
     while (getline(fastq1, r1)) {
@@ -101,53 +108,25 @@ int main(int argc, char** argv) {
         s1_length -= barcode_length;
         s2_length -= barcode_length;
 
-        if (s1_length >= 50){
-            min_kmer = minimizer(s1, barcode_length, 50);
-            output << bitvector_to_DNA(min_kmer) << "\t";
-        } else {
-            output << "NNNNNNNN" << "\t";
+        int s1_seg_length = s1_length / minimizers_count;
+        for (int i = 0; i < minimizers_count; i++){
+            min_kmer = minimizer(s1, barcode_length + i*s1_seg_length, s1_seg_length, k_mer_size);
+            output << min_kmer << "\t";
+//            output << bitvector_to_DNA(min_kmer, k_mer_size)<< "\t";
+//            printf("%d:0x%lx:%s\t", i, min_kmer, bitvector_to_DNA(min_kmer, k_mer_size).c_str());
         }
+//        printf("\n");
 
-        s1_length -= 50;
-        if (s1_length >= 50){
-            min_kmer = minimizer(s1, barcode_length + 50, 50);
-            output << bitvector_to_DNA(min_kmer) << "\t";
-        } else {
-            output << "NNNNNNNN" << "\t";
+        int s2_seg_length = s2_length / minimizers_count;
+        for (int i = 0; i < minimizers_count; i++){
+            min_kmer = minimizer(s2, barcode_length + i*s2_seg_length, s2_seg_length, k_mer_size);
+//            output << bitvector_to_DNA(min_kmer, k_mer_size)<< "\t";
+            output << min_kmer << "\t";
+//            printf("%d:0x%lx:%s\t", i, min_kmer, bitvector_to_DNA(min_kmer, k_mer_size).c_str());
         }
-
-        s1_length -= 50;
-        if (s1_length >= 8){
-            min_kmer = minimizer(s1, barcode_length + 100, (int)s1.size() -  barcode_length  - 100);
-            output << bitvector_to_DNA(min_kmer) << "\t";
-        } else {
-            output << "NNNNNNNN" << "\t";
-        }
-
-
-        if (s2_length >= 50){
-            min_kmer = minimizer(s2, barcode_length, 50);
-            output << bitvector_to_DNA(min_kmer) << "\t";
-        } else {
-            output << "NNNNNNNN" << "\t";
-        }
-
-        s2_length -= 50;
-        if (s2_length >= 50){
-            min_kmer = minimizer(s2, barcode_length + 50, 50);
-            output << bitvector_to_DNA(min_kmer) << "\t";
-        } else {
-            output << "NNNNNNNN" << "\t";
-        }
-
-        s2_length -= 50;
-        if (s2_length >= 8){
-            min_kmer = minimizer(s2, barcode_length + 100, (int)s2.size() -  barcode_length  - 100);
-            output << bitvector_to_DNA(min_kmer) << "\n";
-        } else {
-            output << "NNNNNNNN" << "\n";
-        }
-
+//        printf("\n");
+//        output << s1 << "\t" << s2 << "\n";
+        output << "\n";
     }
 
     return 0;
