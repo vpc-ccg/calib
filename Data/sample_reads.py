@@ -1,38 +1,55 @@
 import random
+import argparse
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Clusters barcodes by locality sensitive hashing.")
+    parser.add_argument("-s", "--sample-size", type=int, help="Number of reads to sample", required=True)
+    parser.add_argument("-n", "--num-of-reads", type=int, help="Total number of reads", required=True)
+    parser.add_argument("-f", "--forward-reads", type=str, help="Forward read file path.", required=True)
+    parser.add_argument("-r", "--reverse-reads", type=str, help="Reverse read file path.", required=True)
+    return parser.parse_args()
 
 
 def sample_fastq(fastq_file, choices, output):
     fastq = open(fastq_file)
     out = open(output, 'w')
     EOF = False
-    read_is_next = False
     i = 0
     choice_index = 0
+    print_next = 0
     while not EOF:
+        i += 1
         line = fastq.readline()
-        if read_is_next:
-            read_is_next = False
-            if choices[choice_index] == i:
-                choice_index += 1
-                print(line, file=out)
-        if line.startswith("@"):
-            i += 1
-            read_is_next = True
+
+        if print_next > 0:
+            print_next -= 1
+            print(line, file=out, end='')
+        if choice_index >= len(choices) and print_next == 0:
+            break
+        if choice_index < len(choices) and choices[choice_index]*4+1 == i:
+            print_next = 3
+            choice_index += 1
+            print(line, file=out, end='')
         if line == "":
             EOF = True
+
     fastq.close()
 
 
 def main():
-    sample_size = 10000000
-    num_of_reads = 59998500
-    fastq_file1 = 'amp_seq_10k_1m1.fq'
-    fastq_file2 = 'amp_seq_10k_1m2.fq'
+    args = parse_args()
+    sample_size = args.sample_size
+    num_of_reads = args.num_of_reads
+    fastq_file1 = args.forward_reads
+    fastq_file2 = args.reverse_reads
     choices = random.sample(range(1, num_of_reads+1), k=sample_size)
     print('choices selected')
+    print(choices)
     choices.sort()
-    sample_fastq(fastq_file1, choices, "amp_seq_10k_1m_sampled1.fq")
-    sample_fastq(fastq_file2, choices, "amp_seq_10k_1m_sampled2.fq")
+    sample_fastq(fastq_file1, choices, args.forward_reads.split('.fq')[0]+"_sampled.fq")
+    sample_fastq(fastq_file2, choices, args.reverse_reads.split('.fq')[0]+"_sampled")
 
 
 if __name__ == "__main__":
