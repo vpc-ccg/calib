@@ -113,24 +113,47 @@ def ascii_to_phred(ascii):
 
 
 def phred_to_ascii(phred):
-    Q = -10 * math.log10(phred)
+    if phred < 0.00000001:
+        Q = 42
+    else:
+        Q = -10 * math.log10(phred)
+    if Q > 42:
+        Q = 42
     return chr(int(Q) + 33)
 
 
 def consensus(sequences, qualities):
-    # TODO: Assuming sequences of same length
-    # TODO: Returns numpy chararray. Might have to process for printing.
-    sequence_length = len(sequences[0])
-    consensus_seq = np.chararray(shape=sequence_length)
-    for i in range(sequence_length):
-        probabilities_of_error = {'A': 0, 'C': 0, 'G': 0, 'T': 0, 'N': 0}
-        for sequence, quality in zip(sequences, qualities):
-            nt = sequence[i]
-            ascii_qual = quality[i]
-            # P(error) = P(error in each column)
-            probabilities_of_error[nt] *= ascii_to_phred(ascii_qual)
-        consensus_seq[i] = min(probabilities_of_error.keys(), key=(lambda k: probabilities_of_error[k]))
-    return consensus_seq
+    consensus_quality = ''
+    consensus = ''
+    for i in range(max((len(s) for s in sequences))):
+        votes = {'A': 0, 'C': 0, 'G': 0, 'T': 0}
+        for idx, seq in enumerate(sequences):
+            if len(seq) <= i:
+                continue
+            votes[seq[i]] += math.log10(1-ascii_to_phred(qualities[idx][i]))
+            for b in votes:
+                if b == seq[i]:
+                    continue
+                votes[b] += math.log10(ascii_to_phred(qualities[idx][i]))
+        for v in votes:
+            votes[v] = math.pow(10, votes[v])
+        norm_fact = sum(votes.values())
+        for v in votes:
+            votes[v] = votes[v]/norm_fact
+        #print(votes)
+        consensus += max(votes.keys(), key=(lambda k: votes[k]))
+        consensus_quality += phred_to_ascii(1-votes[consensus[-1]])
+    return consensus, consensus_quality
+
+def fastq_lines(fastq_path):
+    fastq_file = open(fastq_path)
+    fastq_lines = fastq_file.readlines()
+    read_count = int(len(fastq_lines)/4)
+    fastq_lines_tuples = [0]*read_count
+    for idx in range(read_count):
+        fastq_line_idx = idx*4
+        fastq_lines_tuples[idx] = (fastq_lines[fastq_line_idx].rstrip(), fastq_lines[fastq_line_idx+1].rstrip(), fastq_lines[fastq_line_idx+3].rstrip())
+    return fastq_lines_tuples
 
 
 def main():
@@ -243,14 +266,27 @@ def main():
     clusters = graph.clusters()
     print('\tThere total of {} connected components'.format(len(clusters)), file=log_file)
 
-    
+    fastq_1 = fastq_lines(args.forward_reads)
+    fastq_2 = fastq_lines(args.reverse_reads)
+    out_fastq_1 = open(args.forward_reads + '.corrected.fastq', 'w+')
+    out_fastq_2 = open(args.reverse_reads + '.corrected.fastq', 'w+')
+
+    if len(fastq_1) != len(fastq_2):
+        print('You\'ve screwed up; fastq files don\'t match in line count')
+        exit()
+
     for index, connected_component in enumerate(clusters):
         nodes_count = len(connected_component)
         edges_count = 0
         read_count = 0
+        # mate_1_tuples = []
+        # mate_2_tuples = []
         for node in connected_component:
             edges_count += len(adjacency_sets[node])
             read_count += len(node_to_reads[node])
+            # for read in node_to_reads[node]:
+            #     mate_1_tuples.append(fastq_1[read])
+            #     mate_2_tuples.append(fastq_2[read])
         edges_count -= nodes_count
         edges_count /= 2
         edges_count = int(edges_count)
@@ -260,6 +296,18 @@ def main():
             print('#{}\t{}\t{}\t{}\t{}:'.format(index,  nodes_count, edges_count, read_count, 2*edges_count/(nodes_count * (nodes_count-1))), file=log_file)
         for node in connected_component:
             print(node_to_barcode_1[node], node_to_barcode_2[node], node_to_mini_1[node], node_to_mini_2[node], file=log_file)
+        # seq_1, qual_1 = consensus(sequences=[i[1] for i in mate_1_tuples], qualities=[i[2] for i in mate_1_tuples])
+        # seq_2, qual_2 = consensus(sequences=[i[1] for i in mate_2_tuples], qualities=[i[2] for i in mate_2_tuples])
+        # for read in range(read_count):
+        #     print(fastq_1[read][0], file=out_fastq_1)
+        #     print(fastq_1[read][1], file=out_fastq_1)
+        #     print('+', file=out_fastq_1)
+        #     print(fastq_1[read][2], file=out_fastq_1)
+        #
+        #     print(fastq_2[read][0], file=out_fastq_2)
+        #     print(fastq_2[read][1], file=out_fastq_2)
+        #     print('+', file=out_fastq_2)
+        #     print(fastq_2[read][2], file=out_fastq_2)
 
     finish_time = time.time()
     print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
