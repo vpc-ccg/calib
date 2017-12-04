@@ -112,14 +112,15 @@ def consensus(sequences, qualities):
     # TODO: Assuming sequences of same length
     # TODO: Returns numpy chararray. Might have to process for printing.
     sequence_length = len(sequences[0])
-    consensus_seq = np.chararray(shape=sequence_length)
+    # consensus_seq = np.chararray(shape=sequence_length)
+    consensus_seq = np.empty(shape=sequence_length, dtype='S1')
     for i in range(sequence_length):
         probabilities_of_error = {'A': 0, 'C': 0, 'G': 0, 'T': 0, 'N': 0}
         for sequence, quality in zip(sequences, qualities):
             nt = sequence[i]
             ascii_qual = quality[i]
             # P(error) = P(error in each column)
-            probabilities_of_error[nt] *= ascii_to_phred(ascii_qual)
+            probabilities_of_error[nt] += math.log10(ascii_to_phred(ascii_qual))
         consensus_seq[i] = min(probabilities_of_error.keys(), key=(lambda k: probabilities_of_error[k]))
     return consensus_seq
 
