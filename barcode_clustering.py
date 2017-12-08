@@ -51,58 +51,6 @@ def reverse_complement(sequence):
         new_seq += _complements.get(char, char)
     return new_seq
 
-
-def get_barcodes(fastq_file, barcode_length):
-    fastq = open(fastq_file)
-    barcodes = []
-    EOF = False
-    read_is_next = False
-    while not EOF:
-        line = fastq.readline()
-        if read_is_next:
-            barcodes.append(line[0:barcode_length])
-            read_is_next = False
-        if line.startswith("@"):
-            read_is_next = True
-        if line == "":
-            EOF = True
-    fastq.close()
-    return barcodes
-
-
-def get_barcode_pair_to_line_mapping(barcode_lines_1, barcode_lines_2):
-    barcode_pair_to_line_dict = dict()
-    for line in range(len(barcode_lines_1)):
-        barcode_pair = (barcode_lines_1[line], barcode_lines_2[line])
-        if barcode_pair in barcode_pair_to_line_dict:
-            barcode_pair_to_line_dict[barcode_pair].add(line)
-        else:
-            barcode_pair_to_line_dict[barcode_pair] = {line}
-    return barcode_pair_to_line_dict
-
-
-def get_lsh(barcodes, error_tolerance):
-    barcode_length = len(barcodes[0])
-    # From AAAAAAAA, AAAAAAAT, ..., TTTTTTTT, ..., CCCCCCCC, ..., GGGGGGGG
-    # lsh = np.array([set()]*(4**(barcode_length-error_tolerance)))
-    # TODO: Implement this without hashing using the above method
-    lsh = {}
-    for template, template_id in template_generator(barcode_length, error_tolerance):
-        for index in range(len(barcodes)):
-            barcode_word = template_id + template(barcodes[index])
-            lsh[barcode_word] = lsh.get(barcode_word, {index}).union({index})
-    return lsh
-
-
-def get_adjacency_set(lsh, num_barcodes):
-    # TODO: Once get_lsh is implemented without hashing, change function to use list instead of dictionary
-    adjacency_sets = np.array([set()] * num_barcodes)
-    for adjacent_elements in lsh.values():
-        for node in adjacent_elements:
-            adjacency_sets[node].update(lsh.values)
-    return adjacency_sets
-
-
 def nCr(n, r):
     f = math.factorial
     return int(f(n) / f(r) / f(n-r))
@@ -155,6 +103,15 @@ def fastq_lines(fastq_path):
         fastq_lines_tuples[idx] = (fastq_lines[fastq_line_idx].rstrip(), fastq_lines[fastq_line_idx+1].rstrip(), fastq_lines[fastq_line_idx+3].rstrip())
     return fastq_lines_tuples
 
+dna_encoding = {'A' : 0, 'C' : 1, 'G' : 2, 'T' : 3}
+def dna_to_index(DNA):
+    index = 0
+    power = 1
+    for letter in DNA:
+        index = index + dna_encoding[letter]*power
+        power = power*4
+    return index
+
 
 def main():
     # Parsing args
@@ -194,6 +151,10 @@ def main():
         node_to_barcode_2[idx] = key[1]
         node_to_mini_1[idx] = key[2:2+_minimizer_count]
         node_to_mini_2[idx] = key[2+_minimizer_count:2+_minimizer_count+_minimizer_count]
+    del(idx)
+    del(key)
+
+
     # for idx in range(node_count):
     #     print(node_to_reads[idx])
     #     print(node_to_barcode_1[idx], node_to_barcode_2[idx], node_to_mini_1[idx], node_to_mini_2[idx], sep='\t')
@@ -206,25 +167,54 @@ def main():
     print('Step: LSH of barcodes...', file=log_file)
     start_time = time.time()
 
-    fake_barcode = ''.join([chr(x+65) for x in range(_barcode_length)])
+    # fake_barcode = ''.join([chr(x+65) for x in range(_barcode_length)])
 
-    adjacency_sets = [{x} for x in range(node_count)]
+    adjacency_sets_1 = [{x} for x in range(node_count)]
+    adjacency_sets_2 = [{x} for x in range(node_count)]
+    
 
     for template, template_id in template_generator(_barcode_length, _error_tolerance):
         # TODO: Instead of lsh_list, generate adjacency set from each lsh then remove the lsh.
-        lsh = dict() # lsh_list[template_id]
+        lsh_1 = dict()
+        lsh_2 = dict()
         # print("\tTemplate {} with ID {}".format(template(fake_barcode), template_id), file=log_file)
         for idx in range(node_count):
             barcode_1 = template(node_to_barcode_1[idx])
-            barcode_2 = template(node_to_barcode_2[idx])
-            key = barcode_1 + barcode_2
-            if key in lsh:
-                lsh[key].append(idx)
+            if barcode_1 in lsh_1:
+                lsh_1[barcode_1].append(idx)
             else:
-                lsh[key] = [idx]
-        for adjacent_nodes in lsh.values():
+                lsh_1[barcode_1] = [idx]
+
+            barcode_2= template(node_to_barcode_2[idx])
+            if barcode_2 in lsh_2:
+                lsh_2[barcode_2].append(idx)
+            else:
+                lsh_2[barcode_2] = [idx]
+
+        for barcode_1 in lsh_1:
+            # print(barcode_1, lsh_1[barcode_1])
+            lsh_1[barcode_1] = set(lsh_1[barcode_1])
+            adjacent_nodes = lsh_1[barcode_1]
             for node in adjacent_nodes:
-                adjacency_sets[node].update(set(adjacent_nodes))
+                adjacency_sets_1[node].update(adjacent_nodes)
+        del(lsh_1)
+        for barcode_2 in lsh_2:
+            # print(barcode_2, lsh_2[barcode_2])
+            lsh_2[barcode_2] = set(lsh_2[barcode_2])
+            adjacent_nodes = lsh_2[barcode_2]
+            for node in adjacent_nodes:
+                adjacency_sets_2[node].update(adjacent_nodes)
+        del(lsh_2)
+    del(template)
+    del(template_id)
+
+    adjacency_sets = [set() for _ in range(node_count)]
+    for idx in range(node_count):
+        adjacency_sets[idx] = adjacency_sets_1[idx].intersection(adjacency_sets_2[idx])
+    del(adjacency_sets_1)
+    del(adjacency_sets_2)
+
+
     # for idx, neighbors in enumerate(adjacency_sets):
     #     print(idx, neighbors, sep='\t')
     finish_time = time.time()
@@ -239,9 +229,11 @@ def main():
             # print(node_to_mini_2[node], node_to_mini_2[neighbor], sep='\t')
             # print([node_to_mini_1[node][i]==node_to_mini_1[neighbor][i] for i in range(_minimizer_count)])
             # print([node_to_mini_2[node][i]==node_to_mini_2[neighbor][i] for i in range(_minimizer_count)])
-            if (sum([node_to_mini_1[node][i]==node_to_mini_1[neighbor][i] for i in range(_minimizer_count)]) < _minimizers_threshold) or \
-            ((sum([node_to_mini_2[node][i]==node_to_mini_2[neighbor][i] for i in range(_minimizer_count)]) < _minimizers_threshold)):
+            matching_minimizers_1 = sum([node_to_mini_1[node][i]==node_to_mini_1[neighbor][i] for i in range(_minimizer_count)])
+            matching_minimizers_2 = sum([node_to_mini_2[node][i]==node_to_mini_2[neighbor][i] for i in range(_minimizer_count)])
+            if (matching_minimizers_1 < _minimizers_threshold) or (matching_minimizers_2 < _minimizers_threshold):
                 neighbors.remove(neighbor)
+                adjacency_sets[neighbor].remove(node)
     finish_time = time.time()
     print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
 
