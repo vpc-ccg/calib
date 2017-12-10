@@ -6,7 +6,6 @@ import math
 from itertools import combinations
 from igraph import Graph, summary, InternalError
 import argparse
-
 _complements = {'A': 'T',
                 'T': 'A',
                 'G': 'C',
@@ -29,6 +28,8 @@ def parse_args():
                             help="Threshold for number of minimizers matching per read mate (default: 1)")
     # parser.add_argument("-k", "--k-mer-size", type=int, default=8,
     #                         help="K-mer size for the minimizers (default: 8)")
+    parser.add_argument("-s", "--random-seed", type=int, default=42,
+                            help="NumPy random seed (default: 42)")
     parser.add_argument("-o", "--log-file", help="Log file path.", required=True)
 
     args = parser.parse_args()
@@ -36,13 +37,13 @@ def parse_args():
 
 
 def template_generator(barcode_size, error_tolerance):
-    template_id = 0
-    for comb in combinations(range(barcode_size), barcode_size - error_tolerance):
+    l = list(enumerate(combinations(range(barcode_size), barcode_size - error_tolerance)))
+    np.random.shuffle(l)
+    for template_id, comb in l:
         comb = list(comb)
         def template(barcode):
             return tuple([barcode[i] for i in comb])
         yield template, template_id
-        template_id += 1
 
 
 def reverse_complement(sequence):
@@ -103,32 +104,22 @@ def fastq_lines(fastq_path):
         fastq_lines_tuples[idx] = (fastq_lines[fastq_line_idx].rstrip(), fastq_lines[fastq_line_idx+1].rstrip(), fastq_lines[fastq_line_idx+3].rstrip())
     return fastq_lines_tuples
 
-dna_encoding = {'A' : 0, 'C' : 1, 'G' : 2, 'T' : 3}
-def dna_to_index(DNA):
-    index = 0
-    power = 1
-    for letter in DNA:
-        index = index + dna_encoding[letter]*power
-        power = power*4
-    return index
-
-
 def main():
     # Parsing args
     args = parse_args()
-    print(args)
+    # print(args)
     _barcode_length = args.barcode_length
     _error_tolerance = args.error_tolerance
     _barcode_mini_tsv = args.barcode_mini_tsv_file
     _minimizer_count = args.minimizers_count
     _minimizers_threshold = args.minimizers_threshold
     # _k_mer_size = args.k_mer_size
+    np.random.seed(args.random_seed)
 
     log_file = open(args.log_file, 'w+', buffering=1)
     print('Hmmmm. Good morning?!', file=log_file)
     print('Step: Extracting barcodes...', file=log_file)
     start_time = time.time()
-
     node_to_reads_dict = dict()
 
     _barcode_mini_tsv_file = open(_barcode_mini_tsv)
@@ -153,11 +144,6 @@ def main():
     del(idx)
     del(key)
 
-
-    # for idx in range(node_count):
-    #     print(node_to_reads[idx])
-    #     print(node_to_barcode_1[idx], node_to_barcode_2[idx], node_to_mini_1[idx], node_to_mini_2[idx], sep='\t')
-
     print('\tTotal number of nodes:', node_count, file=log_file)
 
     finish_time = time.time()
@@ -168,9 +154,9 @@ def main():
 
     adjacency_sets = [{x} for x in range(node_count)]
 
-    for template, template_id in template_generator(_barcode_length, _error_tolerance):
+    for tempalte_order, (template, template_id) in enumerate(template_generator(_barcode_length, _error_tolerance)):
         lsh = dict()
-        for idx in range(node_count):
+        for idx in np.random.choice(node_count, size= node_count//5 ,replace=False, ):
             templated_barcode = template(node_to_barcode[idx])
             if 'N' in templated_barcode:
                 continue
@@ -178,14 +164,15 @@ def main():
                 lsh[templated_barcode].append(idx)
             else:
                 lsh[templated_barcode] = [idx]
+        count_new_edges = 0
         for key in lsh:
             lsh[key] = set(lsh[key])
             adjacent_nodes = lsh[key]
             for node in adjacent_nodes:
+                count_new_edges += len(adjacent_nodes.difference(adjacency_sets[node]))
                 adjacency_sets[node].update(adjacent_nodes)
+        print('\t{}: template {} added {} new edges'.format(tempalte_order, template_id, count_new_edges), file=log_file)
         del(lsh)
-    # for idx, neighbors in enumerate(adjacency_sets):
-    #     print(idx, neighbors, sep='\t')
     finish_time = time.time()
     print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
 
@@ -195,10 +182,6 @@ def main():
     for node, neighbors in enumerate(adjacency_sets):
         neighbors.remove(node)
         for neighbor in list(neighbors):
-            # print(node_to_mini_1[node], node_to_mini_1[neighbor], sep='\t')
-            # print(node_to_mini_2[node], node_to_mini_2[neighbor], sep='\t')
-            # print([node_to_mini_1[node][i]==node_to_mini_1[neighbor][i] for i in range(_minimizer_count)])
-            # print([node_to_mini_2[node][i]==node_to_mini_2[neighbor][i] for i in range(_minimizer_count)])
             matching_minimizers_1 = sum([node_to_mini_1[node][i]==node_to_mini_1[neighbor][i] for i in range(_minimizer_count)])
             matching_minimizers_2 = sum([node_to_mini_2[node][i]==node_to_mini_2[neighbor][i] for i in range(_minimizer_count)])
             if (matching_minimizers_1 < _minimizers_threshold) or (matching_minimizers_2 < _minimizers_threshold):
@@ -249,7 +232,6 @@ def main():
             # for read in node_to_reads[node]:
             #     mate_1_tuples.append(fastq_1[read])
             #     mate_2_tuples.append(fastq_2[read])
-        # edges_count -= nodes_count
         edges_count /= 2
         edges_count = int(edges_count)
         if nodes_count == 1:
