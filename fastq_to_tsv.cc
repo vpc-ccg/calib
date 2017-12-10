@@ -68,9 +68,9 @@ int main(int argc, char** argv) {
         uint64_t min_kmer;
 
         if (s1_length < barcode_length){
-            output << string (barcode_length, 'N') << "\t";
+            output << string (barcode_length, 'N');
         } else {
-            output << s1.substr(0, barcode_length) << "\t";
+            output << s1.substr(0, barcode_length);
         }
         if (s2_length < barcode_length){
             output << string (barcode_length, 'N') << "\t";
@@ -96,5 +96,3 @@ int main(int argc, char** argv) {
 
     return 0;
 }
-
-

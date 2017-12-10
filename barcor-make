@@ -1,0 +1,43 @@
+#!/usr/bin/make -rRf
+# Usage:
+# barcor-make reads1=reads1.fq reads2=reads2.fq
+
+barcode_length=10
+error_tolerance=4
+minimizers_num=3
+kmer_size=8
+log_file=log.out
+minimizer_threshold=1
+
+tsv_output=$(firstword $(subst '1.fq', ,$(reads1)))_min.tsv
+
+SHELL=/bin/bash -o pipefail
+CC=g++
+
+.DELETE_ON_ERROR:
+.SECONDARY:
+.PHONY: help correct simulate
+
+help:
+    @echo 'barcor: Correct duplex-sequencing runs by clustering on barcodes and sequences'
+    @echo 'Usage: barcor-make [COMMAND]... [PARAMETER=VALUE]...'
+    @echo 'Example: barcor-make correct reads1=reads1.fq reads2=reads2.fq'
+	@echo 'At the moment, fastq files must end in 1.fq and 2.fq respectively'
+
+simulate:
+
+correct: $(tsv_output)
+	python3 barcode_clustering.py -f $(reads1) -r $(reads2) -t $(tsv_output) -l $(barcode_length) -e $(error_tolerance) -m $(minimizers_num) -x $(minimizer_threshold) -k $(kmer_size) -o $(log_file)
+
+fastq_to_tsv.o: fastq_to_tsv.cc
+	$(CC) fastq_to_tsv.cc -o fastq_to_tsv.o -std=c++11
+
+$(tsv_output): fastq_to_tsv.o
+	./fastq_to_tsv.o $(reads1) $(reads2) $(tsv_output) $(barcode_length) $(kmer_size) $(minimizers_num)
+
+ 
+
+# $^ - Dependencies
+# $< - First dependency
+# $@ - Target
+# $* - Stem in pattern rule ie. %
