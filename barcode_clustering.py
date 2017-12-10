@@ -206,7 +206,6 @@ def main():
     print('Step: LSH of barcodes...', file=log_file)
     start_time = time.time()
 
-    fake_barcode = ''.join([chr(x+65) for x in range(_barcode_length)])
 
     adjacency_sets = [{x} for x in range(node_count)]
 
@@ -222,9 +221,11 @@ def main():
                 lsh[key].append(idx)
             else:
                 lsh[key] = [idx]
-        for adjacent_nodes in lsh.values():
+        for key in lsh:
+            lsh[key] = set(lsh[key])
+            adjacent_nodes = lsh[key]
             for node in adjacent_nodes:
-                adjacency_sets[node].update(set(adjacent_nodes))
+                adjacency_sets[node].update(adjacent_nodes)
     # for idx, neighbors in enumerate(adjacency_sets):
     #     print(idx, neighbors, sep='\t')
     finish_time = time.time()
@@ -234,6 +235,7 @@ def main():
     start_time = time.time()
 
     for node, neighbors in enumerate(adjacency_sets):
+        neighbors.remove(node)
         for neighbor in list(neighbors):
             # print(node_to_mini_1[node], node_to_mini_1[neighbor], sep='\t')
             # print(node_to_mini_2[node], node_to_mini_2[neighbor], sep='\t')
@@ -242,6 +244,7 @@ def main():
             if (sum([node_to_mini_1[node][i]==node_to_mini_1[neighbor][i] for i in range(_minimizer_count)]) < _minimizers_threshold) or \
             ((sum([node_to_mini_2[node][i]==node_to_mini_2[neighbor][i] for i in range(_minimizer_count)]) < _minimizers_threshold)):
                 neighbors.remove(neighbor)
+                adjacency_sets[neighbor].remove(node)
     finish_time = time.time()
     print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
 
@@ -287,7 +290,7 @@ def main():
             # for read in node_to_reads[node]:
             #     mate_1_tuples.append(fastq_1[read])
             #     mate_2_tuples.append(fastq_2[read])
-        edges_count -= nodes_count
+        # edges_count -= nodes_count
         edges_count /= 2
         edges_count = int(edges_count)
         if nodes_count == 1:

@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     unsigned int barcode_length = (unsigned int) atoi(argv[4]);
     unsigned int k_mer_size = (unsigned int) atoi(argv[5]);
     unsigned int minimizers_count = (unsigned int) atoi(argv[6]);
-    
+
     string r1, s1, q1, r2, s2, q2, trash;
     while (getline(fastq1, r1)) {
         getline(fastq1, s1);
