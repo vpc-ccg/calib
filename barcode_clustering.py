@@ -30,6 +30,8 @@ def parse_args():
     #                         help="K-mer size for the minimizers (default: 8)")
     parser.add_argument("-s", "--random-seed", type=int, default=42,
                             help="NumPy random seed (default: 42)")
+    parser.add_argument("-p", "--whole-to-sample-ratio", type=int, default=5,
+                            help="The ratio of the size of the sample of nodes to process per template to the size of node population (default: 5)")
     parser.add_argument("-o", "--log-file", help="Log file path.", required=True)
 
     args = parser.parse_args()
@@ -156,7 +158,7 @@ def main():
 
     for tempalte_order, (template, template_id) in enumerate(template_generator(_barcode_length, _error_tolerance)):
         lsh = dict()
-        for idx in np.random.choice(node_count, size= node_count//5 ,replace=False, ):
+        for idx in np.random.choice(node_count, size= node_count//args.whole_to_sample_ratio ,replace=False):
             templated_barcode = template(node_to_barcode[idx])
             if 'N' in templated_barcode:
                 continue
