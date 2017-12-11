@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     unsigned int barcode_length = (unsigned int) atoi(argv[4]);
     unsigned int k_mer_size = (unsigned int) atoi(argv[5]);
     unsigned int minimizers_count = (unsigned int) atoi(argv[6]);
-    
+
     string r1, s1, q1, r2, s2, q2, trash;
     while (getline(fastq1, r1)) {
         getline(fastq1, s1);
@@ -68,9 +68,9 @@ int main(int argc, char** argv) {
         uint64_t min_kmer;
 
         if (s1_length < barcode_length){
-            output << string (barcode_length, 'N') << "\t";
+            output << string (barcode_length, 'N');
         } else {
-            output << s1.substr(0, barcode_length) << "\t";
+            output << s1.substr(0, barcode_length);
         }
         if (s2_length < barcode_length){
             output << string (barcode_length, 'N') << "\t";
@@ -96,5 +96,3 @@ int main(int argc, char** argv) {
 
     return 0;
 }
-
-
