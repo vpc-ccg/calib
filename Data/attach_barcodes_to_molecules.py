@@ -7,10 +7,10 @@ from itertools import islice
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Attaches barcodes from whitelist to ends of reads randomly")
-    parser.add_argument("-i", "--input", type=str, help="Barcode whitelist path", required=True)
-    parser.add_argument("-m", "--molecules", type=str, help="Molecules/amplicons fasta file", required=True)
-    parser.add_argument("-o", "--output", type=str, help="Output file (default: stdout)")
+    parser.add_argument("-b", "--input-barcodes", type=str, help="Barcodes txt file", required=True)
+    parser.add_argument("-m", "--input-molecules", type=str, help="Molecules/amplicons fasta file", required=True)
     parser.add_argument("-s", "--random-seed", type=int, help="Define a seed (default: no seed)")
+    parser.add_argument("-o", "--output-barcoded-molecules", type=str, help="Output file (default: stdout)")
     args = parser.parse_args()
     return args
 
@@ -36,9 +36,9 @@ def attach_barcodes(barcodes_file_path, molecules_file_path, seed=None, output_f
 
 def main():
     args = parse_args()
-    barcodes_file_path = args.input
-    molecules_file_path = args.molecules
-    output_file_path = args.output if args.output else None
+    barcodes_file_path = args.input_barcodes
+    molecules_file_path = args.input_molecules
+    output_file_path = args.output_barcoded_molecules if args.output_barcoded_molecules else None
     seed = args.random_seed if args.random_seed else None
     attach_barcodes(barcodes_file_path, molecules_file_path, seed=seed, output_file_path=output_file_path)
 

@@ -10,26 +10,26 @@ def parse_args():
         description="Generates molecules/amplicons")
     parser.add_argument("-r", "--reference", type=str, help="Reference genome from which to generate molecules",
                         required=True)
-    parser.add_argument("-m", "--molecules", type=str, help="Output molecules/amplicons fasta file (default: stdout)",
-                        default=None)
-    parser.add_argument("-s", "--random-seed", type=int, help="Define a seed (default: no seed)",
-                        default=None)
+    parser.add_argument("-n", "--number-of-molecules", type=int,
+                        help="Number of molecules. (default: 1000)", default=1000)
     parser.add_argument("-u", "--molecule-size-mean", type=int,
-                        help="Mean size of molecules (taken on standard dist. default: 150", default=150)
-    parser.add_argument("-d", "--molecule-size-sig", type=int,
-                        help="Molecule size stdev (default: 20)", default=20)
-    parser.add_argument("-n", "--number-of-mol", type=int,
-                        help="Number of molecules. (default: 100)", default=100)
+                        help="Mean size of molecules (taken on standard dist. default: 200", default=200)
+    parser.add_argument("-d", "--molecule-size-standard-dev", type=int,
+                        help="Molecule size stdev (default: 25)", default=25)
     parser.add_argument("-l", "--min-molecule-size", type=int,
                         help="Any molecule size less than this will be adjusted to be equal to this by decreasing its start position. (default: 150)", default=150)
+    parser.add_argument("-s", "--random-seed", type=int, help="Define a seed (default: no seed)",
+                        default=None)
+    parser.add_argument("-o", "--output-molecules", type=str, help="Output molecules/amplicons fasta file (default: stdout)",
+                        default=None)
     args = parser.parse_args()
     return args
 
 
 def generate_molecule(genome_file_path,
                       output_file_path=sys.stdout,
-                      molecule_size_mu=150,
-                      molecule_size_sig=20,
+                      molecule_size_mean=150,
+                      molecule_size_standard_dev=20,
                       number_of_molecules=100,
                       random_seed=None,
                       min_molecule_size=150):
@@ -44,7 +44,7 @@ def generate_molecule(genome_file_path,
     for i in range(number_of_molecules):
         start = random.randrange(0, genome_length)
         end = min(
-            [start + abs(math.floor(random.normalvariate(mu=molecule_size_mu, sigma=molecule_size_sig))),
+            [start + abs(math.floor(random.normalvariate(mu=molecule_size_mean, sigma=molecule_size_standard_dev))),
              genome_length])
         if end-start < min_molecule_size:
             start = end - min_molecule_size
@@ -54,11 +54,11 @@ def generate_molecule(genome_file_path,
 
 def main():
     args = parse_args()
-    generate_molecule(genome_file_path=args.reference, 
-                      output_file_path=args.molecules,
-                      molecule_size_mu=args.molecule_size_mean,
-                      molecule_size_sig=args.molecule_size_sig,
-                      number_of_molecules=args.number_of_mol,
+    generate_molecule(genome_file_path=args.reference,
+                      output_file_path=args.output_molecules,
+                      molecule_size_mean=args.molecule_size_mean,
+                      molecule_size_standard_dev=args.molecule_size_standard_dev,
+                      number_of_molecules=args.number_of_molecules,
                       random_seed=args.random_seed,
                       min_molecule_size=args.min_molecule_size)
 

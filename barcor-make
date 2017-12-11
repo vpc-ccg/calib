@@ -8,7 +8,16 @@ random_seed?=42
 # Duplex sequencing simulation
 num_barcodes?=10000
 num_molecules?=1000
+molecule_size_mu?=250
+molecule_size_dev?=25
 read_length?=150
+reference?=Data/e_coli.fa.gz
+coverage?=20
+simulated_barcodes?=Data/simulated_barcodes.txt
+simulated_molecules?=Data/simulated_molecules.fa
+simulated_barcoded_molecules?=Data/simulated_barcoded_molecules.fa
+simulated_reads?=Data/simulated_reads
+simulated_reads_log?=$(simulated_reads).log
 
 # Barcode correction
 barcode_length?=10
@@ -34,24 +43,38 @@ help:
 	@echo '			barcor-make simulate '
 	@echo 'At the moment, fastq files must end in 1.fq and 2.fq respectively'
 
-Data/barcodes.txt:
-	python3 Data/generate_barcodes.py -n $(num_barcodes) -o Data/barcodes.txt -s $(random_seed) -l $(barcode_length)
+barcodes:
+	python3 Data/generate_barcodes.py \
+		--num-of-barcodes $(num_barcodes) \
+		--len-of-one-end-barcode $(barcode_length) \
+		--random-seed $(random_seed) \
+		--output-barcodes $(simulated_barcodes)
 
-Data/molecules.fa:
-	python3 Data/generate_molecules.py -r $(reference) -n $(num_molecules) -m Data/molecules.fa -s $(random_seed) -l $(read_length)
+molecules:
+	python3 Data/generate_molecules.py \
+		--reference $(reference) \
+		--number-of-molecules $(num_molecules) \
+		--molecule-size-mean $(molecule_size_mu) \
+		--molecule-size-standard-dev $(molecule_size_dev) \
+		--min-molecule-size $(read_length) \
+		--random-seed $(random_seed) \
+		--output-molecules $(simulated_molecules)
 
-Data/barcoded_molecules.fa: Data/barcodes.txt Data/molecules.fa
-	python3 Data/attach_barcodes_to_molecules.py -i Data/barcodes.txt -m Data/molecules.fa -o Data/barcoded_molecules.fa -s $(random_seed)
+barcoded_molecules: barcodes molecules
+	python3 Data/attach_barcodes_to_molecules.py \
+		--input-barcodes $(simulated_barcodes) \
+		--input-molecules $(simulated_molecules) \
+		--random-seed $(random_seed) \
+		--output-barcoded-molecules $(simulated_barcoded_molecules)
 
-simulate: Data/barcoded_molecules.fa
-	cd Data; \
-	art_illumina -ss HSXt -amp -p -sam -na -i barcoded_molecules.fa -l $(read_length) -f $(coverage) -o reads -rs $(random_seed) -o simulated_reads_ > simulated_reads.log; \
-	cd ..
+simulate: barcoded_molecules
+	art_illumina -ss HSXt -amp -p -na -i $(simulated_barcoded_molecules) -l $(read_length) -f $(coverage) -rs $(random_seed) -o $(simulated_reads)_ > $(simulated_reads_log); \
 
 simulate_clean:
-	rm Data/barcodes.txt; \
-	rm Data/molecules.fa; \
-	rm Data/barcoded_molecules.fa;
+	rm $(simulated_barcodes); \
+	rm $(simulated_molecules); \
+	rm $(simulated_barcoded_molecules);
+
 
 correct: $(tsv_output)
 	python3 barcode_clustering.py -f $(reads1) -r $(reads2) -t $(tsv_output) -l $(barcode_length) -e $(error_tolerance) -m $(minimizers_num) -x $(minimizer_threshold) -k $(kmer_size) -o $(log_file)
