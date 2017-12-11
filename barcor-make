@@ -45,8 +45,13 @@ Data/barcoded_molecules.fa: Data/barcodes.txt Data/molecules.fa
 
 simulate: Data/barcoded_molecules.fa
 	cd Data; \
-	art_illumina -ss HSXt -amp -p -sam -na -i barcoded_molecules.fa -l $(read_length) -f $(coverage) -o reads -rs $(random_seed) -o simulated_reads> art_illumina.log; \
+	art_illumina -ss HSXt -amp -p -sam -na -i barcoded_molecules.fa -l $(read_length) -f $(coverage) -o reads -rs $(random_seed) -o simulated_reads_ > simulated_reads.log; \
 	cd ..
+
+simulate_clean:
+	rm Data/barcodes.txt; \
+	rm Data/molecules.fa; \
+	rm Data/barcoded_molecules.fa;
 
 correct: $(tsv_output)
 	python3 barcode_clustering.py -f $(reads1) -r $(reads2) -t $(tsv_output) -l $(barcode_length) -e $(error_tolerance) -m $(minimizers_num) -x $(minimizer_threshold) -k $(kmer_size) -o $(log_file)
