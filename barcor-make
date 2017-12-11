@@ -31,7 +31,7 @@ help:
 	@echo 'barcor: Correct duplex-sequencing runs by clustering on barcodes and sequences'
 	@echo 'Usage: barcor-make [COMMAND]... [PARAMETER=VALUE]...'
 	@echo 'Example: barcor-make correct reads1=reads1.fq reads2=reads2.fq'
-	@echo '			barcor-make simulate 
+	@echo '			barcor-make simulate '
 	@echo 'At the moment, fastq files must end in 1.fq and 2.fq respectively'
 
 simulate: Data/reads1.fq Data/reads2.fq
@@ -43,7 +43,7 @@ Data/barcodes.txt:
 Data/molecules.txt:
 	python3 Data/generate_molecules.py -r $(reference) -n $(num_molecules) -m Data/molecules.fa -s $(random_seed)
 
-Data/barcoded_molecules.fa: Data/barcodes.txt Data/molecules.fa 
+Data/barcoded_molecules.fa: Data/barcodes.txt Data/molecules.fa
 	python3 Data/attach_barcodes_to_molecules.py -i Data/barcodes.txt -m Data/molecules.fa -o Data/barcoded_molecules.fa -s $(random_seed)
 
 Data/reads1.fq Data/reads2.fq: Data/barcoded_molecules.fa
@@ -60,7 +60,7 @@ fastq_to_tsv.o: fastq_to_tsv.cc
 $(tsv_output): fastq_to_tsv.o
 	./fastq_to_tsv.o $(reads1) $(reads2) $(tsv_output) $(barcode_length) $(kmer_size) $(minimizers_num)
 
- 
+
 
 # $^ - Dependencies
 # $< - First dependency
