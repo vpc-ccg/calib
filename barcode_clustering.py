@@ -18,12 +18,8 @@ def parse_args():
     parser.add_argument("-f", "--forward-reads", type=str, help="Forward read file path.", required=True)
     parser.add_argument("-r", "--reverse-reads", type=str, help="Reverse read file path.", required=True)
     parser.add_argument("-t", "--barcode-mini-tsv-file", type=str, help="Reverse read file path.", required=True)
-    parser.add_argument("-l", "--barcode-length", type=int, default=10,
-                        help="Barcode length (default: 10)")
     parser.add_argument("-e", "--error-tolerance", type=int, default=2,
                         help="Error tolerance for barcode clustering (default: 2)")
-    parser.add_argument("-m", "--minimizers-count", type=int, default=3,
-                            help="Number of minimizers per read mate (default: 3)")
     parser.add_argument("-x", "--minimizers-threshold", type=int, default=1,
                             help="Threshold for number of minimizers matching per read mate (default: 1)")
     # parser.add_argument("-k", "--k-mer-size", type=int, default=8,
@@ -110,10 +106,8 @@ def main():
     # Parsing args
     args = parse_args()
     # print(args)
-    _barcode_length = args.barcode_length
     _error_tolerance = args.error_tolerance
     _barcode_mini_tsv = args.barcode_mini_tsv_file
-    _minimizer_count = args.minimizers_count
     _minimizers_threshold = args.minimizers_threshold
     # _k_mer_size = args.k_mer_size
     np.random.seed(args.random_seed)
@@ -131,6 +125,8 @@ def main():
             node_to_reads_dict[node_key].append(idx)
         else:
             node_to_reads_dict[node_key] = [idx]
+    _barcode_length = len(node_key[0])
+    _minimizer_count = (len(node_key) - 1 ) // 2
 
     node_count = len(node_to_reads_dict)
     node_to_reads = np.zeros(shape=node_count, dtype=object)
