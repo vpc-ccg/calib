@@ -49,7 +49,7 @@ Data/barcoded_molecules.fa: Data/barcodes.txt Data/molecules.fa
 Data/reads1.fq Data/reads2.fq: Data/barcoded_molecules.fa
 	cd Data
 	art_illumina -ss HSXt -amp -p -sam -na -i barcoded_molecules.fa -l $(read_length) -f $(coverage) -o reads -rs $(random_seed) > art_illumina.log
-	cd -
+	cd ..
 
 correct: $(tsv_output)
 	python3 barcode_clustering.py -f $(reads1) -r $(reads2) -t $(tsv_output) -l $(barcode_length) -e $(error_tolerance) -m $(minimizers_num) -x $(minimizer_threshold) -k $(kmer_size) -o $(log_file)
