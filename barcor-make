@@ -43,7 +43,7 @@ Data/barcodes.txt:
 Data/molecules.txt:
 	python3 Data/generate_molecules.py -r $(reference) -n $(num_molecules) -m Data/molecules.fa -s $(random_seed)
 
-Data/barcoded_molecules.txt: Data/barcodes.txt Data/molecules.fa 
+Data/barcoded_molecules.fa: Data/barcodes.txt Data/molecules.fa 
 	python3 Data/attach_barcodes_to_molecules.py -i Data/barcodes.txt -m Data/molecules.fa -o Data/barcoded_molecules.fa -s $(random_seed)
 
 Data/reads1.fq Data/reads2.fq: Data/barcoded_molecules.fa
