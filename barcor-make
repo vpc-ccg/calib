@@ -1,13 +1,22 @@
 #!/usr/bin/make -rRf
 # Usage:
-# barcor-make reads1=reads1.fq reads2=reads2.fq
+# barcor-make correct reads1=reads1.fq reads2=reads2.fq
+# barcor-make simulate
+#
+random_seed?=42
 
-barcode_length=10
-error_tolerance=4
-minimizers_num=3
-kmer_size=8
-log_file=log.out
-minimizer_threshold=1
+# Duplex sequencing simulation
+num_barcodes?=10000
+num_molecules?=1000
+read_length?=150
+
+# Barcode correction
+barcode_length?=10
+error_tolerance?=4
+minimizers_num?=3
+kmer_size?=8
+log_file?=log.out
+minimizer_threshold?=1
 
 tsv_output=$(firstword $(subst '1.fq', ,$(reads1)))_min.tsv
 
@@ -19,12 +28,28 @@ CC=g++
 .PHONY: help correct simulate
 
 help:
-    @echo 'barcor: Correct duplex-sequencing runs by clustering on barcodes and sequences'
-    @echo 'Usage: barcor-make [COMMAND]... [PARAMETER=VALUE]...'
-    @echo 'Example: barcor-make correct reads1=reads1.fq reads2=reads2.fq'
+	@echo 'barcor: Correct duplex-sequencing runs by clustering on barcodes and sequences'
+	@echo 'Usage: barcor-make [COMMAND]... [PARAMETER=VALUE]...'
+	@echo 'Example: barcor-make correct reads1=reads1.fq reads2=reads2.fq'
+	@echo '			barcor-make simulate 
 	@echo 'At the moment, fastq files must end in 1.fq and 2.fq respectively'
 
-simulate:
+simulate: Data/reads1.fq Data/reads2.fq
+
+
+Data/barcodes.txt:
+	python3 Data/generate_barcodes.py -n $(num_barcodes) -o Data/barcodes.txt -s $(random_seed)
+
+Data/molecules.txt:
+	python3 Data/generate_molecules.py -r $(reference) -n $(num_molecules) -m Data/molecules.fa -s $(random_seed)
+
+Data/barcoded_molecules.txt: Data/barcodes.txt Data/molecules.fa 
+	python3 Data/attach_barcodes_to_molecules.py -i Data/barcodes.txt -m Data/molecules.fa -o Data/barcoded_molecules.fa -s $(random_seed)
+
+Data/reads1.fq Data/reads2.fq: Data/barcoded_molecules.fa
+	cd Data
+	art_illumina -ss HSXt -amp -p -sam -na -i barcoded_molecules.fa -l $(read_length) -f $(coverage) -o reads -rs $(random_seed) > art_illumina.log
+	cd -
 
 correct: $(tsv_output)
 	python3 barcode_clustering.py -f $(reads1) -r $(reads2) -t $(tsv_output) -l $(barcode_length) -e $(error_tolerance) -m $(minimizers_num) -x $(minimizer_threshold) -k $(kmer_size) -o $(log_file)
