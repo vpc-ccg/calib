@@ -34,21 +34,18 @@ help:
 	@echo '			barcor-make simulate '
 	@echo 'At the moment, fastq files must end in 1.fq and 2.fq respectively'
 
-simulate: Data/reads1.fq Data/reads2.fq
-
-
 Data/barcodes.txt:
-	python3 Data/generate_barcodes.py -n $(num_barcodes) -o Data/barcodes.txt -s $(random_seed)
+	python3 Data/generate_barcodes.py -n $(num_barcodes) -o Data/barcodes.txt -s $(random_seed) -l $(barcode_length)
 
-Data/molecules.txt:
-	python3 Data/generate_molecules.py -r $(reference) -n $(num_molecules) -m Data/molecules.fa -s $(random_seed)
+Data/molecules.fa:
+	python3 Data/generate_molecules.py -r $(reference) -n $(num_molecules) -m Data/molecules.fa -s $(random_seed) -l $(read_length)
 
 Data/barcoded_molecules.fa: Data/barcodes.txt Data/molecules.fa
 	python3 Data/attach_barcodes_to_molecules.py -i Data/barcodes.txt -m Data/molecules.fa -o Data/barcoded_molecules.fa -s $(random_seed)
 
-Data/reads1.fq Data/reads2.fq: Data/barcoded_molecules.fa
-	cd Data
-	art_illumina -ss HSXt -amp -p -sam -na -i barcoded_molecules.fa -l $(read_length) -f $(coverage) -o reads -rs $(random_seed) > art_illumina.log
+simulate: Data/barcoded_molecules.fa
+	cd Data; \
+	art_illumina -ss HSXt -amp -p -sam -na -i barcoded_molecules.fa -l $(read_length) -f $(coverage) -o reads -rs $(random_seed) -o simulated_reads> art_illumina.log; \
 	cd ..
 
 correct: $(tsv_output)
