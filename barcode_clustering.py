@@ -1,6 +1,5 @@
 import sys
 import time
-import statistics
 import numpy as np
 import math
 from itertools import combinations
@@ -111,7 +110,6 @@ def consensus(sequences, qualities):
         norm_fact = sum(votes.values())
         for v in votes:
             votes[v] = votes[v]/norm_fact
-        #print(votes)
         consensus += max(votes.keys(), key=(lambda k: votes[k]))
         consensus_quality += phred_to_ascii(1-votes[consensus[-1]])
     return consensus, consensus_quality
@@ -139,9 +137,13 @@ def main():
     np.random.seed(_random_seed)
 
     print('Hmmmm. Good morning?!', file=log_file)
+    print('Hmmmm. Good morning?!')
     print('Well, it is morning somewhere...', file=log_file)
-    print('So morning morning it is!', file=log_file)
+    print('Well, it is morning somewhere...')
+    print('So good morning it is!', file=log_file)
+    print('So good morning it is!')
     print('Step: Extracting barcodes...', file=log_file)
+    print('Step: Extracting barcodes...')
     start_time = time.time()
     node_to_reads_dict = dict()
 
@@ -157,6 +159,7 @@ def main():
 
     if (len(node_key) -1) % 2 != 0:
         print('Something is wrong with your TSV file', file=log_file)
+        print('Something is wrong with your TSV file')
         exit()
 
     node_count = len(node_to_reads_dict)
@@ -174,11 +177,14 @@ def main():
     del(key)
 
     print('\tTotal number of nodes:', node_count, file=log_file)
+    print('\tTotal number of nodes:', node_count)
 
     finish_time = time.time()
     print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
+    print('\tLast step took {} seconds'.format(finish_time - start_time))
 
     print('Step: LSH of barcodes...', file=log_file)
+    print('Step: LSH of barcodes...')
     start_time = time.time()
 
     adjacency_sets = [{x} for x in range(node_count)]
@@ -201,11 +207,14 @@ def main():
                 count_new_edges += len(adjacent_nodes.difference(adjacency_sets[node]))
                 adjacency_sets[node].update(adjacent_nodes)
         print('\t{}: template {} added {} new edges'.format(tempalte_order, template_id, count_new_edges), file=log_file)
+        print('\t{}: template {} added {} new edges'.format(tempalte_order, template_id, count_new_edges))
         del(lsh)
     finish_time = time.time()
     print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
+    print('\tLast step took {} seconds'.format(finish_time - start_time))
 
     print("Step: Removing edges due to mini\'s...", file=log_file)
+    print("Step: Removing edges due to mini\'s...")
     start_time = time.time()
 
     for node, neighbors in enumerate(adjacency_sets):
@@ -218,27 +227,35 @@ def main():
                 adjacency_sets[neighbor].remove(node)
     finish_time = time.time()
     print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
+    print('\tLast step took {} seconds'.format(finish_time - start_time))
 
 
     print("Step: Building graph from adjacency_sets...", file=log_file)
+    print("Step: Building graph from adjacency_sets...")
     start_time = time.time()
 
     graph = Graph([(node, neighbor) for node, neighbors in enumerate(adjacency_sets) for neighbor in neighbors])
     print("\tGraph building from adjacency lists is completed", file=log_file)
+    print("\tGraph building from adjacency lists is completed")
 
     graph.vs['id'] = [x for x in range(node_count)  ]
     print("\tLabeling vertices on graph is completed", file=log_file)
+    print("\tLabeling vertices on graph is completed")
 
     graph.simplify()
     print("\tSimplifying the graph is completed", file=log_file)
+    print("\tSimplifying the graph is completed")
 
     finish_time = time.time()
     print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
+    print('\tLast step took {} seconds'.format(finish_time - start_time))
     print("Step: Getting clusters (connected components) of the barcode graph...", file=log_file)
+    print("Step: Getting clusters (connected components) of the barcode graph...")
     start_time = time.time()
 
     clusters = graph.clusters()
     print('\tThere total of {} connected components'.format(len(clusters)), file=log_file)
+    print('\tThere total of {} connected components'.format(len(clusters)))
 
     fastq_1 = fastq_lines(args.forward_reads)
     fastq_2 = fastq_lines(args.reverse_reads)
@@ -246,6 +263,7 @@ def main():
     out_fastq_2 = open(_output_prefix + '.collapsed_2.fq', 'w+')
 
     if len(fastq_1) != len(fastq_2):
+        print('You\'ve screwed up -_-; fastq files line counts don\'t match', file=log_file)
         print('You\'ve screwed up -_-; fastq files line counts don\'t match')
         exit()
 
