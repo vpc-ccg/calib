@@ -88,16 +88,16 @@ $(simulated_barcoded_molecules): $(simulated_barcodes) $(simulated_molecules)
 
 simulate: $(simulated_barcoded_molecules)
 	$(art_illumina) \
-	--seqSys HSXt \
-	--amplicon \
-	--paired \
-	--noALN \
-	--in $(simulated_barcoded_molecules) \
-	--len $(read_length) \
-	--fcov $(coverage) \
-	--rndSeed $(random_seed) \
-	--out $(simulated_reads)_ \
-	> $(simulated_reads_log);
+		--seqSys HSXt \
+		--amplicon \
+		--paired \
+		--noALN \
+		--in $(simulated_barcoded_molecules) \
+		--len $(read_length) \
+		--fcov $(coverage) \
+		--rndSeed $(random_seed) \
+		--out $(simulated_reads)_ \
+		> $(simulated_reads_log);
 
 simulate_clean:
 	rm -f $(simulated_barcodes); \
