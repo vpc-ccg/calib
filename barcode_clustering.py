@@ -144,6 +144,7 @@ def fastq_lines(fastq_path):
 
 
 def main():
+    clustering_time = time.time()
     # Parsing args
     args = parse_args()
     _barcode_mini_tsv = args.barcode_mini_tsv_file
@@ -310,6 +311,7 @@ def main():
         #     print(node_to_barcode[node], node_to_mini_1[node], node_to_mini_2[node], file=clusters_file)
     finish_time = time.time()
     print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
+    print('From the beginning to clustering, it takes {} seconds'.format(time.time() - clustering_time), file=log_file)
 
     if not args.correct:
         exit()
