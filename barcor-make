@@ -3,6 +3,9 @@
 # barcor-make correct reads1=reads1.fq reads2=reads2.fq
 # barcor-make simulate
 #
+
+
+# Common arguments
 random_seed?=42
 
 # Duplex sequencing simulation
@@ -19,13 +22,23 @@ simulated_barcoded_molecules?=Data/simulated_barcoded_molecules.fa
 simulated_reads?=Data/simulated_reads
 simulated_reads_log?=$(simulated_reads).log
 
-# Barcode correction
+# Correction arguments
+input_reads_prefix?=$(simulated_reads)
+forward_reads?=$(input_reads_prefix)_1.fq
+reverse_reads?=$(input_reads_prefix)_2.fq
+
 barcode_length?=10
-error_tolerance?=4
 minimizers_num?=3
 kmer_size?=8
-log_file?=log.out
-minimizer_threshold?=1
+
+barcode_error_tolerance?=2
+minimizers_threshold?=1
+whole_to_sample_ratio?=1
+
+output_prefix?=$(input_reads_prefix)_l$(barcode_length)_m$(minimizers_num)_k$(kmer_size)_e$(barcode_error_tolerance)_t$(minimizers_threshold)_q$(whole_to_sample_ratio)
+barcode_mini_tsv_file?=$(output_prefix).tsv
+
+
 
 tsv_output=$(firstword $(subst '1.fq', ,$(reads1)))_min.tsv
 
@@ -76,14 +89,23 @@ simulate_clean:
 	rm $(simulated_barcoded_molecules);
 
 
-correct: $(tsv_output)
-	python3 barcode_clustering.py -f $(reads1) -r $(reads2) -t $(tsv_output) -l $(barcode_length) -e $(error_tolerance) -m $(minimizers_num) -x $(minimizer_threshold) -k $(kmer_size) -o $(log_file)
-
 fastq_to_tsv.o: fastq_to_tsv.cc
 	$(CC) fastq_to_tsv.cc -o fastq_to_tsv.o -std=c++11
 
-$(tsv_output): fastq_to_tsv.o
-	./fastq_to_tsv.o $(reads1) $(reads2) $(tsv_output) $(barcode_length) $(kmer_size) $(minimizers_num)
+$(barcode_mini_tsv_file): fastq_to_tsv.o
+	./fastq_to_tsv.o $(forward_reads) $(reverse_reads) $(barcode_mini_tsv_file) $(barcode_length) $(kmer_size) $(minimizers_num)
+
+correct: $(barcode_mini_tsv_file)
+	python3 barcode_clustering.py \
+		--forward-reads $(forward_reads)\
+		--reverse-reads $(reverse_reads)\
+		--barcode-mini-tsv-file $(barcode_mini_tsv_file)\
+		--barcode-error-tolerance $(barcode_error_tolerance)\
+		--minimizers-threshold $(minimizers_threshold)\
+		--whole-to-sample-ratio $(whole_to_sample_ratio)\
+		--random-seed $(random_seed)\
+		--output-prefix $(output_prefix)
+
 
 
 
