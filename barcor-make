@@ -4,6 +4,11 @@
 # barcor-make simulate
 #
 
+SHELL=/bin/bash -o pipefail
+cc?=g++
+python3?=python3
+cc_args?= -O4 -std=c++11
+art_illumina?=art_illumina
 
 # Common arguments
 random_seed?=42
@@ -42,8 +47,6 @@ barcode_mini_tsv_file?=$(output_prefix).tsv
 
 tsv_output=$(firstword $(subst '1.fq', ,$(reads1)))_min.tsv
 
-SHELL=/bin/bash -o pipefail
-CC=g++
 
 .DELETE_ON_ERROR:
 .SECONDARY:
@@ -56,15 +59,15 @@ help:
 	@echo '			barcor-make simulate '
 	@echo 'At the moment, fastq files must end in 1.fq and 2.fq respectively'
 
-barcodes:
-	python3 Data/generate_barcodes.py \
+$(simulated_barcodes):
+	$(python3) Data/generate_barcodes.py \
 		--num-of-barcodes $(num_barcodes) \
 		--len-of-one-end-barcode $(barcode_length) \
 		--random-seed $(random_seed) \
 		--output-barcodes $(simulated_barcodes)
 
-molecules:
-	python3 Data/generate_molecules.py \
+$(simulated_molecules):
+	$(python3) Data/generate_molecules.py \
 		--reference $(reference) \
 		--number-of-molecules $(num_molecules) \
 		--molecule-size-mean $(molecule_size_mu) \
@@ -73,15 +76,15 @@ molecules:
 		--random-seed $(random_seed) \
 		--output-molecules $(simulated_molecules)
 
-barcoded_molecules: barcodes molecules
-	python3 Data/attach_barcodes_to_molecules.py \
+$(simulated_barcoded_molecules): $(simulated_barcodes) $(simulated_molecules)
+	$(python3) Data/attach_barcodes_to_molecules.py \
 		--input-barcodes $(simulated_barcodes) \
 		--input-molecules $(simulated_molecules) \
 		--random-seed $(random_seed) \
 		--output-barcoded-molecules $(simulated_barcoded_molecules)
 
-simulate: barcoded_molecules
-	art_illumina -ss HSXt -amp -p -na -i $(simulated_barcoded_molecules) -l $(read_length) -f $(coverage) -rs $(random_seed) -o $(simulated_reads)_ > $(simulated_reads_log); \
+simulate: $(simulated_barcoded_molecules)
+	$(art_illumina) -ss HSXt -amp -p -na -i $(simulated_barcoded_molecules) -l $(read_length) -f $(coverage) -rs $(random_seed) -o $(simulated_reads)_ > $(simulated_reads_log); \
 
 simulate_clean:
 	rm $(simulated_barcodes); \
@@ -90,13 +93,13 @@ simulate_clean:
 
 
 fastq_to_tsv.o: fastq_to_tsv.cc
-	$(CC) fastq_to_tsv.cc -o fastq_to_tsv.o -std=c++11
+	$(cc) fastq_to_tsv.cc -o fastq_to_tsv.o $(cc_args)
 
 $(barcode_mini_tsv_file): fastq_to_tsv.o $(forward_reads) $(reverse_reads)
 	./fastq_to_tsv.o $(forward_reads) $(reverse_reads) $(barcode_mini_tsv_file) $(barcode_length) $(kmer_size) $(minimizers_num)
 
 correct: $(forward_reads) $(reverse_reads) $(barcode_mini_tsv_file)
-	python3 barcode_clustering.py \
+	$(python3) barcode_clustering.py \
 		--forward-reads $(forward_reads)\
 		--reverse-reads $(reverse_reads)\
 		--barcode-mini-tsv-file $(barcode_mini_tsv_file)\
@@ -106,7 +109,8 @@ correct: $(forward_reads) $(reverse_reads) $(barcode_mini_tsv_file)
 		--random-seed $(random_seed)\
 		--output-prefix $(output_prefix)
 
-
+clean:
+	rm -f *.o
 
 
 # $^ - Dependencies
