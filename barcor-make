@@ -7,7 +7,7 @@
 SHELL=/bin/bash -o pipefail
 cc?=g++
 python3?=python3
-cc_args?= -O4 -std=c++11
+cc_args?= -O3 -std=c++11
 art_illumina?=art_illumina
 
 # Common arguments
@@ -25,7 +25,7 @@ simulated_barcodes?=Data/simulated_barcodes.txt
 simulated_molecules?=Data/simulated_molecules.fa
 simulated_barcoded_molecules?=Data/simulated_barcoded_molecules.fa
 simulated_reads?=Data/simulated_reads
-simulated_reads_log?=$(simulated_reads).log
+simulated_reads_log?=$(simulated_reads)_art_illumina.log
 
 # Correction arguments
 input_reads_prefix?=$(simulated_reads)
@@ -42,11 +42,6 @@ whole_to_sample_ratio?=1
 
 output_prefix?=$(input_reads_prefix)_l$(barcode_length)_m$(minimizers_num)_k$(kmer_size)_e$(barcode_error_tolerance)_t$(minimizers_threshold)_q$(whole_to_sample_ratio)
 barcode_mini_tsv_file?=$(output_prefix).tsv
-
-
-
-tsv_output=$(firstword $(subst '1.fq', ,$(reads1)))_min.tsv
-
 
 .DELETE_ON_ERROR:
 .SECONDARY:
