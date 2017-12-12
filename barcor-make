@@ -13,7 +13,7 @@ art_illumina?=art_illumina
 # Common arguments
 random_seed?=42
 
-# Duplex sequencing simulation
+# Amplicon sequencing simulation
 num_barcodes?=10000
 num_molecules?=1000
 molecule_size_mu?=250
@@ -27,7 +27,7 @@ simulated_barcoded_molecules?=Data/simulated_barcoded_molecules.fa
 simulated_reads?=Data/simulated_reads
 simulated_reads_log?=$(simulated_reads)_art_illumina.log
 
-# Correction arguments
+# Clustering and correction arguments
 input_reads_prefix?=$(simulated_reads)
 forward_reads?=$(input_reads_prefix)_1.fq
 reverse_reads?=$(input_reads_prefix)_2.fq
@@ -40,8 +40,16 @@ barcode_error_tolerance?=2
 minimizers_threshold?=1
 whole_to_sample_ratio?=1
 
+output_corrected_reads?=False
 output_prefix?=$(input_reads_prefix)_l$(barcode_length)_m$(minimizers_num)_k$(kmer_size)_e$(barcode_error_tolerance)_t$(minimizers_threshold)_q$(whole_to_sample_ratio)
 barcode_mini_tsv_file?=$(output_prefix).tsv
+
+# Rand Index Accuracy arguments
+number_of_true_molecules?=$(num_molecules)
+number_of_reads_per_true_molecule?=$(coverage)
+clusters_file?=$(output_prefix).clusters
+# number
+
 
 .DELETE_ON_ERROR:
 .SECONDARY:
@@ -79,12 +87,22 @@ $(simulated_barcoded_molecules): $(simulated_barcodes) $(simulated_molecules)
 		--output-barcoded-molecules $(simulated_barcoded_molecules)
 
 simulate: $(simulated_barcoded_molecules)
-	$(art_illumina) -ss HSXt -amp -p -na -i $(simulated_barcoded_molecules) -l $(read_length) -f $(coverage) -rs $(random_seed) -o $(simulated_reads)_ > $(simulated_reads_log); \
+	$(art_illumina) \
+	--seqSys HSXt \
+	--amplicon \
+	--paired \
+	--noALN \
+	--in $(simulated_barcoded_molecules) \
+	--len $(read_length) \
+	--fcov $(coverage) \
+	--rndSeed $(random_seed) \
+	--out $(simulated_reads)_ \
+	> $(simulated_reads_log);
 
 simulate_clean:
-	rm $(simulated_barcodes); \
-	rm $(simulated_molecules); \
-	rm $(simulated_barcoded_molecules);
+	rm -f $(simulated_barcodes); \
+	rm -f $(simulated_molecules); \
+	rm -f $(simulated_barcoded_molecules);
 
 
 fastq_to_tsv.o: fastq_to_tsv.cc
@@ -93,16 +111,24 @@ fastq_to_tsv.o: fastq_to_tsv.cc
 $(barcode_mini_tsv_file): fastq_to_tsv.o $(forward_reads) $(reverse_reads)
 	./fastq_to_tsv.o $(forward_reads) $(reverse_reads) $(barcode_mini_tsv_file) $(barcode_length) $(kmer_size) $(minimizers_num)
 
-correct: $(forward_reads) $(reverse_reads) $(barcode_mini_tsv_file)
+cluster: $(forward_reads) $(reverse_reads) $(barcode_mini_tsv_file)
 	$(python3) barcode_clustering.py \
-		--forward-reads $(forward_reads)\
-		--reverse-reads $(reverse_reads)\
-		--barcode-mini-tsv-file $(barcode_mini_tsv_file)\
-		--barcode-error-tolerance $(barcode_error_tolerance)\
-		--minimizers-threshold $(minimizers_threshold)\
-		--whole-to-sample-ratio $(whole_to_sample_ratio)\
-		--random-seed $(random_seed)\
-		--output-prefix $(output_prefix)
+		--forward-reads $(forward_reads) \
+		--reverse-reads $(reverse_reads) \
+		--barcode-mini-tsv-file $(barcode_mini_tsv_file) \
+		--barcode-error-tolerance $(barcode_error_tolerance) \
+		--minimizers-threshold $(minimizers_threshold) \
+		--whole-to-sample-ratio $(whole_to_sample_ratio) \
+		--random-seed $(random_seed) \
+		--output-prefix $(output_prefix) \
+		--correct $(output_corrected_reads)
+
+accuracy: $(clusters_file)
+	$(python3) Data/rand_index.py \
+		--input-clusters-file $(clusters_file) \
+		--number-of-true-molecules $(number_of_true_molecules) \
+		--number-of-reads-per-true-molecule $(number_of_reads_per_true_molecule)
+
 
 clean:
 	rm -f *.o

@@ -5,10 +5,19 @@ import math
 from itertools import combinations
 from igraph import Graph, summary, InternalError
 import argparse
+
 _complements = {'A': 'T',
                 'T': 'A',
                 'G': 'C',
                 'C': 'G'}
+
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
 def parse_args():
@@ -53,6 +62,13 @@ def parse_args():
                         "--output-prefix",
                         required=True,
                         help="Output prefix for log, clusters, and collapesd (corrected) fastq files.")
+    parser.add_argument("-c",
+                        "--correct",
+                        type=str2bool,
+                        nargs='?',
+                        const=True,
+                        default=False,
+                        help="Output corrected fastq files")
     args = parser.parse_args()
     return args
 
@@ -72,6 +88,7 @@ def reverse_complement(sequence):
     for char in reversed(sequence):
         new_seq += _complements.get(char, char)
     return new_seq
+
 
 def nCr(n, r):
     f = math.factorial
@@ -114,6 +131,7 @@ def consensus(sequences, qualities):
         consensus_quality += phred_to_ascii(1-votes[consensus[-1]])
     return consensus, consensus_quality
 
+
 def fastq_lines(fastq_path):
     fastq_file = open(fastq_path)
     fastq_lines = fastq_file.readlines()
@@ -123,6 +141,7 @@ def fastq_lines(fastq_path):
         fastq_line_idx = idx*4
         fastq_lines_tuples[idx] = (fastq_lines[fastq_line_idx].rstrip(), fastq_lines[fastq_line_idx+1].rstrip(), fastq_lines[fastq_line_idx+3].rstrip())
     return fastq_lines_tuples
+
 
 def main():
     # Parsing args
@@ -286,14 +305,14 @@ def main():
         else:
             print('#{}\t{}\t{}\t{}\t{}:'.format(index,  nodes_count, edges_count, read_count, 2*edges_count/(nodes_count * (nodes_count-1))), file=clusters_file)
         for read in reads:
-            print(fastq_1[read][0], fastq_1[read][1], sep='\t', file=clusters_file)
-        print('+',  file=clusters_file)
-        for read in reads:
-            print(fastq_2[read][0], fastq_2[read][1], sep='\t', file=clusters_file)
+            print(fastq_1[read][0], fastq_1[read][1], fastq_1[read][2], fastq_2[read][0], fastq_2[read][1], fastq_2[read][2], sep='\t', file=clusters_file)
         # for node in connected_component:
         #     print(node_to_barcode[node], node_to_mini_1[node], node_to_mini_2[node], file=clusters_file)
     finish_time = time.time()
     print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
+
+    if not args.correct:
+        exit()
 
     print("Step: Correcting and collapsing clusters...", file=log_file)
     start_time = time.time()
