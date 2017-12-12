@@ -15,21 +15,45 @@ _complements = {'A': 'T',
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Clusters barcodes by locality sensitive hashing.")
-    parser.add_argument("-f", "--forward-reads", type=str, help="Forward read file path.", required=True)
-    parser.add_argument("-r", "--reverse-reads", type=str, help="Reverse read file path.", required=True)
-    parser.add_argument("-t", "--barcode-mini-tsv-file", type=str, help="Reverse read file path.", required=True)
-    parser.add_argument("-e", "--error-tolerance", type=int, default=2,
+    parser.add_argument("-f",
+                        "--forward-reads",
+                        type=str,
+                        required=True,
+                        help="Forward read file path.")
+    parser.add_argument("-r",
+                        "--reverse-reads",
+                        type=str,
+                        required=True,
+                        help="Reverse read file path.")
+    parser.add_argument("-t",
+                        "--barcode-mini-tsv-file",
+                        type=str,
+                        required=True,
+                        help="Barcode and minimizers tab seperated values file.")
+    parser.add_argument("-e",
+                        "--barcode-error-tolerance",
+                        type=int,
+                        default=2,
                         help="Error tolerance for barcode clustering (default: 2)")
-    parser.add_argument("-x", "--minimizers-threshold", type=int, default=1,
-                            help="Threshold for number of minimizers matching per read mate (default: 1)")
-    # parser.add_argument("-k", "--k-mer-size", type=int, default=8,
-    #                         help="K-mer size for the minimizers (default: 8)")
-    parser.add_argument("-s", "--random-seed", type=int, default=42,
-                            help="NumPy random seed (default: 42)")
-    parser.add_argument("-p", "--whole-to-sample-ratio", type=int, default=5,
-                            help="The ratio of the size of the sample of nodes to process per template to the size of node population (default: 5)")
-    parser.add_argument("-o", "--log-file", help="Log file path.", required=True)
-
+    parser.add_argument("-m",
+                        "--minimizers-threshold",
+                        type=int,
+                        default=1,
+                        help="Threshold for number of minimizers matching per read mate (default: 1)")
+    parser.add_argument("-q",
+                        "--whole-to-sample-ratio",
+                         type=int,
+                         default=1,
+                         help="The ratio of the size of the sample of nodes to process per template to the size of node population (default: 1)")
+    parser.add_argument("-s",
+                        "--random-seed",
+                        type=int,
+                        default=42,
+                        help="NumPy random seed (default: 42)")
+    parser.add_argument("-o",
+                        "--output-prefix",
+                        required=True,
+                        help="Output prefix for log, clusters, and collapesd (corrected) fastq files.")
     args = parser.parse_args()
     return args
 
@@ -105,21 +129,24 @@ def fastq_lines(fastq_path):
 def main():
     # Parsing args
     args = parse_args()
-    # print(args)
-    _error_tolerance = args.error_tolerance
     _barcode_mini_tsv = args.barcode_mini_tsv_file
+    _error_tolerance = args.barcode_error_tolerance
     _minimizers_threshold = args.minimizers_threshold
-    # _k_mer_size = args.k_mer_size
-    np.random.seed(args.random_seed)
+    _random_seed = args.random_seed
+    _output_prefix = args.output_prefix
 
-    log_file = open(args.log_file, 'w+', buffering=1)
+    log_file = open("{}.log".format(_output_prefix), 'w+', buffering=1)
+    np.random.seed(_random_seed)
+
     print('Hmmmm. Good morning?!', file=log_file)
+    print('Well, it is morning somewhere...', file=log_file)
+    print('So morning morning it is!', file=log_file)
     print('Step: Extracting barcodes...', file=log_file)
     start_time = time.time()
     node_to_reads_dict = dict()
 
-    _barcode_mini_tsv_file = open(_barcode_mini_tsv)
-    for idx, line in enumerate(_barcode_mini_tsv_file):
+    barcode_mini_tsv_file = open(_barcode_mini_tsv)
+    for idx, line in enumerate(barcode_mini_tsv_file):
         node_key = tuple(line.rstrip().split('\t'))
         if node_key in node_to_reads_dict:
             node_to_reads_dict[node_key].append(idx)
@@ -127,6 +154,10 @@ def main():
             node_to_reads_dict[node_key] = [idx]
     _barcode_length = len(node_key[0])
     _minimizer_count = (len(node_key) - 1 ) // 2
+
+    if (len(node_key) -1) % 2 != 0:
+        print('Something is wrong with your TSV file', file=log_file)
+        exit()
 
     node_count = len(node_to_reads_dict)
     node_to_reads = np.zeros(shape=node_count, dtype=object)
@@ -211,45 +242,54 @@ def main():
 
     fastq_1 = fastq_lines(args.forward_reads)
     fastq_2 = fastq_lines(args.reverse_reads)
-    out_fastq_1 = open(args.forward_reads + '.corrected.fastq', 'w+')
-    out_fastq_2 = open(args.reverse_reads + '.corrected.fastq', 'w+')
+    out_fastq_1 = open(_output_prefix + '.collapsed_1.fq', 'w+')
+    out_fastq_2 = open(_output_prefix + '.collapsed_2.fq', 'w+')
 
     if len(fastq_1) != len(fastq_2):
-        print('You\'ve screwed up; fastq files don\'t match in line count')
+        print('You\'ve screwed up -_-; fastq files line counts don\'t match')
         exit()
 
+    clusters_file = open(_output_prefix + '.clusters', 'w+')
     for index, connected_component in enumerate(clusters):
         nodes_count = len(connected_component)
         edges_count = 0
         read_count = 0
+
         # mate_1_tuples = []
         # mate_2_tuples = []
+        reads = []
         for node in connected_component:
             edges_count += len(adjacency_sets[node])
-            read_count += len(node_to_reads[node])
-            # for read in node_to_reads[node]:
-            #     mate_1_tuples.append(fastq_1[read])
-            #     mate_2_tuples.append(fastq_2[read])
-        edges_count /= 2
-        edges_count = int(edges_count)
+            reads.extend(node_to_reads[node])
+        edges_count = edges_count // 2
+        read_count = len(reads)
         if nodes_count == 1:
-            print('#{}\t{}\t{}\t{}\t{}:'.format(index, nodes_count, edges_count, read_count,'nan'), file=log_file)
+            print('#{}\t{}\t{}\t{}\t{}:'.format(index, nodes_count, edges_count, read_count,'nan'), file=clusters_file)
         else:
-            print('#{}\t{}\t{}\t{}\t{}:'.format(index,  nodes_count, edges_count, read_count, 2*edges_count/(nodes_count * (nodes_count-1))), file=log_file)
+            print('#{}\t{}\t{}\t{}\t{}:'.format(index,  nodes_count, edges_count, read_count, 2*edges_count/(nodes_count * (nodes_count-1))), file=clusters_file)
+        for read in reads:
+            print(fastq_1[read][0], fastq_1[read][1], sep='\t', file=clusters_file)
+        print('+',  file=clusters_file)
+        for read in reads:
+            print(fastq_2[read][0], fastq_2[read][1], sep='\t', file=clusters_file)
+        # for node in connected_component:
+        #     print(node_to_barcode[node], node_to_mini_1[node], node_to_mini_2[node], file=clusters_file)
+
+    for index, connected_component in enumerate(clusters):
+        sequences_1 = []
+        qualities_1 = []
+        sequences_2 = []
+        qualities_2 = []
         for node in connected_component:
-            print(node_to_barcode[node], node_to_mini_1[node], node_to_mini_2[node], file=log_file)
-        # seq_1, qual_1 = consensus(sequences=[i[1] for i in mate_1_tuples], qualities=[i[2] for i in mate_1_tuples])
-        # seq_2, qual_2 = consensus(sequences=[i[1] for i in mate_2_tuples], qualities=[i[2] for i in mate_2_tuples])
-        # for read in range(read_count):
-        #     print(fastq_1[read][0], file=out_fastq_1)
-        #     print(fastq_1[read][1], file=out_fastq_1)
-        #     print('+', file=out_fastq_1)
-        #     print(fastq_1[read][2], file=out_fastq_1)
-        #
-        #     print(fastq_2[read][0], file=out_fastq_2)
-        #     print(fastq_2[read][1], file=out_fastq_2)
-        #     print('+', file=out_fastq_2)
-        #     print(fastq_2[read][2], file=out_fastq_2)
+            for read in node_to_reads[node]:
+                sequences_1.append(fastq_1[read][1])
+                qualities_1.append(fastq_1[read][2])
+                sequences_2.append(fastq_2[read][1])
+                qualities_2.append(fastq_2[read][2])
+        seq_1, qual_1 = consensus(sequences=sequences_1, qualities=qualities_1)
+        print('@cluster_id_{}/1\n{}\n{}\n{}'.format(index, seq_1, '+', qual_1), file=out_fastq_1)
+        seq_2, qual_2 = consensus(sequences=sequences_2, qualities=qualities_2)
+        print('@cluster_id_{}/2\n{}\n{}\n{}'.format(index, seq_2, '+', qual_2), file=out_fastq_2)
 
     finish_time = time.time()
     print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
