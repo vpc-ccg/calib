@@ -1,5 +1,4 @@
 import argparse
-import rstr
 import sys
 import random
 
