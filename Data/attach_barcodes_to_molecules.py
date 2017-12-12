@@ -7,10 +7,26 @@ from itertools import islice
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Attaches barcodes from whitelist to ends of reads randomly")
-    parser.add_argument("-b", "--input-barcodes", type=str, help="Barcodes txt file", required=True)
-    parser.add_argument("-m", "--input-molecules", type=str, help="Molecules/amplicons fasta file", required=True)
-    parser.add_argument("-s", "--random-seed", type=int, help="Define a seed (default: no seed)")
-    parser.add_argument("-o", "--output-barcoded-molecules", type=str, help="Output file (default: stdout)")
+    parser.add_argument("-b",
+                        "--input-barcodes",
+                        type=str,
+                        required=True,
+                        help="Barcodes txt file")
+    parser.add_argument("-m",
+                        "--input-molecules",
+                        type=str,
+                        required=True,
+                        help="Molecules fasta file")
+    parser.add_argument("-s",
+                        "--random-seed",
+                        type=int,
+                        default=42,
+                        help="NumPy random seed (default: 42)")
+    parser.add_argument("-o",
+                        "--output-barcoded-molecules",
+                        type=str,
+                        default=None,
+                        help="Output file (default: stdout)")
     args = parser.parse_args()
     return args
 

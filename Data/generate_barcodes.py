@@ -6,13 +6,27 @@ import random
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Generates whitelist of barcodes")
-    parser.add_argument("-n", "--num-of-barcodes", type=int, help="Number of barcodes (default: 1000)",
-                        default=1000)
-    parser.add_argument("-l", "--len-of-one-end-barcode", type=int, help="Length of one side of the barcode (default: 10)",
-                        default=10)
-    parser.add_argument("-s", "--random-seed", type=int, help="Define a seed (default: no seed)", default=None)
-    parser.add_argument("-o", "--output-barcodes", type=str, help="Output barcodes file (default: stdout)")
+        description="Generates a list of barcodes")
+    parser.add_argument("-n",
+                        "--num-of-barcodes",
+                        type=int,
+                        default=1000,
+                        help="Number of barcodes (default: 1000)")
+    parser.add_argument("-l",
+                        "--len-of-one-end-barcode",
+                        type=int,
+                        default=10,
+                        help="Length of one side of the barcode (default: 10)")
+    parser.add_argument("-s",
+                        "--random-seed",
+                        type=int,
+                        default=42,
+                        help="NumPy random seed (default: 42)")
+    parser.add_argument("-o",
+                        "--output-barcodes",
+                        type=str,
+                        default=None,
+                        help="Output barcodes file (default: stdout)")
     args = parser.parse_args()
     return args
 

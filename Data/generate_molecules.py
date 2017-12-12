@@ -7,21 +7,40 @@ import math
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Generates molecules/amplicons")
-    parser.add_argument("-r", "--reference", type=str, help="Reference genome from which to generate molecules",
-                        required=True)
-    parser.add_argument("-n", "--number-of-molecules", type=int,
-                        help="Number of molecules. (default: 1000)", default=1000)
-    parser.add_argument("-u", "--molecule-size-mean", type=int,
-                        help="Mean size of molecules (taken on standard dist. default: 200", default=200)
-    parser.add_argument("-d", "--molecule-size-standard-dev", type=int,
-                        help="Molecule size stdev (default: 25)", default=25)
-    parser.add_argument("-l", "--min-molecule-size", type=int,
-                        help="Any molecule size less than this will be adjusted to be equal to this by decreasing its start position. (default: 150)", default=150)
-    parser.add_argument("-s", "--random-seed", type=int, help="Define a seed (default: no seed)",
-                        default=None)
-    parser.add_argument("-o", "--output-molecules", type=str, help="Output molecules/amplicons fasta file (default: stdout)",
-                        default=None)
+        description="Generates molecules")
+    parser.add_argument("-r",
+                        "--reference",
+                        type=str,
+                        required=True,
+                        help="Reference genome from which to generate molecules")
+    parser.add_argument("-n",
+                        "--number-of-molecules",
+                        type=int,
+                        default=1000,
+                        help="Number of molecules. (default: 1000)")
+    parser.add_argument("-u", "--molecule-size-mean",
+                        type=int,
+                        default=200,
+                        help="Mean size of molecules (taken on standard dist. default: 200")
+    parser.add_argument("-d",
+                        "--molecule-size-standard-dev",
+                        type=int,
+                        default=25,
+                        help="Molecule size stdev (default: 25)")
+    parser.add_argument("-l",
+                        "--min-molecule-size",
+                        type=int,
+                        default=150,
+                        help="Any molecule size less than this will be adjusted to be equal to this by decreasing its start position. (default: 150)")
+    parser.add_argument("-s",
+                        "--random-seed",
+                        type=int,
+                        default=42,
+                        help="NumPy random seed (default: 42)")
+    parser.add_argument("-o", "--output-molecules", 
+                        type=str,
+                        default=None,
+                        help="Output molecules/amplicons fasta file (default: stdout)")
     args = parser.parse_args()
     return args
 

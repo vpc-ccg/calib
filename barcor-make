@@ -34,7 +34,7 @@ CC=g++
 
 .DELETE_ON_ERROR:
 .SECONDARY:
-.PHONY: help correct simulate
+.PHONY: help correct simulate simulate_clean
 
 help:
 	@echo 'barcor: Correct duplex-sequencing runs by clustering on barcodes and sequences'
