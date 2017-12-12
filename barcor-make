@@ -92,10 +92,10 @@ simulate_clean:
 fastq_to_tsv.o: fastq_to_tsv.cc
 	$(CC) fastq_to_tsv.cc -o fastq_to_tsv.o -std=c++11
 
-$(barcode_mini_tsv_file): fastq_to_tsv.o
+$(barcode_mini_tsv_file): fastq_to_tsv.o $(forward_reads) $(reverse_reads)
 	./fastq_to_tsv.o $(forward_reads) $(reverse_reads) $(barcode_mini_tsv_file) $(barcode_length) $(kmer_size) $(minimizers_num)
 
-correct: $(barcode_mini_tsv_file)
+correct: $(forward_reads) $(reverse_reads) $(barcode_mini_tsv_file)
 	python3 barcode_clustering.py \
 		--forward-reads $(forward_reads)\
 		--reverse-reads $(reverse_reads)\

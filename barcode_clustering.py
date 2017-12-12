@@ -274,6 +274,11 @@ def main():
             print(fastq_2[read][0], fastq_2[read][1], sep='\t', file=clusters_file)
         # for node in connected_component:
         #     print(node_to_barcode[node], node_to_mini_1[node], node_to_mini_2[node], file=clusters_file)
+    finish_time = time.time()
+    print('\tLast step took {} seconds'.format(finish_time - start_time), file=log_file)
+
+    print("Step: Correcting and collapsing clusters...", file=log_file)
+    start_time = time.time()
 
     for index, connected_component in enumerate(clusters):
         sequences_1 = []
