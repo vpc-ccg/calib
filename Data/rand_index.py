@@ -24,7 +24,6 @@ def parse_args():
 
 def score_cluster(cluster_counts):
     score = 0
-    cluster_counts = list(cluster_counts.values())
     for i in range(len(cluster_counts)):
         score = score + cluster_counts[i]*(cluster_counts[i]-1)//2
         for j in range(i+1, len(cluster_counts)):
@@ -61,8 +60,8 @@ def main():
             else:
                 cluster_counts[predicted_cluster] = 1
             line = clusters_file.readline()
-        cluster_counts_list = list(cluster_counts.values())
-        if len(cluster_counts_list) == 1 and cluster_counts_list[0] == _reads_per_molecule:
+        cluster_counts = list(cluster_counts.values())
+        if len(cluster_counts) == 1 and cluster_counts[0] == _reads_per_molecule:
             correct_clusters += 1
         else:
             incorrect_clusters += 1
