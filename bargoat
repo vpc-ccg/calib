@@ -19,12 +19,14 @@ num_molecules?=1000
 molecule_size_mu?=250
 molecule_size_dev?=25
 read_length?=150
+barcode_length?=10
 reference?=Data/e_coli.fa.gz
 coverage?=20
-simulated_barcodes?=Data/simulated_barcodes.txt
-simulated_molecules?=Data/simulated_molecules.fa
-simulated_barcoded_molecules?=Data/simulated_barcoded_molecules.fa
-simulated_reads?=Data/simulated_reads
+simulation_prefix?=Data/simulated
+simulated_barcodes?=$(simulation_prefix)_l$(barcode_length)_barcodes.txt
+simulated_molecules?=$(simulation_prefix)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_molecules.fa
+simulated_barcoded_molecules?=$(simulation_prefix)_l$(barcode_length)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_barcoded_molecules.fa
+simulated_reads?=$(Data/simulated_reads)_reads
 simulated_reads_log?=$(simulated_reads)_art_illumina.log
 
 # Clustering and correction arguments
@@ -32,7 +34,6 @@ input_reads_prefix?=$(simulated_reads)
 forward_reads?=$(input_reads_prefix)_1.fq
 reverse_reads?=$(input_reads_prefix)_2.fq
 
-barcode_length?=10
 minimizers_num?=3
 kmer_size?=8
 
