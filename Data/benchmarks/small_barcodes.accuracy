@@ -1,0 +1,7 @@
+python3 Data/rand_index.py \
+		--input-clusters-file small_barcodes.clusters \
+		--number-of-true-molecules 10000 \
+		--number-of-reads-per-true-molecule 20
+Rand Index: 0.9999144986224932
+Correct clusters: 999
+Incorrect clutsers: 2
