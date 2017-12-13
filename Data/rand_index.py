@@ -47,7 +47,8 @@ def main():
     _molecules_total = args.number_of_true_molecules
     _reads_per_molecule = args.number_of_reads_per_true_molecule
     _reads_total = _molecules_total*_reads_per_molecule
-
+    correct_clusters = 0
+    incorrect_clusters = 0
     max_possible_TP = (_reads_total - _reads_per_molecule) * _reads_per_molecule * _molecules_total // 2
     line = clusters_file.readline()
     while(line != ''):
@@ -60,6 +61,7 @@ def main():
             else:
                 cluster_counts[predicted_cluster] = 1
             line = clusters_file.readline()
+
         max_possible_TP = max_possible_TP + score_cluster(cluster_counts)
     print( max_possible_TP/ (_reads_total*(_reads_total-1)//2 ))
 

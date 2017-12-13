@@ -38,10 +38,10 @@ kmer_size?=8
 
 barcode_error_tolerance?=2
 minimizers_threshold?=1
-whole_to_sample_ratio?=1
+ratio?=1.0
 
 output_corrected_reads?=False
-output_prefix?=$(input_reads_prefix)_l$(barcode_length)_m$(minimizers_num)_k$(kmer_size)_e$(barcode_error_tolerance)_t$(minimizers_threshold)_q$(whole_to_sample_ratio)
+output_prefix?=$(input_reads_prefix)_l$(barcode_length)_m$(minimizers_num)_k$(kmer_size)_e$(barcode_error_tolerance)_t$(minimizers_threshold)_q$(ratio)
 barcode_mini_tsv_file?=$(output_prefix).tsv
 
 # Rand Index Accuracy arguments
@@ -118,7 +118,7 @@ cluster: $(forward_reads) $(reverse_reads) $(barcode_mini_tsv_file)
 		--barcode-mini-tsv-file $(barcode_mini_tsv_file) \
 		--barcode-error-tolerance $(barcode_error_tolerance) \
 		--minimizers-threshold $(minimizers_threshold) \
-		--whole-to-sample-ratio $(whole_to_sample_ratio) \
+		--ratio $(ratio) \
 		--random-seed $(random_seed) \
 		--output-prefix $(output_prefix) \
 		--correct $(output_corrected_reads)

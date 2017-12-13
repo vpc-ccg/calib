@@ -49,10 +49,10 @@ def parse_args():
                         default=1,
                         help="Threshold for number of minimizers matching per read mate (default: 1)")
     parser.add_argument("-q",
-                        "--whole-to-sample-ratio",
-                         type=int,
-                         default=1,
-                         help="The ratio of the size of the sample of nodes to process per template to the size of node population (default: 1)")
+                        "--ratio",
+                         type=float,
+                         default=1.0,
+                         help="The ratio of nodes to use per template (default: 1.0)")
     parser.add_argument("-s",
                         "--random-seed",
                         type=int,
@@ -211,7 +211,7 @@ def main():
 
     for tempalte_order, (template, template_id) in enumerate(template_generator(_barcode_length, _error_tolerance)):
         lsh = dict()
-        for idx in np.random.choice(node_count, size= node_count//args.whole_to_sample_ratio ,replace=False):
+        for idx in np.random.choice(node_count, size= int(node_count*args.ratio) ,replace=False):
             templated_barcode = template(node_to_barcode[idx])
             if 'N' in templated_barcode:
                 continue
