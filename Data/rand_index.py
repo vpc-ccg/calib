@@ -29,6 +29,7 @@ def score_cluster(cluster_counts):
         score = score + cluster_counts[i]*(cluster_counts[i]-1)//2
         for j in range(i+1, len(cluster_counts)):
              score = score - cluster_counts[i]*cluster_counts[j]
+    # print(cluster_counts, score)
     return score
 
 def get_predicted_cluster(line):
@@ -49,6 +50,7 @@ def main():
     _reads_total = _molecules_total*_reads_per_molecule
 
     max_possible_TP = (_reads_total - _reads_per_molecule) * _reads_per_molecule * _molecules_total // 2
+    # print(max_possible_TP, _reads_total)
     line = clusters_file.readline()
     while(line != ''):
         line = clusters_file.readline()
