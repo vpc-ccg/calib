@@ -38,10 +38,10 @@ kmer_size?=8
 
 barcode_error_tolerance?=2
 minimizers_threshold?=1
-whole_to_sample_ratio?=1
+ratio?=1.0
 
 output_corrected_reads?=False
-output_prefix?=$(input_reads_prefix)_l$(barcode_length)_m$(minimizers_num)_k$(kmer_size)_e$(barcode_error_tolerance)_t$(minimizers_threshold)_q$(whole_to_sample_ratio)
+output_prefix?=$(input_reads_prefix)_l$(barcode_length)_m$(minimizers_num)_k$(kmer_size)_e$(barcode_error_tolerance)_t$(minimizers_threshold)_q$(ratio)
 barcode_mini_tsv_file?=$(output_prefix).tsv
 
 # Rand Index Accuracy arguments
@@ -56,11 +56,11 @@ clusters_file?=$(output_prefix).clusters
 .PHONY: help correct simulate simulate_clean
 
 help:
-	@echo 'barcor: Correct duplex-sequencing runs by clustering on barcodes and sequences'
-	@echo 'Usage: barcor-make [COMMAND]... [PARAMETER=VALUE]...'
-	@echo 'Example: barcor-make correct reads1=reads1.fq reads2=reads2.fq'
-	@echo '			barcor-make simulate '
-	@echo 'At the moment, fastq files must end in 1.fq and 2.fq respectively'
+	@echo 'barcor: Correct tagged amplicon sequencing reads by clustering on barcodes and sequences'
+	@echo 'Usage: ./barcor-make [COMMAND]... [PARAMETER=VALUE]...'
+	@echo 'Example: barcor-make simulate'
+	@echo '			barcor-make cluster input_reads_prefix=Data/simulated_reads'
+	@echo 'We recommend checking the possible list of commands down here, and the parameter list up here.'
 
 $(simulated_barcodes):
 	$(python3) Data/generate_barcodes.py \
@@ -118,7 +118,7 @@ cluster: $(forward_reads) $(reverse_reads) $(barcode_mini_tsv_file)
 		--barcode-mini-tsv-file $(barcode_mini_tsv_file) \
 		--barcode-error-tolerance $(barcode_error_tolerance) \
 		--minimizers-threshold $(minimizers_threshold) \
-		--whole-to-sample-ratio $(whole_to_sample_ratio) \
+		--ratio $(ratio) \
 		--random-seed $(random_seed) \
 		--output-prefix $(output_prefix) \
 		--correct $(output_corrected_reads)
@@ -132,9 +132,3 @@ accuracy: $(clusters_file)
 
 clean:
 	rm -f *.o
-
-
-# $^ - Dependencies
-# $< - First dependency
-# $@ - Target
-# $* - Stem in pattern rule ie. %

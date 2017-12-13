@@ -35,12 +35,11 @@ def generate_barcodes(output_file_path=None,
                       number_of_barcodes=1000,
                       barcode_length=10):
     random.seed(random_seed)
-    # barcode_regex = '[ACGT]{' +str(barcode_length) + '}'
     barcodes = set()
     while len(barcodes) < number_of_barcodes:
         barcode = "".join([random.sample(['A','C','G','T'], 1)[0] for _ in range(barcode_length)])
         barcodes.add(barcode)
-    
+
     if output_file_path:
         output_file = open(output_file_path, 'w+')
     else:

@@ -24,7 +24,6 @@ def parse_args():
 
 def score_cluster(cluster_counts):
     score = 0
-    cluster_counts = list(cluster_counts.values())
     for i in range(len(cluster_counts)):
         score = score + cluster_counts[i]*(cluster_counts[i]-1)//2
         for j in range(i+1, len(cluster_counts)):
@@ -48,7 +47,8 @@ def main():
     _molecules_total = args.number_of_true_molecules
     _reads_per_molecule = args.number_of_reads_per_true_molecule
     _reads_total = _molecules_total*_reads_per_molecule
-
+    correct_clusters = 0
+    incorrect_clusters = 0
     max_possible_TP = (_reads_total - _reads_per_molecule) * _reads_per_molecule * _molecules_total // 2
     # print(max_possible_TP, _reads_total)
     line = clusters_file.readline()
@@ -62,8 +62,15 @@ def main():
             else:
                 cluster_counts[predicted_cluster] = 1
             line = clusters_file.readline()
+        cluster_counts = list(cluster_counts.values())
+        if len(cluster_counts) == 1 and cluster_counts[0] == _reads_per_molecule:
+            correct_clusters += 1
+        else:
+            incorrect_clusters += 1
         max_possible_TP = max_possible_TP + score_cluster(cluster_counts)
-    print( max_possible_TP/ (_reads_total*(_reads_total-1)//2 ))
+    print('Rand Index:', max_possible_TP/ (_reads_total*(_reads_total-1)//2 ))
+    print('Correct clusters:', correct_clusters)
+    print('Incorrect clutsers:', incorrect_clusters)
 
 
 if __name__ == "__main__":
