@@ -26,7 +26,7 @@ simulation_prefix?=Data/simulated
 simulated_barcodes?=$(simulation_prefix)_l$(barcode_length)_barcodes.txt
 simulated_molecules?=$(simulation_prefix)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_molecules.fa
 simulated_barcoded_molecules?=$(simulation_prefix)_l$(barcode_length)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_barcoded_molecules.fa
-simulated_reads?=$(Data/simulated_reads)_reads
+simulated_reads?=$(simulation_prefix)_l$(barcode_length)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_reads
 simulated_reads_log?=$(simulated_reads)_art_illumina.log
 
 # Clustering and correction arguments
