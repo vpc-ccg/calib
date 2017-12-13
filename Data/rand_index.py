@@ -61,9 +61,15 @@ def main():
             else:
                 cluster_counts[predicted_cluster] = 1
             line = clusters_file.readline()
-
+        cluster_counts_list = list(cluster_counts.values())
+        if len(cluster_counts_list) == 1 and cluster_counts_list[0] == _reads_per_molecule:
+            correct_clusters += 1
+        else:
+            incorrect_clusters += 1
         max_possible_TP = max_possible_TP + score_cluster(cluster_counts)
-    print( max_possible_TP/ (_reads_total*(_reads_total-1)//2 ))
+    print('Rand Index:', max_possible_TP/ (_reads_total*(_reads_total-1)//2 ))
+    print('Correct clusters:', correct_clusters)
+    print('Incorrect clutsers:', incorrect_clusters)
 
 
 if __name__ == "__main__":
