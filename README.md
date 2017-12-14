@@ -78,7 +78,17 @@ Finally, if you ran a simulated dataset, you can check BarGoat `cluster` accurac
 ./bargoat accuracy
 ```
 
-Which will take the default simulated reads clusters produced by `cluster` command. Accuracy is measured using [Rand Index](https://en.wikipedia.org/wiki/Rand_index). The number of perfect clusters is reported, alongside the number of imperfect or incorrect clusters.
+Which will take the default simulated reads clusters produced by `cluster` command. Accuracy is measured using [Rand Index](https://en.wikipedia.org/wiki/Rand_index).
+
+## Reproducing Benchmarks
+
+To reporucede any of the benchmarks in our report, run a command like this:
+
+```bash
+./bargoat simulate cluster accuracy num_molecules=300000 num_barcodes=30000 barcode_length=8 minimizers_num=5 kmer_size=4 barcode_error_tolerance=1 minimizers_threshold=3 
+```
+Where you may change the value of any parameters to match any of the reported datasets (or a new dataset for that matter).
+
 
 
 
