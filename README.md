@@ -89,6 +89,9 @@ To reporucede any of the benchmarks in our report, run a command like this:
 ```
 Where you may change the value of any parameters to match any of the reported datasets (or a new dataset for that matter).
 
+## Report
+Our report is hosted on Overleaf at [https://www.overleaf.com/read/jywsyjsmtrdp](https://www.overleaf.com/read/jywsyjsmtrdp)
+
 
 
 
