@@ -58,7 +58,7 @@ def generate_molecule(genome_file_path,
     else:
         output_file = sys.stdout
     random.seed(random_seed)
-    genome = Fasta(genome_file_path)
+    genome = str(Fasta(genome_file_path)[0])
     genome_length = len(genome[0])
     for i in range(number_of_molecules):
         start = random.randrange(0, genome_length)
@@ -68,7 +68,7 @@ def generate_molecule(genome_file_path,
         if end-start < min_molecule_size:
             start = end - min_molecule_size
         print(">{}:{}-{}".format(i, start, end), file=output_file)
-        print(genome[0][start:end], file=output_file)
+        print(genome[start:end], file=output_file)
 
 
 def main():
