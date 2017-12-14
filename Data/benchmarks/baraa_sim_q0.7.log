@@ -1,0 +1,34 @@
+Hmmmm. Good morning?!
+Well, it is morning somewhere...
+So good morning it is!
+Step: Extracting barcodes...
+	Total number of nodes: 1517751
+	Last step took 36.680776834487915 seconds
+Step: LSH of barcodes...
+	0: template 0 added 2743780 new edges
+	1: template 1 added 1420872 new edges
+	2: template 5 added 777132 new edges
+	3: template 14 added 392828 new edges
+	4: template 13 added 206214 new edges
+	5: template 11 added 107284 new edges
+	6: template 8 added 55202 new edges
+	7: template 9 added 32664 new edges
+	8: template 2 added 58370 new edges
+	9: template 15 added 100254 new edges
+	10: template 4 added 69166 new edges
+	11: template 7 added 134850 new edges
+	12: template 10 added 8786 new edges
+	13: template 12 added 18472 new edges
+	14: template 3 added 55168 new edges
+	15: template 6 added 92296 new edges
+	Last step took 186.30008554458618 seconds
+Step: Removing edges due to mini's...
+	Last step took 179.26616525650024 seconds
+Step: Building graph from adjacency_sets...
+	Graph building from adjacency lists is completed
+	Labeling vertices on graph is completed
+	Simplifying the graph is completed
+	Last step took 7.71756386756897 seconds
+Step: Getting clusters (connected components) of the barcode graph...
+	There total of 359134 connected components
+	Last step took 113.55982160568237 seconds

@@ -1,0 +1,9 @@
+python3 Data/rand_index.py \
+		--input-clusters-file baraa_sim_dunovo.clusters \
+		--number-of-true-molecules 300000 \
+		--number-of-reads-per-true-molecule 20
+Rand Index: 0.9999999929249989
+Misclustered pairs: 127350
+All pairs: 17999997000000
+Correct clusters: 294120
+Incorrect clutsers: 5887

@@ -1,0 +1,9 @@
+/home/eerhan/.linuxbrew/Cellar/python3/3.6.2/bin/python3.6 Data/rand_index.py \
+		--input-clusters-file baraa_sim_q0.65.clusters \
+		--number-of-true-molecules 300000 \
+		--number-of-reads-per-true-molecule 20
+Rand Index: 0.9999999273133767
+Misclustered pairs: 1308359
+All pairs: 17999997000000
+Correct clusters: 238186
+Incorrect clutsers: 130591

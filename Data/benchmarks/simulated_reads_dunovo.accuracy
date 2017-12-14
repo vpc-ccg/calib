@@ -3,5 +3,7 @@ python3 Data/rand_index.py \
 		--number-of-true-molecules 1000 \
 		--number-of-reads-per-true-molecule 20
 Rand Index: 0.9999974648732437
+Misclustered pairs: 507
+All pairs: 199990000
 Correct clusters: 974
 Incorrect clutsers: 27
