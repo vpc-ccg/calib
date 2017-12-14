@@ -1,0 +1,7 @@
+python3 Data/rand_index.py \
+		--input-clusters-file large_sim.clusters \
+		--number-of-true-molecules 100000 \
+		--number-of-reads-per-true-molecule 20
+Rand Index: 0.9999999976059988
+Correct clusters: 99748
+Incorrect clutsers: 504
