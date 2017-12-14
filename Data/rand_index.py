@@ -69,6 +69,8 @@ def main():
             incorrect_clusters += 1
         max_possible_TP = max_possible_TP + score_cluster(cluster_counts)
     print('Rand Index:', max_possible_TP/ (_reads_total*(_reads_total-1)//2 ))
+    print('Misclustered pairs:',  (_reads_total*(_reads_total-1)//2 ) - max_possible_TP)
+    print('All pairs:',  (_reads_total*(_reads_total-1)//2 ))
     print('Correct clusters:', correct_clusters)
     print('Incorrect clutsers:', incorrect_clusters)
 
