@@ -1,0 +1,10 @@
+//
+// Created by borabi on 19/12/17.
+//
+
+#include "global.h"
+
+#ifndef BARGOAT_EXTRACT_BARCODES_AND_MINIMIZERS_H
+#define BARGOAT_EXTRACT_BARCODES_AND_MINIMIZERS_H
+
+#endif //BARGOAT_EXTRACT_BARCODES_AND_MINIMIZERS_H

@@ -1,5 +1,5 @@
-#include "fastq_to_tsv.h"
-#include "parse_flags.h"
+
+#include "cluster/parse_flags.h"
 
 
 // Auxilary function to print in ASCII rather than decimal
