@@ -1,11 +1,6 @@
-#include <iostream>
-#include <fstream>
-#include <stdio.h>
-#include <map>
+#include "fastq_to_tsv.h"
+#include "parse_flags.h"
 
-#include <cstdint>
-
-using namespace std;
 
 // Auxilary function to print in ASCII rather than decimal
 string bitvector_to_DNA(uint64_t k_mer, int k_mer_size){
