@@ -12,6 +12,6 @@ using namespace std;
 #ifndef BARGOAT_PARSE_FLAGS_H
 #define BARGOAT_PARSE_FLAGS_H
 
-int parse_flags(int argc, char *argv[]);
+void parse_flags(int argc, char *argv[]);
 
 #endif //BARGOAT_PARSE_FLAGS_H

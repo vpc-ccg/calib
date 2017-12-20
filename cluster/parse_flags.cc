@@ -4,13 +4,14 @@
 
 #include "parse_flags.h"
 
-int parse_flags(int argc, char *argv[]){
+void parse_flags(int argc, char *argv[]){
 
     // parameter initialization
     barcode_length = 0;
     minimizer_count = 0;
     minimizer_threshold = 0;
     error_tolerance = 0;
+    kmer_size = 0;
     input_prefix = "";
     output_prefix= "";
 
@@ -32,6 +33,10 @@ int parse_flags(int argc, char *argv[]){
             minimizer_count = atoi(argv[i+1]);
         }
 
+        if (current_param == "-k" || current_param == "--kmer-size") {
+            kmer_size = atoi(argv[i+1]);
+        }
+
         if (current_param == "-e" || current_param == "--error-tolerance") {
             error_tolerance = atoi(argv[i+1]);
         }
@@ -39,6 +44,7 @@ int parse_flags(int argc, char *argv[]){
         if (current_param == "-t" || current_param == "--minimizer-threshold") {
             minimizer_threshold = atoi(argv[i+1]);
         }
+
 
 
     }
