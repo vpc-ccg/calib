@@ -4,6 +4,8 @@
 
 #include "parse_flags.h"
 
+using namespace std;
+
 void parse_flags(int argc, char *argv[]){
 
     // parameter initialization

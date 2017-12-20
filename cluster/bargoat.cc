@@ -4,11 +4,13 @@
 
 #include "string"
 #include <iostream>
-using namespace std;
 
 #include "global.h"
 #include "parse_flags.h"
+#include "extract_barcodes_and_minimizers.h"
+#include "cluster.h"
 
+using namespace std;
 
 // Parameter definitions
 string input_prefix;
@@ -32,5 +34,9 @@ int main(int argc, char *argv[]){
     log << "\tkmer_size:\t" << kmer_size << "\n";
     log << "\terror_tolerance:\t" << error_tolerance << "\n";
     log << "\tminimizer_threshold:\t" << minimizer_threshold << "\n";
+
+    extract_barcodes_and_minimizers();
+
+    cluster();
 
 }

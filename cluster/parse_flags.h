@@ -5,9 +5,9 @@
 #include <string>
 #include <stdlib.h>
 #include <iostream>
-using namespace std;
-
 #include "global.h"
+
+
 
 #ifndef BARGOAT_PARSE_FLAGS_H
 #define BARGOAT_PARSE_FLAGS_H
