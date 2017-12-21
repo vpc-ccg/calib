@@ -7,9 +7,9 @@
 
 using namespace std;
 
-int node_count;
-int read_count;
-unordered_map<Node* , std::vector<int>, NodeHash, NodeEqual> node_to_read;
+int node_count = 0;
+int read_count = 0;
+node_map node_to_read;
 
 
 void extract_barcodes_and_minimizers() {
@@ -18,21 +18,15 @@ void extract_barcodes_and_minimizers() {
     fastq1.open (input_prefix + "1.fq");
     fastq2.open (input_prefix + "2.fq");
 
-    cout << "Reading fastq files\n";
-
-
-    node_count = 0;
-    read_count = 0;
+    log << "Reading fastq files\n";
 
     string r1, s1, q1, r2, s2, q2, trash;
-    Node* current_node = new Node;
-    current_node->minimizers_1 = new uint64_t [minimizer_count];
-    current_node->minimizers_2 = new uint64_t [minimizer_count];
-    current_node->barcode = "";
-    current_node->id = node_count;
-    node_count++;
+
+    Node current_node;
+
+    cout << "#nodes\t" << node_count << "\n";
+
     // Processing FASTQ files one read at a time
-    cout << "Reading fastq files\n";
     while (getline(fastq1, r1)) {
         getline(fastq1, s1);
         getline(fastq1, trash);
@@ -41,84 +35,73 @@ void extract_barcodes_and_minimizers() {
         getline(fastq2, s2);
         getline(fastq2, trash);
         getline(fastq2, q2);
-        cout << r1 << "\n"; //<< "\t" << r2 << "\t" << s1 << "\t" << s2 << "\t" << q1 << "\t" << q2 << "\n";
 
         int s1_length = s1.size();
         int s2_length = s2.size();
 
         // Extracting the barcode from the start of both mates
         if (s1_length >= barcode_length && s2_length >= barcode_length){
-            current_node->barcode = s1.substr(0, barcode_length) + s2.substr(0, barcode_length);
+            current_node.barcode = s1.substr(0, barcode_length) + s2.substr(0, barcode_length);
         } else {
-            current_node->barcode = string (barcode_length*2, 'N');
+            current_node.barcode = string (barcode_length*2, 'N');
         }
 
         s1_length -= barcode_length;
         s2_length -= barcode_length;
 
-        cout << s1 <<"\n";
 
         // Splitting the remaining sequence into ~ equally sized segments, and extracting minimizers from each
         int s1_seg_length = s1_length / minimizer_count;
         if (s1_seg_length >= kmer_size){
             int start = barcode_length;
             for (int i = 0; i < minimizer_count; i++){
-                current_node->minimizers_1[i] = minimizer(s1, start, s1_seg_length);
-                cout << start << "\t" << s1.substr(start, s1_seg_length) << "\n";
+                current_node.minimizers_1[i] = minimizer(s1, start, s1_seg_length);
                 start += s1_seg_length;
             }
         } else {
             for (int i = 0; i < minimizer_count; i++){
-                current_node->minimizers_1[i] = -1;
+                current_node.minimizers_1[i] = -1;
             }
         }
-        cout << "H2\n";
 
         int s2_seg_length = s2_length / minimizer_count;
         if (s2_seg_length >= kmer_size){
             for (int i = 0; i < minimizer_count; i++){
-                current_node->minimizers_2[i] = minimizer(s2, barcode_length + i*s2_seg_length, s2_seg_length);
+                current_node.minimizers_2[i] = minimizer(s2, barcode_length + i*s2_seg_length, s2_seg_length);
             }
         } else {
             for (int i = 0; i < minimizer_count; i++){
-                current_node->minimizers_2[i] = -1;
+                current_node.minimizers_2[i] = -1;
             }
         }
 
-        cout << "H3\n";
 
 
-        cout << current_node->id << "\t" << current_node->barcode << "\t" ;
-        for (int i =0; i < minimizer_count; i++)
-            cout << current_node->minimizers_1[i] << "\t";
-        for (int i =0; i < minimizer_count; i++)
-            cout << current_node->minimizers_2[i] << "\t";
-        cout << "\n";
 
-        auto search = node_to_read.find(current_node);
-        if (search != node_to_read.end()) {
-            search->second.push_back(read_count);
-
+        if (node_to_read.find(current_node) != node_to_read.end()) {
+            node_to_read[current_node].push_back(read_count++);
         } else {
-            node_to_read[current_node] = vector<int>(read_count);
-            current_node = (Node*) malloc(sizeof(Node));
-            current_node->minimizers_1 = (uint64_t*) malloc(sizeof(uint64_t)*minimizer_count);
-            current_node->minimizers_2 = (uint64_t*) malloc(sizeof(uint64_t)*minimizer_count);
-            current_node->barcode = "";
-            current_node->id = node_count;
-            node_count++;
+            vector<int> current_vector;
+            current_vector.push_back(read_count++);
+            node_to_read[current_node] = current_vector;
+            current_node = Node();
         }
-
+//
+//        cout << current_node.id << "\t" << current_node.barcode << "\t" ;
+//        for (int i =0; i < minimizer_count; i++)
+//            cout << current_node.minimizers_1[i] << "\t";
+//        for (int i =0; i < minimizer_count; i++)
+//            cout << current_node.minimizers_2[i] << "\t";
+//        cout << "\n";
     }
 
-    delete [] current_node->minimizers_1;
-    delete [] current_node->minimizers_2;
-    delete current_node;
+    delete [] current_node.minimizers_1;
+    delete [] current_node.minimizers_2;
 
 }
 
 // Extract the lexicographically minimum k-mer in a given string with start and range
-uint64_t minimizer(string seq, int start, int length){
+uint64_t minimizer(string& seq, int start, int length){
     // Report -1 if no k-mer fits
     if (length < kmer_size){
         return (uint64_t) - 1;

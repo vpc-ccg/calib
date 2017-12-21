@@ -12,16 +12,7 @@
 
 using namespace std;
 
-// Parameter definitions
-string input_prefix;
-string output_prefix;
-int barcode_length;
-int minimizer_count;
-int error_tolerance;
-int minimizer_threshold;
-int kmer_size;
 ofstream log;
-
 
 int main(int argc, char *argv[]){
     parse_flags(argc, argv);
