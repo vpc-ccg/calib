@@ -2,17 +2,38 @@
 // Created by borabi on 19/12/17.
 //
 
-#include "extract_barcodes_and_minimizers.h"
+#include "extract.h"
 #include "global.h"
 
 using namespace std;
 
+
+#define ASCII_SIZE 128
+#define BYTE_SIZE 8
+#define ENCODE_SIZE 2
+
 int node_count = 0;
 int read_count = 0;
 node_map node_to_read;
+uint64_t encode [ASCII_SIZE];
+
+kmer_t invalid_kmer = (kmer_t) -1;
+
 
 
 void extract_barcodes_and_minimizers() {
+
+    for (int i = 0; i < ASCII_SIZE; i++)
+        encode[i] = (uint64_t) -1;
+    encode['A'] = 0x0;
+    encode['C'] = 0x1;
+    encode['G'] = 0x2;
+    encode['T'] = 0x3;
+    encode['a'] = 0x0;
+    encode['c'] = 0x1;
+    encode['g'] = 0x2;
+    encode['t'] = 0x3;
+
     ifstream fastq1;
     ifstream fastq2;
     fastq1.open (input_prefix + "1.fq");
@@ -101,31 +122,94 @@ void extract_barcodes_and_minimizers() {
 }
 
 // Extract the lexicographically minimum k-mer in a given string with start and range
-uint64_t minimizer(string& seq, int start, int length){
-    // Report -1 if no k-mer fits
-    if (length < kmer_size){
-        return (uint64_t) - 1;
-    }
-    uint64_t current_k_mer = 0;
+kmer_t minimizer(string& seq, int start, int length){
+    int end = start + length;
+    // printf("%d\t%d\t%s\n", start, end, seq.substr(start, length).c_str());;
+    kmer_t current_k_mer = (kmer_t) -1;
     // Biggest possible k-mer is all 1's
-    uint64_t min_k_mer = (uint64_t) - 1;
-    // Ignoring leftmost bytes depending on k-mer size
-    uint64_t kmer_size_mask = (uint64_t) - 1;
-    kmer_size_mask >>= (sizeof(uint64_t)-kmer_size)*8;
+    kmer_t min_k_mer = (kmer_t) -1;
+    // printf("MIN\t0x%08X\n", min_k_mer);
+    // Ignoring leftmost bits depending on k-mer size
+    kmer_t kmer_size_mask = (kmer_t) -1;
+    // TODO: Compute this once?
+    kmer_size_mask >>= (sizeof(kmer_t)*BYTE_SIZE-kmer_size*ENCODE_SIZE);
+    // printf("MASK\t0x%08X\n", kmer_size_mask);
+
+    if (start + kmer_size > end){
+        // printf("Oops\n");
+        return invalid_kmer--;
+    }
 
     // Building the first k-mer
-    for (int i = start; i < start + kmer_size; i++){
-        current_k_mer <<= 8;
-        current_k_mer |= (uint64_t) seq.at(i);
+    // printf("i  SEQ\tCURRENT__\tENCODE___\tMASKED__\n");
+    for (int i = start; i < start + kmer_size && i < end; i++){
+        // printf("%2d   %c\t", i, seq.at(i));
+        // printf("0x%08X\t", current_k_mer);
+        // printf("0x%08X\t", encode[(size_t)seq.at(i)]);
+        current_k_mer <<= ENCODE_SIZE;
+        current_k_mer |= encode[(size_t)seq.at(i)];
+        // printf("0x%08X\n", current_k_mer&kmer_size_mask);
+        // Hit a non ACTG nucleotide
+        if (encode[(size_t)seq.at(i)] == (kmer_t) -1){
+            current_k_mer = (kmer_t) -1;
+            // printf("HERE\n");
+            start = i+1;
+            // Hit yet another non nucleotide
+            if (start + kmer_size > end){
+                // printf("Oops\n");
+                return invalid_kmer--;
+            }
+
+        }
     }
+    current_k_mer &= kmer_size_mask;
+
     min_k_mer = min_k_mer < current_k_mer ? min_k_mer : current_k_mer;
 
     // Bit shifting to get new k-mers, and masking to keep k-mer size fixed
-    for (int i = start + kmer_size; i < start + length; i++){
-        current_k_mer <<= 8;
+    // printf("MIN\t0x%08X\n", min_k_mer);
+
+    // printf("After first minimizer\n");
+    // printf("i  SEQ\tCURRENT__\tENCODE___\tMASKED__\tMINIMUM\n");
+
+    for (int i = start + kmer_size; i < end; i++){
+        // printf("%2d   %c\t", i, seq.at(i));
+        // printf("0x%08X\t", current_k_mer);
+        // printf("0x%08X\t", encode[(size_t)seq.at(i)]);
+
+        current_k_mer <<= ENCODE_SIZE;
         current_k_mer &= kmer_size_mask;
-        current_k_mer |= (uint64_t) seq.at(i);
+        current_k_mer |= encode[(size_t)seq.at(i)];
+        // printf("0x%08X\t", current_k_mer&kmer_size_mask);
+
+        // Re-building the first k-mer if we hit a non ACTG nucleotide
+        if (encode[(size_t)seq.at(i)] == (kmer_t) -1){
+            // printf("HERE\n");
+            current_k_mer = (kmer_t) -1;
+            i++;
+            int j;
+            for (j = i; j < i + kmer_size && j < end; j++){
+                // printf("j %2d:%c\t", j, seq.at(j));
+                // printf("0x%08X\t", current_k_mer);
+                // printf("0x%08X\t", encode[(size_t)seq.at(j)]);
+
+                current_k_mer <<= ENCODE_SIZE;
+                current_k_mer |= encode[(size_t)seq.at(j)];
+                // printf("0x%08X\n", current_k_mer&kmer_size_mask);
+
+                // Hit a non ACTG nucleotide
+                if (encode[(size_t)seq.at(j)] == (kmer_t) -1){
+                    // printf( "==\tHERE\n");
+                    i = j+1;
+                }
+            }
+            current_k_mer &= kmer_size_mask;
+            i=j;
+        }
+
         min_k_mer = min_k_mer < current_k_mer ? min_k_mer : current_k_mer;
+        // printf("0x%08X\n", min_k_mer);
+
     }
 
     return min_k_mer;

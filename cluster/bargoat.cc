@@ -7,7 +7,7 @@
 
 #include "global.h"
 #include "parse_flags.h"
-#include "extract_barcodes_and_minimizers.h"
+#include "extract.h"
 #include "cluster.h"
 
 using namespace std;
