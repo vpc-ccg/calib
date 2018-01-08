@@ -43,7 +43,6 @@ minimizers_threshold?=1
 
 output_corrected_reads?=False
 output_prefix?=$(input_reads_prefix)_l$(barcode_length)_m$(minimizers_num)_k$(kmer_size)_e$(barcode_error_tolerance)_t$(minimizers_threshold)
-barcode_mini_tsv_file?=$(output_prefix).tsv
 
 # Rand Index Accuracy arguments
 number_of_true_molecules?=$(num_molecules)
