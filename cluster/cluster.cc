@@ -76,19 +76,19 @@ void extract_clusters(node_id_to_node_id_vector &adjacency_sets){
 }
 
 bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
-    int unmatched_minimimizers_1 = 0;
-    int unmatched_minimimizers_2 = 0;
+    int matched_minimimizers_1 = 0;
+    int matched_minimimizers_2 = 0;
 
 
     // std::cout << node_id << " ---- " << neighbor_id << '\n';
     for (int i =0; i < minimizer_count; i++){
         // std::cout << nodes[node_id].minimizers_1[i] << " ---- " << nodes[neighbor_id].minimizers_1[i] << '\n';
         // std::cout << nodes[node_id].minimizers_2[i] << " ---- " << nodes[neighbor_id].minimizers_2[i] << '\n';
-        unmatched_minimimizers_1 += nodes[node_id].minimizers_1[i] != nodes[neighbor_id].minimizers_1[i];
-        unmatched_minimimizers_2 += nodes[node_id].minimizers_2[i] != nodes[neighbor_id].minimizers_2[i];
+        matched_minimimizers_1 += nodes[node_id].minimizers_1[i] == nodes[neighbor_id].minimizers_1[i];
+        matched_minimimizers_2 += nodes[node_id].minimizers_2[i] == nodes[neighbor_id].minimizers_2[i];
     }
     // cout << unmatched_minimimizers_1 + unmatched_minimimizers_2 << "\n";
-    return unmatched_minimimizers_1 > minimizer_threshold && unmatched_minimimizers_2 > minimizer_threshold;
+    return !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold);
 }
 
 
