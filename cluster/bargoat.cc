@@ -12,21 +12,22 @@
 
 using namespace std;
 
-ofstream log;
+ofstream dog;
 
 int main(int argc, char *argv[]){
     parse_flags(argc, argv);
-    log = ofstream(output_prefix + ".log");
-    log << "Parameters:\n";
-    log << "\tinput_prefix:\t" << input_prefix << "\n";
-    log << "\toutput_prefix:\t" << output_prefix << "\n";
-    log << "\tbarcode_length:\t" << barcode_length << "\n";
-    log << "\tminimizer_count:\t" << minimizer_count << "\n";
-    log << "\tkmer_size:\t" << kmer_size << "\n";
-    log << "\terror_tolerance:\t" << error_tolerance << "\n";
-    log << "\tminimizer_threshold:\t" << minimizer_threshold << "\n";
+    dog = ofstream(output_prefix + ".log");
+    dog << "Parameters:\n";
+    dog << "\tinput_prefix:\t" << input_prefix << "\n";
+    dog << "\toutput_prefix:\t" << output_prefix << "\n";
+    dog << "\tbarcode_length:\t" << barcode_length << "\n";
+    dog << "\tminimizer_count:\t" << minimizer_count << "\n";
+    dog << "\tkmer_size:\t" << kmer_size << "\n";
+    dog << "\terror_tolerance:\t" << error_tolerance << "\n";
+    dog << "\tminimizer_threshold:\t" << minimizer_threshold << "\n";
 
     extract_barcodes_and_minimizers();
+    cout << "Done extracting\n";
 
     cluster();
 

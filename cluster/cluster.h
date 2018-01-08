@@ -4,26 +4,39 @@
 #include "global.h"
 #include <unordered_map>
 #include <vector>
-
+#include <unordered_set>
 
 
 #ifndef CLUSTER_H
 #define CLUSTER_H
 
-extern int node_count;
-extern int read_count;
+
+typedef size_t node_id_t;
+typedef size_t read_id_t;
+typedef uint64_t minimizer_t;
+
+extern size_t node_count;
+extern size_t read_count;
+
+struct Read{
+    std::string name_1;
+    std::string sequence_1;
+    std::string quality_1;
+
+    std::string name_2;
+    std::string sequence_2;
+    std::string quality_2;
+};
 
 struct Node{
-    Node() {
-        barcode = "";
-        minimizers_1 = new uint64_t [minimizer_count];
-        minimizers_2 = new uint64_t [minimizer_count];
-        id = node_count++;
-    }
     std::string barcode;
-    uint64_t *minimizers_1;
-    uint64_t *minimizers_2;
-    int id;
+    std::vector<minimizer_t> minimizers_1; //(minimizer_count, (minimizer_t) -1);
+    std::vector<minimizer_t> minimizers_2; //(minimizer_count);
+    Node(){
+        barcode = "";
+        minimizers_1 = std::vector<minimizer_t> (minimizer_count);
+        minimizers_2 = std::vector<minimizer_t> (minimizer_count);
+    }
 };
 
 struct NodeHash {
@@ -52,12 +65,25 @@ struct NodeEqual {
     }
 };
 
-typedef std::unordered_map<Node, std::vector<int>, NodeHash, NodeEqual> node_map;
-extern node_map node_to_read;
+// reads will store the actual paired-end fastq files contents
+typedef std::vector<Read> read_vector;
+// node_vector and node_id_to_read_id will replace node_to_read_id once reading fastq files is done
+typedef std::vector<Node> node_vector;
+typedef std::vector<std::vector<read_id_t>> node_id_to_read_id_vector;
 
+// node_id_to_node_id maps a node to its neighbors
+typedef std::vector<std::unordered_set<node_id_t>> node_id_to_node_id_vector;
+// masked_barcode_to_node_id is an LSH dictionary
+typedef std::unordered_map<std::string, std::vector<node_id_t>> masked_barcode_to_node_id_unordered_map;
+
+extern read_vector reads;
+extern node_vector nodes;
+extern node_id_to_read_id_vector node_to_read_vector;
 
 void cluster();
-void print_node(Node node, std::vector<int> reads);
-
+void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector &adjacency_sets);
+void barcode_similarity(int mask_id, node_id_to_node_id_vector &adjacency_sets);
+std::string mask(std::string barcode, int mask_id);
+void print_node(node_id_t node_id);
 
 #endif //CLUSTER_H

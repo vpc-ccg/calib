@@ -9,9 +9,7 @@
 #define BARGOAT_EXTRACT_H
 
 
-typedef uint32_t kmer_t;
-
-kmer_t minimizer(std::string& seq, int start, int length);
+minimizer_t minimizer(std::string& seq, int start, int length);
 void extract_barcodes_and_minimizers();
 
 #endif //BARGOAT_EXTRACT_H

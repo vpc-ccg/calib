@@ -20,10 +20,9 @@ extern int minimizer_count;
 extern int kmer_size;
 extern int error_tolerance;
 extern int minimizer_threshold;
-extern std::ofstream log;
+extern std::ofstream dog;
 
 
 
 
 #endif //BARGOAT_GLOBAL_H
-

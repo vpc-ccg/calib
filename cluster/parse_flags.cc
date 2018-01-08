@@ -47,7 +47,7 @@ void parse_flags(int argc, char *argv[]){
             minimizer_threshold = atoi(argv[i+1]);
         }
     }
-    
+
     if (barcode_length < 0 || minimizer_count < 0 || error_tolerance < 0 || minimizer_threshold < 0 || kmer_size < 0){
         cout << "Missing parameters!\n";
         exit(-1);
