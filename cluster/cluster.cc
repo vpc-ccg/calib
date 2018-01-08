@@ -116,12 +116,12 @@ void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_sets &adj
 void barcode_similarity(node_id_to_node_id_vector_of_sets &adjacency_sets){
     node_id_to_node_id_vector_of_vectors adjacency_lists(node_count);
 
-    vector<bool> mask(barcode_length, false);
-    std::fill(mask.begin() + error_tolerance, mask.end(), true);
-    masked_barcode_buffer[barcode_length-error_tolerance] = '\0';
+    vector<bool> mask(barcode_length*2, false);
+    std::fill(mask.begin() + error_tolerance*2, mask.end(), true);
+    masked_barcode_buffer[barcode_length*2-error_tolerance*2] = '\0';
 
     string template_barcode;
-    for (char c = 'A'; c < 'A' + barcode_length; c++){
+    for (char c = 'A'; c < 'A' + barcode_length*2; c++){
         template_barcode += c;
     }
 
@@ -156,7 +156,7 @@ void barcode_similarity(node_id_to_node_id_vector_of_sets &adjacency_sets){
 
 string mask_barcode(const string& barcode, const vector<bool>& mask){
     int pos = 0;
-    for (int i = 0; i < barcode_length; i++){
+    for (int i = 0; i < barcode_length*2; i++){
         if (mask[i]){
             masked_barcode_buffer[pos] = barcode.at(i);
             pos++;
