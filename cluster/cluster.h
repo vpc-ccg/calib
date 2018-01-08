@@ -4,7 +4,9 @@
 #include "global.h"
 #include <unordered_map>
 #include <vector>
+// #include <bitset>
 #include <unordered_set>
+#include <algorithm>
 
 
 #ifndef CLUSTER_H
@@ -82,8 +84,8 @@ extern node_id_to_read_id_vector node_to_read_vector;
 
 void cluster();
 void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector &adjacency_sets);
-void barcode_similarity(int mask_id, node_id_to_node_id_vector &adjacency_sets);
-std::string mask(std::string barcode, int mask_id);
+void barcode_similarity(node_id_to_node_id_vector &adjacency_sets);
+std::string mask_barcode(const std::string& barcode, const std::vector<bool>& mask);
 void print_node(node_id_t node_id);
 
 #endif //CLUSTER_H
