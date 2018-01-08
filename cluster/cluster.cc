@@ -3,7 +3,9 @@
 //
 
 #include "cluster.h"
-#include <igraph.h>
+
+#include <stack>
+#include <algorithm>
 
 using namespace std;
 
@@ -21,23 +23,56 @@ void cluster(){
 
     barcode_similarity(adjacency_sets);
 
-    dog << "Removing edged of unmatched minimizers\n";
-    cout << "Removing edged of unmatched minimizers\n";
+    dog << "Removing edges of unmatched minimizers\n";
+    cout << "Removing edges of unmatched minimizers\n";
 
     remove_edges_of_unmatched_minimizers(adjacency_sets);
 
-    cout <<  adjacency_sets.size() << "\n";
-    for (size_t i = 0; i < node_count; i++){
-        dog << i << "\t" << adjacency_sets[i].size();
-        cout << i << "\t" << adjacency_sets[i].size();
-        for (auto neighbor : adjacency_sets[i]){
-            dog << neighbor << "\t";
-            cout << neighbor << "\t";
+    dog << "Extracting clusters\n";
+    cout << "Extracting clusters\n";
+
+    extract_clusters(adjacency_sets);
+    // cout <<  adjacency_sets.size() << "\n";
+    // for (size_t i = 0; i < node_count; i++){
+    //     dog << i << "\t" << adjacency_sets[i].size();
+    //     cout << i << "\t" << adjacency_sets[i].size();
+    //     for (auto neighbor : adjacency_sets[i]){
+    //         dog << neighbor << "\t";
+    //         cout << neighbor << "\t";
+    //     }
+    //     dog << "\n";
+    //     cout << "\n";
+    // }
+}
+
+void extract_clusters(node_id_to_node_id_vector &adjacency_sets){
+    vector<bool> pushed(node_count, false);
+    stack<node_id_t> opened;
+    size_t cluster_count = 0;
+    for (node_id_t node = 0; node < node_count; node++){
+        if (!pushed[node]){
+            // cout << "cluster # " << cluster_count << ":\t";
+            dog << "# "<< cluster_count <<"\n";
+            opened.push(node);
+            pushed[node] = true;
+            while(!opened.empty()){
+                for (node_id_t neighbor: adjacency_sets[opened.top()]){
+                    if (!pushed[neighbor]){
+                        opened.push(neighbor);
+                        pushed[neighbor] = true;
+                    }
+                }
+                for (read_id_t read : node_to_read_vector[opened.top()]){
+                    dog << opened.top() << "\t" << read << "\t";
+                    dog << reads[read].name_1 << "\t" << reads[read].sequence_1 << "\t" << reads[read].quality_1 << "\t";
+                    dog << reads[read].name_2 << "\t" << reads[read].sequence_2 << "\t" << reads[read].quality_2 << "\n";
+                }
+                opened.pop();
+            }
+
+            cluster_count++;
         }
-        dog << "\n";
-        cout << "\n";
     }
-    std::cout << "HERE WE ARE!" << '\n';
 }
 
 bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
@@ -45,14 +80,14 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
     int unmatched_minimimizers_2 = 0;
 
 
-    std::cout << node_id << " ---- " << neighbor_id << '\n';
+    // std::cout << node_id << " ---- " << neighbor_id << '\n';
     for (int i =0; i < minimizer_count; i++){
-        std::cout << nodes[node_id].minimizers_1[i] << " ---- " << nodes[neighbor_id].minimizers_1[i] << '\n';
-        std::cout << nodes[node_id].minimizers_2[i] << " ---- " << nodes[neighbor_id].minimizers_2[i] << '\n';
+        // std::cout << nodes[node_id].minimizers_1[i] << " ---- " << nodes[neighbor_id].minimizers_1[i] << '\n';
+        // std::cout << nodes[node_id].minimizers_2[i] << " ---- " << nodes[neighbor_id].minimizers_2[i] << '\n';
         unmatched_minimimizers_1 += nodes[node_id].minimizers_1[i] != nodes[neighbor_id].minimizers_1[i];
         unmatched_minimimizers_2 += nodes[node_id].minimizers_2[i] != nodes[neighbor_id].minimizers_2[i];
     }
-    cout << unmatched_minimimizers_1 + unmatched_minimimizers_2 << "\n";
+    // cout << unmatched_minimimizers_1 + unmatched_minimimizers_2 << "\n";
     return unmatched_minimimizers_1 > minimizer_threshold && unmatched_minimimizers_2 > minimizer_threshold;
 }
 
@@ -62,10 +97,10 @@ void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector &adjacency_s
     int removed_count = 0;
     for (node_id_t node = 0; node < adjacency_sets.size(); node++){
         adjacency_sets[node].erase(node);
-        std::cout << "NODE: " << node << "\twith neighborhood of\t" << adjacency_sets[node].size()<< '\n';
+        // std::cout << "NODE: " << node << "\twith neighborhood of\t" << adjacency_sets[node].size()<< '\n';
 
         for (auto neighbor = adjacency_sets[node].begin(); neighbor != adjacency_sets[node].end(); ){
-            std::cout << "==>" << *neighbor << '\n';
+            // std::cout << "==>" << *neighbor << '\n';
             if (unmatched_minimimizers(node, *neighbor)){
                 removed_count++;
                 adjacency_sets[*neighbor].erase(node);
@@ -75,18 +110,18 @@ void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector &adjacency_s
             }
         }
     }
-    cout << "Removed " << removed_count << " edges\n";
+    // cout << "Removed " << removed_count << " edges\n";
 }
 
 void barcode_similarity(node_id_to_node_id_vector &adjacency_sets){
     masked_barcode_to_node_id_unordered_map lsh;
 
-    vector<bool> mask(barcode_length);
+    vector<bool> mask(barcode_length, false);
     std::fill(mask.begin() + error_tolerance, mask.end(), true);
     masked_barcode_buffer[barcode_length-error_tolerance] = '\0';
 
     do {
-        for (char c = 'A'; c < 'A' + barcode_length-error_tolerance + 1; c++){
+        for (char c = 'A'; c < 'A' + barcode_length; c++){
             masked_barcode_buffer[c-'A'] = c;
         }
         cout << mask_barcode(string(masked_barcode_buffer), mask) << "\n";
@@ -96,22 +131,11 @@ void barcode_similarity(node_id_to_node_id_vector &adjacency_sets){
     } while (std::next_permutation(mask.begin(), mask.end()));
 
     for (auto bucket : lsh){
-        // cout << bucket.first << "\twith size\t" << bucket.second.size() << "\n";
-
         for (node_id_t node : bucket.second){
-
-            // cout << "==> " << node << "\n";
-
             adjacency_sets[node].insert(bucket.second.begin(), bucket.second.end());
 
-
-            // for (auto n : adjacency_sets[node]){
-                // cout << "====> " << n << "\n";
-            // }
         }
     }
-    // cout << "adjacency_sets.size() : "  << adjacency_sets.size() << "\n";
-
 }
 
 
@@ -137,5 +161,4 @@ void print_node(node_id_t node_id){
 
     for (read_id_t read: node_to_read_vector[node_id])
         dog << "\t" << read << "\t" << reads[read].sequence_1 << "\t" << reads[read].sequence_2 << "\n";
-
 }

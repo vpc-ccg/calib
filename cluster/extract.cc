@@ -108,9 +108,9 @@ void extract_barcodes_and_minimizers() {
 
 
         if (node_to_read_map.find(current_node) != node_to_read_map.end()) {
-            node_to_read_map[current_node].push_back(reads.size());
+            node_to_read_map[current_node].push_back(reads.size()-1);
         } else {
-            node_to_read_map.emplace(current_node, vector<node_id_t>{reads.size()});
+            node_to_read_map.emplace(current_node, vector<node_id_t>{reads.size()-1});
             // vector<node_id_t> current_vector;
             // current_vector.push_back(read_count++);
             // node_to_read[current_node] = current_vector;
