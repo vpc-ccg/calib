@@ -68,12 +68,15 @@ void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector &adjacency_s
     int removed_count = 0;
     for (node_id_t node = 0; node < adjacency_sets.size(); node++){
         std::cout << "NODE: " << node << "\twith neighborhood of\t" << adjacency_sets[node].size()<< '\n';
-        for (node_id_t neighbor : adjacency_sets[node]){
-            std::cout << "==>" << neighbor << '\n';
-            if (unmatched_minimimizers(node, neighbor)){
+
+        for (auto neighbor = adjacency_sets[node].begin(); neighbor != adjacency_sets[node].end(); ){
+            std::cout << "==>" << *neighbor << '\n';
+            if (unmatched_minimimizers(node, *neighbor)){
                 removed_count++;
-                adjacency_sets[node].erase(neighbor);
-                adjacency_sets[neighbor].erase(node);
+                adjacency_sets[*neighbor].erase(node);
+                neighbor = adjacency_sets[node].erase(neighbor);
+            } else {
+                neighbor++;
             }
         }
     }
