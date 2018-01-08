@@ -19,7 +19,7 @@ void cluster(){
     // }
 
     // adjacency_sets per nodes
-    node_id_to_node_id_vector adjacency_sets(node_count);
+    node_id_to_node_id_vector_of_sets adjacency_sets;
 
     barcode_similarity(adjacency_sets);
 
@@ -45,7 +45,7 @@ void cluster(){
     // }
 }
 
-void extract_clusters(node_id_to_node_id_vector &adjacency_sets){
+void extract_clusters(node_id_to_node_id_vector_of_sets &adjacency_sets){
     vector<bool> pushed(node_count, false);
     stack<node_id_t> opened;
     size_t cluster_count = 0;
@@ -93,7 +93,7 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
 
 
 
-void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector &adjacency_sets){
+void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_sets &adjacency_sets){
     int removed_count = 0;
     for (node_id_t node = 0; node < adjacency_sets.size(); node++){
         adjacency_sets[node].erase(node);
@@ -113,8 +113,8 @@ void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector &adjacency_s
     // cout << "Removed " << removed_count << " edges\n";
 }
 
-void barcode_similarity(node_id_to_node_id_vector &adjacency_sets){
-    masked_barcode_to_node_id_unordered_map lsh;
+void barcode_similarity(node_id_to_node_id_vector_of_sets &adjacency_sets){
+    node_id_to_node_id_vector_of_vectors adjacency_lists(node_count);
 
     vector<bool> mask(barcode_length, false);
     std::fill(mask.begin() + error_tolerance, mask.end(), true);
@@ -127,17 +127,30 @@ void barcode_similarity(node_id_to_node_id_vector &adjacency_sets){
 
     do {
         cout << mask_barcode(string(template_barcode), mask) << "\n";
+        masked_barcode_to_node_id_unordered_map lsh;
         for (node_id_t i = 0; i < node_count; i++){
             lsh[mask_barcode(nodes[i].barcode, mask)].push_back(i);
         }
+        int buckets_processed = 0;
+        for (auto bucket : lsh){
+          sort(bucket.second.begin(), bucket.second.end());
+          for (node_id_t node : bucket.second){
+            vector<node_id_t> result;
+            set_union(adjacency_lists[node].begin(), adjacency_lists[node].end(),
+                        bucket.second.begin(), bucket.second.end(),
+                        back_inserter(result)
+                      );
+            adjacency_lists[node] = move(result);
+
+          }
+          buckets_processed++;
+        }
     } while (std::next_permutation(mask.begin(), mask.end()));
 
-    for (auto bucket : lsh){
-        for (node_id_t node : bucket.second){
-            adjacency_sets[node].insert(bucket.second.begin(), bucket.second.end());
-
-        }
+    for (auto neighborhood : adjacency_lists){
+      adjacency_sets.push_back(  unordered_set<node_id_t>(make_move_iterator(neighborhood.begin()), make_move_iterator(neighborhood.end()) )    );
     }
+
 }
 
 

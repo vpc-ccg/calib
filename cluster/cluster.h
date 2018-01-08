@@ -72,7 +72,8 @@ typedef std::vector<Node> node_vector;
 typedef std::vector<std::vector<read_id_t>> node_id_to_read_id_vector;
 
 // node_id_to_node_id maps a node to its neighbors
-typedef std::vector<std::unordered_set<node_id_t>> node_id_to_node_id_vector;
+typedef std::vector<std::unordered_set<node_id_t>> node_id_to_node_id_vector_of_sets;
+typedef std::vector<std::vector<node_id_t>> node_id_to_node_id_vector_of_vectors;
 // masked_barcode_to_node_id is an LSH dictionary
 typedef std::unordered_map<std::string, std::vector<node_id_t>> masked_barcode_to_node_id_unordered_map;
 
@@ -81,10 +82,10 @@ extern node_vector nodes;
 extern node_id_to_read_id_vector node_to_read_vector;
 
 void cluster();
-void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector &adjacency_sets);
-void barcode_similarity(node_id_to_node_id_vector &adjacency_sets);
+void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_sets &adjacency_sets);
+void barcode_similarity(node_id_to_node_id_vector_of_sets &adjacency_sets);
 std::string mask_barcode(const std::string& barcode, const std::vector<bool>& mask);
-void extract_clusters(node_id_to_node_id_vector &adjacency_sets);
+void extract_clusters(node_id_to_node_id_vector_of_sets &adjacency_sets);
 void print_node(node_id_t node_id);
 
 #endif //CLUSTER_H
