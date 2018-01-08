@@ -120,11 +120,13 @@ void barcode_similarity(node_id_to_node_id_vector &adjacency_sets){
     std::fill(mask.begin() + error_tolerance, mask.end(), true);
     masked_barcode_buffer[barcode_length-error_tolerance] = '\0';
 
+    string template_barcode;
+    for (char c = 'A'; c < 'A' + barcode_length; c++){
+        template_barcode += c;
+    }
+
     do {
-        for (char c = 'A'; c < 'A' + barcode_length - error_tolerance; c++){
-            masked_barcode_buffer[c-'A'] = c;
-        }
-        cout << mask_barcode(string(masked_barcode_buffer), mask) << "\n";
+        cout << mask_barcode(string(template_barcode), mask) << "\n";
         for (node_id_t i = 0; i < node_count; i++){
             lsh[mask_barcode(nodes[i].barcode, mask)].push_back(i);
         }
