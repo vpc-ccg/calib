@@ -7,7 +7,8 @@
 using namespace std;
 
 // Parameter definitions
-string input_prefix = "";
+string input_1 = "";
+string input_2 = "";
 string output_prefix = "";
 int barcode_length = -1;
 int minimizer_count = -1;
@@ -19,8 +20,12 @@ void parse_flags(int argc, char *argv[]){
 
     for (int i = 0; i < argc; i++){
         string current_param(argv[i]);
-        if (current_param == "-i" || current_param == "--input-prefix") {
-            input_prefix = string(argv[i+1]);
+        if (current_param == "-f" || current_param == "--input-forward") {
+            input_1 = string(argv[i+1]);
+        }
+
+        if (current_param == "-r" || current_param == "--input-reverse") {
+            input_2 = string(argv[i+1]);
         }
 
         if (current_param == "-o" || current_param == "--output-prefix") {
@@ -52,7 +57,7 @@ void parse_flags(int argc, char *argv[]){
         cout << "Missing parameters!\n";
         exit(-1);
     }
-    if (input_prefix == "" || output_prefix == ""){
+    if (input_1 == "" || input_2 == "" || output_prefix == ""){
         cout << "Missing parameters!\n";
         exit(-1);
     }

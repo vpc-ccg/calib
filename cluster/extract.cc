@@ -42,8 +42,8 @@ void extract_barcodes_and_minimizers() {
 
     ifstream fastq1;
     ifstream fastq2;
-    fastq1.open (input_prefix + "1.fq");
-    fastq2.open (input_prefix + "2.fq");
+    fastq1.open (input_1);
+    fastq2.open (input_2);
 
     dog << "Reading fastq files\n";
 

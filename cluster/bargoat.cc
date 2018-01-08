@@ -16,9 +16,10 @@ ofstream dog;
 
 int main(int argc, char *argv[]){
     parse_flags(argc, argv);
-    dog = ofstream(output_prefix + ".log");
+    dog = ofstream(output_prefix + ".clusters");
     dog << "Parameters:\n";
-    dog << "\tinput_prefix:\t" << input_prefix << "\n";
+    dog << "\tinput_1:\t" << input_1 << "\n";
+    dog << "\tinput_2:\t" << input_2 << "\n";
     dog << "\toutput_prefix:\t" << output_prefix << "\n";
     dog << "\tbarcode_length:\t" << barcode_length << "\n";
     dog << "\tminimizer_count:\t" << minimizer_count << "\n";

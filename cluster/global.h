@@ -13,7 +13,8 @@
 
 
 
-extern std::string input_prefix;
+extern std::string input_1;
+extern std::string input_2;
 extern std::string output_prefix;
 extern int barcode_length;
 extern int minimizer_count;
