@@ -37,7 +37,7 @@ def parse_args():
                         type=int,
                         default=42,
                         help="NumPy random seed (default: 42)")
-    parser.add_argument("-o", "--output-molecules", 
+    parser.add_argument("-o", "--output-molecules",
                         type=str,
                         default=None,
                         help="Output molecules/amplicons fasta file (default: stdout)")
