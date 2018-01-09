@@ -2,6 +2,7 @@ import numpy as np
 import argparse
 from numpy import random
 import math
+import sys
 
 
 def parse_args():
@@ -47,13 +48,28 @@ def parse_args():
     return args
 
 
+def flatten_dictionary(dictionary):
+    flattened_dict = []
+    for key, item in dictionary.items():
+        for i in range(len(item)):
+            new_tuple = (key, item[i])
+            flattened_dict.append(new_tuple)
+    return flattened_dict
+
+
 def pcr_cycle(molecules, duplication_rate, error_rate, pcr_results, cycles_left=0):
-    num_duplications = int(math.floor(len(molecules) * duplication_rate))
-    duplicate_choices = np.random.choice(list(molecules.keys()), size=num_duplications, replace=False)
-    for molecule_id in duplicate_choices:
+    choices = flatten_dictionary(pcr_results)
+    num_duplications = int(math.floor(len(choices) * duplication_rate))
+    duplicate_choice_idxs = np.random.choice(len(choices), size=num_duplications, replace=False)
+    print('PCR cycles left: ', cycles_left, file=sys.stderr)
+    print('Select {} out of {} molecules'.format(num_duplications, len(choices)), file=sys.stderr)
+    for i in duplicate_choice_idxs:
+        molecule_id, error_idxs = choices[i]
         molecule = molecules[molecule_id]
         error_choices = np.random.choice([True, False], p=[error_rate, 1-error_rate], size=len(molecule))
-        pcr_results[molecule_id].append(np.where(error_choices)[0])
+        error_choices = np.append(np.where(error_choices)[0], error_idxs)
+        pcr_results[molecule_id].append(error_choices)
+        # if len(molecules[molecule_id]) <= max(error_choices)
     if cycles_left == 0:
         return pcr_results
     else:
@@ -76,7 +92,7 @@ def main():
         molecule = molecules_file.readline().rstrip()
         molecules[molecule_id] = molecule
         # pcr_results is a list of lists of error indices
-        pcr_results[molecule_id] = []
+        pcr_results[molecule_id] = [[]]
     pcr_results = pcr_cycle(molecules,
                             args.duplication_rate_per_cycle,
                             args.error_rate,
@@ -84,9 +100,11 @@ def main():
                             cycles_left=3)
     nucleotides = {'A', 'C', 'G', 'T'}
     for molecule_id, pcr_result in pcr_results.items():
-        molecule = molecules[molecule_id]
         for error_idxs in pcr_result:
+            molecule = molecules[molecule_id]
             for error_idx in error_idxs:
+                error_idx = int(error_idx)
+                molecule = molecules[molecule_id]
                 mutation_choices = nucleotides - set(molecule[error_idx])
                 mutation = np.random.choice(list(mutation_choices), size=1)[0]
                 molecule = molecule[0:error_idx] + mutation + molecule[error_idx+1:]
