@@ -19,19 +19,19 @@ void cluster(){
     // }
 
     // adjacency_sets per nodes
-    node_id_to_node_id_vector_of_sets adjacency_sets;
+    node_id_to_node_id_vector_of_vectors adjacency_lists(node_count);
 
-    barcode_similarity(adjacency_sets);
+    barcode_similarity(adjacency_lists);
 
     dog << "Removing edges of unmatched minimizers\n";
     cout << "Removing edges of unmatched minimizers\n";
 
-    remove_edges_of_unmatched_minimizers(adjacency_sets);
+    remove_edges_of_unmatched_minimizers(adjacency_lists);
 
     dog << "Extracting clusters\n";
     cout << "Extracting clusters\n";
 
-    extract_clusters(adjacency_sets);
+    extract_clusters(adjacency_lists);
     // cout <<  adjacency_sets.size() << "\n";
     // for (size_t i = 0; i < node_count; i++){
     //     dog << i << "\t" << adjacency_sets[i].size();
@@ -45,7 +45,7 @@ void cluster(){
     // }
 }
 
-void extract_clusters(node_id_to_node_id_vector_of_sets &adjacency_sets){
+void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     vector<bool> pushed(node_count, false);
     stack<node_id_t> opened;
     size_t cluster_count = 0;
@@ -56,7 +56,7 @@ void extract_clusters(node_id_to_node_id_vector_of_sets &adjacency_sets){
             opened.push(node);
             pushed[node] = true;
             while(!opened.empty()){
-                for (node_id_t neighbor: adjacency_sets[opened.top()]){
+                for (node_id_t neighbor: adjacency_lists[opened.top()]){
                     if (!pushed[neighbor]){
                         opened.push(neighbor);
                         pushed[neighbor] = true;
@@ -93,28 +93,23 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
 
 
 
-void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_sets &adjacency_sets){
+void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     int removed_count = 0;
-    for (node_id_t node = 0; node < adjacency_sets.size(); node++){
-        adjacency_sets[node].erase(node);
+    for (node_id_t node = 0; node < node_count; node++){
         // std::cout << "NODE: " << node << "\twith neighborhood of\t" << adjacency_sets[node].size()<< '\n';
-
-        for (auto neighbor = adjacency_sets[node].begin(); neighbor != adjacency_sets[node].end(); ){
+        vector<node_id_t> good_neighbors;
+        for (node_id_t neighbor : adjacency_lists[node]){
             // std::cout << "==>" << *neighbor << '\n';
-            if (unmatched_minimimizers(node, *neighbor)){
-                removed_count++;
-                adjacency_sets[*neighbor].erase(node);
-                neighbor = adjacency_sets[node].erase(neighbor);
-            } else {
-                neighbor++;
+            if (!unmatched_minimimizers(node, neighbor)){
+                good_neighbors.push_back(neighbor);
             }
         }
+        adjacency_lists[node] = move(good_neighbors);
     }
     // cout << "Removed " << removed_count << " edges\n";
 }
 
-void barcode_similarity(node_id_to_node_id_vector_of_sets &adjacency_sets){
-    node_id_to_node_id_vector_of_vectors adjacency_lists(node_count);
+void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
 
     vector<bool> mask(barcode_length*2, false);
     std::fill(mask.begin() + error_tolerance*2, mask.end(), true);
@@ -146,10 +141,9 @@ void barcode_similarity(node_id_to_node_id_vector_of_sets &adjacency_sets){
           buckets_processed++;
         }
     } while (std::next_permutation(mask.begin(), mask.end()));
-
-    for (auto neighborhood : adjacency_lists){
-      adjacency_sets.push_back(  unordered_set<node_id_t>(make_move_iterator(neighborhood.begin()), make_move_iterator(neighborhood.end()) )    );
-    }
+    // for (auto neighborhood : adjacency_lists){
+    //   adjacency_sets.push_back(  unordered_set<node_id_t>(make_move_iterator(neighborhood.begin()), make_move_iterator(neighborhood.end()) )    );
+    // }
 
 }
 
