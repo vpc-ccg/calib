@@ -3,15 +3,9 @@ BarGoat clusters paired-end reads using their barcodes and sequences. BarGoat is
 
 ## Prerequisites
 
-BarGoat is implemented in Python 3 and C++11. Clustering reads requires installing the following dependencies:
+BarGoat read clustering is implemented in C++11 and has been tested on Linux operating system.
 
-- [NumPy](http://www.numpy.org/) 
-- [argparse](https://pypi.python.org/pypi/argparse)
-- [igraph](http://igraph.org/python/)
-
-Note that igraph installation has some C dependencies. Make sure igraph is working before running BarGoat. We personally recommend using [Anaconda 3](https://docs.anaconda.com/anaconda/install/) to manage all these dependencies.
-
-If you wish to simulate read sets using BarGoat, you will need the following prerequisites:
+The simulatation module of BarGoat is implemented in Python 3. BarGoat read simulation has the following prerequisites:
 
 - [pyfaidx](https://pythonhosted.org/pyfaidx/)
 - [argparse](https://pypi.python.org/pypi/argparse)
