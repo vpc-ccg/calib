@@ -29,8 +29,9 @@ minimizer_t invalid_kmer = (minimizer_t) -1;
 void extract_barcodes_and_minimizers() {
     node_to_read_id_unordered_map node_to_read_map;
 
-    for (int i = 0; i < ASCII_SIZE; i++)
+    for (int i = 0; i < ASCII_SIZE; i++) {
         encode[i] = (minimizer_t) -1;
+    }
     encode['A'] = 0x0;
     encode['C'] = 0x1;
     encode['G'] = 0x2;
@@ -67,7 +68,7 @@ void extract_barcodes_and_minimizers() {
         int s2_length = reads.back().sequence_2.size();
 
         // Extracting the barcode from the start of both mates
-        if (s1_length >= barcode_length && s2_length >= barcode_length){
+        if (s1_length >= barcode_length && s2_length >= barcode_length) {
             current_node.barcode =
                 reads.back().sequence_1.substr(0, barcode_length) +
                 reads.back().sequence_2.substr(0, barcode_length);
@@ -81,27 +82,27 @@ void extract_barcodes_and_minimizers() {
 
         // Splitting the remaining sequence into ~ equally sized segments, and extracting minimizers from each
         int s1_seg_length = s1_length / minimizer_count;
-        if (s1_seg_length >= kmer_size){
+        if (s1_seg_length >= kmer_size) {
             int start = barcode_length;
-            for (int i = 0; i < minimizer_count; i++){
+            for (int i = 0; i < minimizer_count; i++) {
                 current_node.minimizers_1[i] = minimizer(reads.back().sequence_1, start, s1_seg_length);
                 start += s1_seg_length;
             }
         } else {
-            for (int i = 0; i < minimizer_count; i++){
+            for (int i = 0; i < minimizer_count; i++) {
                 current_node.minimizers_1[i] = -1;
             }
         }
 
         int s2_seg_length = s2_length / minimizer_count;
-        if (s2_seg_length >= kmer_size){
+        if (s2_seg_length >= kmer_size) {
             int start = barcode_length;
-            for (int i = 0; i < minimizer_count; i++){
+            for (int i = 0; i < minimizer_count; i++) {
                 current_node.minimizers_2[i] = minimizer(reads.back().sequence_2, start, s2_seg_length);
                 start += s2_seg_length;
             }
         } else {
-            for (int i = 0; i < minimizer_count; i++){
+            for (int i = 0; i < minimizer_count; i++) {
                 current_node.minimizers_2[i] = -1;
             }
         }
@@ -117,8 +118,6 @@ void extract_barcodes_and_minimizers() {
             current_node = Node();
         }
         reads.push_back(Read());
-
-//
 //        cout << current_node.id << "\t" << current_node.barcode << "\t" ;
 //        for (int i =0; i < minimizer_count; i++)
 //            cout << current_node.minimizers_1[i] << "\t";
@@ -135,7 +134,7 @@ void extract_barcodes_and_minimizers() {
 
     nodes.reserve(node_count);
     node_to_read_vector.reserve(node_count);
-    for (auto kv : node_to_read_map){
+    for (auto kv : node_to_read_map) {
         nodes.push_back(move(kv.first));
         node_to_read_vector.push_back(move(kv.second));
     }
@@ -157,14 +156,14 @@ minimizer_t minimizer(string& seq, int start, int length){
     kmer_size_mask >>= (sizeof(minimizer_t)*BYTE_SIZE-kmer_size*ENCODE_SIZE);
     // printf("MASK\t0x%08X\n", kmer_size_mask);
 
-    if (start + kmer_size > end){
+    if (start + kmer_size > end) {
         // printf("Oops\n");
         return invalid_kmer--;
     }
 
     // Building the first k-mer
     // printf("i  SEQ\tCURRENT__\tENCODE___\tMASKED__\n");
-    for (int i = start; i < start + kmer_size && i < end; i++){
+    for (int i = start; i < start + kmer_size && i < end; i++) {
         // printf("%2d   %c\t", i, seq.at(i));
         // printf("0x%08X\t", current_k_mer);
         // printf("0x%08X\t", encode[(size_t)seq.at(i)]);
@@ -172,12 +171,12 @@ minimizer_t minimizer(string& seq, int start, int length){
         current_k_mer |= encode[(size_t)seq.at(i)];
         // printf("0x%08X\n", current_k_mer&kmer_size_mask);
         // Hit a non ACTG nucleotide
-        if (encode[(size_t)seq.at(i)] == (minimizer_t) -1){
+        if (encode[(size_t)seq.at(i)] == (minimizer_t) -1) {
             current_k_mer = (minimizer_t) -1;
             // printf("HERE\n");
             start = i+1;
             // Hit yet another non nucleotide
-            if (start + kmer_size > end){
+            if (start + kmer_size > end) {
                 // printf("Oops\n");
                 return invalid_kmer--;
             }
@@ -194,7 +193,7 @@ minimizer_t minimizer(string& seq, int start, int length){
     // printf("After first minimizer\n");
     // printf("i  SEQ\tCURRENT__\tENCODE___\tMASKED__\tMINIMUM\n");
 
-    for (int i = start + kmer_size; i < end; i++){
+    for (int i = start + kmer_size; i < end; i++) {
         // printf("%2d   %c\t", i, seq.at(i));
         // printf("0x%08X\t", current_k_mer);
         // printf("0x%08X\t", encode[(size_t)seq.at(i)]);
@@ -205,12 +204,12 @@ minimizer_t minimizer(string& seq, int start, int length){
         // printf("0x%08X\t", current_k_mer&kmer_size_mask);
 
         // Re-building the first k-mer if we hit a non ACTG nucleotide
-        if (encode[(size_t)seq.at(i)] == (minimizer_t) -1){
+        if (encode[(size_t)seq.at(i)] == (minimizer_t) -1) {
             // printf("HERE\n");
             current_k_mer = (minimizer_t) -1;
             i++;
             int j;
-            for (j = i; j < i + kmer_size && j < end; j++){
+            for (j = i; j < i + kmer_size && j < end; j++) {
                 // printf("j %2d:%c\t", j, seq.at(j));
                 // printf("0x%08X\t", current_k_mer);
                 // printf("0x%08X\t", encode[(size_t)seq.at(j)]);
@@ -220,7 +219,7 @@ minimizer_t minimizer(string& seq, int start, int length){
                 // printf("0x%08X\n", current_k_mer&kmer_size_mask);
 
                 // Hit a non ACTG nucleotide
-                if (encode[(size_t)seq.at(j)] == (minimizer_t) -1){
+                if (encode[(size_t)seq.at(j)] == (minimizer_t) -1) {
                     // printf( "==\tHERE\n");
                     i = j+1;
                 }

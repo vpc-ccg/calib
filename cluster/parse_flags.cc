@@ -18,7 +18,7 @@ int kmer_size = -1;
 
 void parse_flags(int argc, char *argv[]){
 
-    for (int i = 0; i < argc; i++){
+    for (int i = 0; i < argc; i++) {
         string current_param(argv[i]);
         if (current_param == "-f" || current_param == "--input-forward") {
             input_1 = string(argv[i+1]);
@@ -53,11 +53,11 @@ void parse_flags(int argc, char *argv[]){
         }
     }
 
-    if (barcode_length < 0 || minimizer_count < 0 || error_tolerance < 0 || minimizer_threshold < 0 || kmer_size < 0){
+    if (barcode_length < 0 || minimizer_count < 0 || error_tolerance < 0 || minimizer_threshold < 0 || kmer_size < 0) {
         cout << "Missing parameters!\n";
         exit(-1);
     }
-    if (input_1 == "" || input_2 == "" || output_prefix == ""){
+    if (input_1 == "" || input_2 == "" || output_prefix == "") {
         cout << "Missing parameters!\n";
         exit(-1);
     }

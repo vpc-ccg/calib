@@ -6,11 +6,8 @@
 #include <fstream>
 #include <stdio.h>
 
-
 #ifndef BARGOAT_GLOBAL_H
 #define BARGOAT_GLOBAL_H
-
-
 
 
 extern std::string input_1;
