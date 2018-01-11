@@ -4,6 +4,8 @@ from numpy import random
 import math
 import sys
 
+nucleotides = {'A', 'C', 'G', 'T'}
+
 
 def parse_args():
     defaults = {'number_of_cycles': 6,
@@ -64,13 +66,20 @@ def pcr_cycle(molecules, duplication_rate, error_rate, pcr_results, cycles_left=
     print('PCR cycles left: ', cycles_left, file=sys.stderr)
     print('Select {} out of {} molecules'.format(num_duplications, len(choices)), file=sys.stderr)
     for i in duplicate_choice_idxs:
-        molecule_id, error_idxs = choices[i]
+        molecule_id, existing_mutations = choices[i]
         molecule = molecules[molecule_id]
         error_choices = np.random.choice([True, False], p=[error_rate, 1-error_rate], size=len(molecule))
-        error_choices = np.append(np.where(error_choices)[0], error_idxs)
-        pcr_results[molecule_id].append(error_choices)
+        error_idxs = np.where(error_choices)[0]
+        mutations = []
+        for error_idx in error_idxs:
+            mutation_choices = nucleotides - set(molecule[error_idx])
+            mutation = np.random.choice(list(mutation_choices), size=1)[0]
+            mutations.append((error_idx, mutation))
+        mutations = mutations + existing_mutations
+        # print(mutations)
+        pcr_results[molecule_id].append(mutations)
         # if len(molecules[molecule_id]) <= max(error_choices)
-    if cycles_left == 0:
+    if cycles_left == 1:
         return pcr_results
     else:
         return pcr_cycle(molecules, duplication_rate, error_rate, pcr_results, cycles_left-1)
@@ -97,19 +106,21 @@ def main():
                             args.duplication_rate_per_cycle,
                             args.error_rate,
                             pcr_results,
-                            cycles_left=3)
-    nucleotides = {'A', 'C', 'G', 'T'}
+                            cycles_left=args.number_of_cycles)
+    if args.pcr_product:
+        output = open(args.pcr_product, 'w')
+    else:
+        output = sys.stdout
     for molecule_id, pcr_result in pcr_results.items():
-        for error_idxs in pcr_result:
+        molecule_number = 0
+        for mutations in pcr_result:
             molecule = molecules[molecule_id]
-            for error_idx in error_idxs:
-                error_idx = int(error_idx)
+            for error_idx, mutation in mutations:
                 molecule = molecules[molecule_id]
-                mutation_choices = nucleotides - set(molecule[error_idx])
-                mutation = np.random.choice(list(mutation_choices), size=1)[0]
                 molecule = molecule[0:error_idx] + mutation + molecule[error_idx+1:]
-            print(molecule_id)
-            print(molecule)
+            print(molecule_id + "_{}".format(str(molecule_number)), file=output)
+            molecule_number += 1
+            print(molecule, file=output)
 
 
 if __name__ == "__main__":
