@@ -23,10 +23,14 @@ read_length?=150
 barcode_length?=10
 reference?=Data/e_coli.fa.gz
 coverage?=20
+pcr_cycles?=7
+pcr_duplication_rate?=0.8
+pcr_error_rate?=0.00003
 simulation_prefix?=Data/simulated
 simulated_barcodes?=$(simulation_prefix)_l$(barcode_length)_barcodes.txt
 simulated_molecules?=$(simulation_prefix)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_molecules.fa
 simulated_barcoded_molecules?=$(simulation_prefix)_l$(barcode_length)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_barcoded_molecules.fa
+amplified_barcoded_molecules?=$(simulation_prefix)_l$(barcode_length)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_amplified_barcoded_molecules.fa
 simulated_reads?=$(simulation_prefix)_l$(barcode_length)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_reads
 simulated_reads_log?=$(simulated_reads)_art_illumina.log
 
@@ -86,7 +90,16 @@ $(simulated_barcoded_molecules): $(simulated_barcodes) $(simulated_molecules)
 		--random-seed $(random_seed) \
 		--output-barcoded-molecules $(simulated_barcoded_molecules)
 
-simulate: $(simulated_barcoded_molecules)
+$(amplified_barcoded_molecules): $(simulated_barcoded_molecules)
+	$(python3) Data/pcr_duplication.py \
+		--molecules $(simulated_barcoded_molecules) \
+		--number-of-cycles $(pcr_cycles) \
+		--duplication-rate-per-cycle $(pcr_duplication_rate) \
+		--error-rate $(pcr_error_rate) \
+		--random-seed $(random_seed) \
+		--pcr-product $(amplified_barcoded_molecules)
+
+simulate: $(amplified_barcoded_molecules)
 	$(art_illumina) \
 		--seqSys HSXt \
 		--amplicon \
@@ -94,7 +107,7 @@ simulate: $(simulated_barcoded_molecules)
 		--noALN \
 		--in $(simulated_barcoded_molecules) \
 		--len $(read_length) \
-		--fcov $(coverage) \
+		--fcov 1 \
 		--rndSeed $(random_seed) \
 		--out $(simulated_reads)_ \
 		> $(simulated_reads_log);
