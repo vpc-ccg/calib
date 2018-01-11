@@ -87,8 +87,7 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id);
 void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists);
 void print_node(node_id_t node_id);
 void process_lsh(masked_barcode_to_node_id_unordered_map &lsh,
-                 node_id_to_node_id_vector_of_vectors adjacency_lists,
-                 size_t reminder,
-                 size_t divisor);
+                 node_id_to_node_id_vector_of_vectors &adjacency_lists,
+                 size_t reminder);
 
 #endif //CLUSTER_H

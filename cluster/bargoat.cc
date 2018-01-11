@@ -26,6 +26,7 @@ int main(int argc, char *argv[]){
     dog << "\tkmer_size:\t" << kmer_size << "\n";
     dog << "\terror_tolerance:\t" << error_tolerance << "\n";
     dog << "\tminimizer_threshold:\t" << minimizer_threshold << "\n";
+    dog << "\tthreads:\t" << thread_count << "\n";
 
     extract_barcodes_and_minimizers();
     cout << "Done extracting\n";

@@ -18,6 +18,7 @@ extern int minimizer_count;
 extern int kmer_size;
 extern int error_tolerance;
 extern int minimizer_threshold;
+extern int thread_count;
 extern std::ofstream dog;
 
 

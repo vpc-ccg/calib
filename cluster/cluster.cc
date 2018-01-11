@@ -116,8 +116,8 @@ void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_vectors &
 
 void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     vector<bool> mask(barcode_length*2, false);
-    std::fill(mask.begin() + error_tolerance*2, mask.end(), true);
-    masked_barcode_buffer[barcode_length*2-error_tolerance*2] = '\0';
+    std::fill(mask.begin() + error_tolerance, mask.end(), true);
+    masked_barcode_buffer[barcode_length*2-error_tolerance] = '\0';
 
     string template_barcode;
     for (char c = 'A'; c < 'A' + barcode_length*2; c++) {
@@ -134,9 +134,27 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
         }
         build_time += difftime(time(NULL), start);
         cout << "Building LSH took: " << difftime(time(NULL), start) << "\n";
-
-        //int buckets_processed = 0;
+        process_lsh(lsh, adjacency_lists, 0);
         start = time(NULL);
+        process_time += difftime(time(NULL), start);
+        cout << "Processing LSH took: " << difftime(time(NULL), start) << "\n";
+    } while (std::next_permutation(mask.begin(), mask.end()));
+    cout << "Building all LSH took: " << build_time << "\n";
+    cout << "Processing all LSH took: " << process_time << "\n";
+    // for (auto neighborhood : adjacency_lists){
+    //   adjacency_sets.push_back(  unordered_set<node_id_t>(make_move_iterator(neighborhood.begin()), make_move_iterator(neighborhood.end()) )    );
+    // }
+
+}
+
+void process_lsh(masked_barcode_to_node_id_unordered_map &lsh,
+                 node_id_to_node_id_vector_of_vectors &adjacency_lists,
+                 size_t thread_id){
+    auto it = lsh.begin();
+    for (int i = 0; i < (int) thread_id; i++) {
+        it++;
+    }
+    while (it != lsh.end()) {
         for (auto bucket : lsh) {
             sort(bucket.second.begin(), bucket.second.end());
             for (node_id_t node : bucket.second) {
@@ -150,22 +168,10 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
             }
             //buckets_processed++;
         }
-//        lsh.clear();
-        process_time += difftime(time(NULL), start);
-        cout << "Processing LSH took: " << difftime(time(NULL), start) << "\n";
-    } while (std::next_permutation(mask.begin(), mask.end()));
-    cout << "Building all LSH took: " << build_time << "\n";
-    cout << "Processing all LSH took: " << process_time << "\n";
-    // for (auto neighborhood : adjacency_lists){
-    //   adjacency_sets.push_back(  unordered_set<node_id_t>(make_move_iterator(neighborhood.begin()), make_move_iterator(neighborhood.end()) )    );
-    // }
-
-}
-
-void process_lsh(masked_barcode_to_node_id_unordered_map &lsh,
-                 node_id_to_node_id_vector_of_vectors adjacency_lists,
-                 size_t reminder,
-                 size_t divisor){
+        for (int i = 0; i < thread_count; i++) {
+            it++;
+        }
+    }
 
 
 }
