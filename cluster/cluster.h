@@ -17,50 +17,50 @@ extern size_t node_count;
 extern size_t read_count;
 
 struct Read {
-	std::string name_1;
-	std::string sequence_1;
-	std::string quality_1;
+    std::string name_1;
+    std::string sequence_1;
+    std::string quality_1;
 
-	std::string name_2;
-	std::string sequence_2;
-	std::string quality_2;
+    std::string name_2;
+    std::string sequence_2;
+    std::string quality_2;
 };
 
 struct Node {
-	std::string barcode;
-	std::vector<minimizer_t> minimizers_1; //(minimizer_count, (minimizer_t) -1);
-	std::vector<minimizer_t> minimizers_2; //(minimizer_count);
-	Node(){
-		barcode = "";
-		minimizers_1 = std::vector<minimizer_t> (minimizer_count);
-		minimizers_2 = std::vector<minimizer_t> (minimizer_count);
-	}
+    std::string barcode;
+    std::vector<minimizer_t> minimizers_1;     //(minimizer_count, (minimizer_t) -1);
+    std::vector<minimizer_t> minimizers_2;     //(minimizer_count);
+    Node(){
+        barcode = "";
+        minimizers_1 = std::vector<minimizer_t> (minimizer_count);
+        minimizers_2 = std::vector<minimizer_t> (minimizer_count);
+    }
 };
 
 struct NodeHash {
-	size_t operator()(const Node& node) const {
-		size_t result = std::hash<std::string>()(node.barcode);
-		for (int i = 0; i < minimizer_count; i++) {
-			result ^= std::hash<int>()(node.minimizers_1[i]) << i;
-		}
-		for (int i = 0; i < minimizer_count; i++) {
-			result ^= std::hash<int>()(node.minimizers_2[i]) << i;
-		}
-		return result;
-	}
+    size_t operator()(const Node& node) const {
+        size_t result = std::hash<std::string>()(node.barcode);
+        for (int i = 0; i < minimizer_count; i++) {
+            result ^= std::hash<int>()(node.minimizers_1[i]) << i;
+        }
+        for (int i = 0; i < minimizer_count; i++) {
+            result ^= std::hash<int>()(node.minimizers_2[i]) << i;
+        }
+        return result;
+    }
 };
 
 struct NodeEqual {
-	bool operator()(const Node& lhs, const Node& rhs) const {
-		bool result = lhs.barcode == rhs.barcode;
-		for (int i = 0; i < minimizer_count; i++) {
-			result = result && (lhs.minimizers_1[i] == rhs.minimizers_1[i]);
-		}
-		for (int i = 0; i < minimizer_count; i++) {
-			result = result && (lhs.minimizers_2[i] == rhs.minimizers_2[i]);
-		}
-		return result;
-	}
+    bool operator()(const Node& lhs, const Node& rhs) const {
+        bool result = lhs.barcode == rhs.barcode;
+        for (int i = 0; i < minimizer_count; i++) {
+            result = result && (lhs.minimizers_1[i] == rhs.minimizers_1[i]);
+        }
+        for (int i = 0; i < minimizer_count; i++) {
+            result = result && (lhs.minimizers_2[i] == rhs.minimizers_2[i]);
+        }
+        return result;
+    }
 };
 
 // reads will store the actual paired-end fastq files contents
