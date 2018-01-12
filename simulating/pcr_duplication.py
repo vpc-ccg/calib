@@ -116,7 +116,6 @@ def main():
         for mutations in pcr_result:
             molecule = molecules[molecule_id]
             for error_idx, mutation in mutations:
-                molecule = molecules[molecule_id]
                 molecule = molecule[0:error_idx] + mutation + molecule[error_idx+1:]
             print(molecule_id + "_{}".format(str(molecule_number)), file=output)
             molecule_number += 1
