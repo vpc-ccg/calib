@@ -110,7 +110,7 @@ simulate: $(amplified_barcoded_molecules)
 		--amplicon \
 		--paired \
 		--noALN \
-		--in $(simulated_barcoded_molecules) \
+		--in $(amplified_barcoded_molecules) \
 		--len $(read_length) \
 		--fcov 1 \
 		--rndSeed $(random_seed) \
