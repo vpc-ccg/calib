@@ -2,7 +2,7 @@
 // Created by borabi on 19/12/17.
 //
 
-#include "parse_flags.h"
+#include "commandline.h"
 
 using namespace std;
 
@@ -10,6 +10,7 @@ using namespace std;
 string input_1 = "";
 string input_2 = "";
 string output_prefix = "";
+bool silent = false;
 int barcode_length = -1;
 int minimizer_count = -1;
 int error_tolerance = -1;
@@ -28,6 +29,9 @@ void parse_flags(int argc, char *argv[]){
         }
         if (current_param == "-o" || current_param == "--output-prefix") {
             output_prefix = string(argv[i+1]);
+        }
+        if (current_param == "-s" || current_param == "--silent") {
+            silent = true;
         }
         if (current_param == "-l" || current_param == "--barcode-length") {
             barcode_length = atoi(argv[i+1]);
@@ -62,3 +66,20 @@ void parse_flags(int argc, char *argv[]){
         exit(-1);
     }
 }
+
+void print_flags(ofstream &out){
+    out << "Parameters:\n";
+    out << "\tinput_1:\t" << input_1 << "\n";
+    out << "\tinput_2:\t" << input_2 << "\n";
+    out << "\toutput_prefix:\t" << output_prefix << "\n";
+    out << "\tbarcode_length:\t" << barcode_length << "\n";
+    out << "\tminimizer_count:\t" << minimizer_count << "\n";
+    out << "\tkmer_size:\t" << kmer_size << "\n";
+    out << "\terror_tolerance:\t" << error_tolerance << "\n";
+    out << "\tminimizer_threshold:\t" << minimizer_threshold << "\n";
+    out << "\tthreads:\t" << thread_count << "\n";
+
+}
+// void print_flags(ofstream &out){
+//
+// }

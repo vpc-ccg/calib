@@ -9,9 +9,10 @@
 
 
 
-#ifndef BARGOAT_PARSE_FLAGS_H
-#define BARGOAT_PARSE_FLAGS_H
+#ifndef BARGOAT_COMMANDLINE_H
+#define BARGOAT_COMMANDLINE_H
 
 void parse_flags(int argc, char *argv[]);
+void print_flags(std::ofstream &out);
 
-#endif //BARGOAT_PARSE_FLAGS_H
+#endif //BARGOAT_COMMANDLINE_H

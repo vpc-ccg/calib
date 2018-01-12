@@ -4,9 +4,10 @@
 
 #include "string"
 #include <iostream>
+#include <sstream>
 
 #include "global.h"
-#include "parse_flags.h"
+#include "commandline.h"
 #include "extract.h"
 #include "cluster.h"
 
@@ -16,21 +17,22 @@ ofstream dog;
 
 int main(int argc, char *argv[]){
     parse_flags(argc, argv);
-    dog = ofstream(output_prefix + ".clusters");
-    dog << "Parameters:\n";
-    dog << "\tinput_1:\t" << input_1 << "\n";
-    dog << "\tinput_2:\t" << input_2 << "\n";
-    dog << "\toutput_prefix:\t" << output_prefix << "\n";
-    dog << "\tbarcode_length:\t" << barcode_length << "\n";
-    dog << "\tminimizer_count:\t" << minimizer_count << "\n";
-    dog << "\tkmer_size:\t" << kmer_size << "\n";
-    dog << "\terror_tolerance:\t" << error_tolerance << "\n";
-    dog << "\tminimizer_threshold:\t" << minimizer_threshold << "\n";
-    dog << "\tthreads:\t" << thread_count << "\n";
 
+    stringstream ss;
+    if (silent) {
+        cout.rdbuf(ss.rdbuf());
+    }
+
+
+    dog = ofstream(output_prefix + ".cluster.log");
+    print_flags(dog);
+    // print_flags(&cout);
+
+    cout << "Extracting minimizers and barcodes...\n";
     extract_barcodes_and_minimizers();
-    cout << "Done extracting\n";
 
+    cout << "Clustering...\n";
     cluster();
 
+    cout << "All done! Have good day!\n";
 }

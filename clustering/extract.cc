@@ -52,8 +52,6 @@ void extract_barcodes_and_minimizers() {
     Node current_node;
     reads.push_back(Read());
 
-    cout << "#nodes\t" << node_count << "\n";
-
     // Processing FASTQ files one read at a time
     while (getline(fastq1, reads.back().name_1)) {
         getline(fastq1, reads.back().sequence_1);
@@ -130,7 +128,11 @@ void extract_barcodes_and_minimizers() {
 
     read_count = reads.size();
     node_count = node_to_read_map.size();
-    cout << node_to_read_map.size() << "\t" << "\t" << node_count << "\n";
+
+    cout << "Read count: " << read_count << "\n";
+    dog << "Read count: " << read_count << "\n";
+    cout << "Node count: " << node_count << "\n";
+    dog << "Node count: " << node_count << "\n";
 
     nodes.reserve(node_count);
     node_to_read_vector.reserve(node_count);

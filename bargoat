@@ -1,7 +1,7 @@
 #!/usr/bin/make -rRf
 # Usage:
-# barcor-make correct reads1=reads1.fq reads2=reads2.fq
-# barcor-make simulate
+# bargoat correct reads1=reads1.fq reads2=reads2.fq
+# bargoat simulate
 #
 
 SHELL=/bin/bash -o pipefail
@@ -9,7 +9,8 @@ cc?=g++
 python3?=python3
 clustering_path?=clustering/
 cc_files?= $(clustering_path)bargoat.cc $(clustering_path)cluster.cc $(clustering_path)extract.cc $(clustering_path)parse_flags.cc $(clustering_path)cluster.h $(clustering_path)extract.h $(clustering_path)global.h $(clustering_path)parse_flags.h
-cc_args?= -O3 -std=c++11
+cc_flags?=
+cc_args?= $(cc_flags)  -g -std=c++11
 art_illumina?=art_illumina
 
 # Common arguments
@@ -36,6 +37,7 @@ simulated_molecules?=$(simulation_prefix)_mu$(molecule_size_mu)_dev$(molecule_si
 simulated_barcoded_molecules?=$(simulation_prefix)_l$(barcode_length)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_barcoded_molecules.fa
 amplified_barcoded_molecules?=$(simulation_prefix)_l$(barcode_length)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_amplified_barcoded_molecules.fa
 simulated_reads?=$(simulation_prefix)_l$(barcode_length)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_reads
+sequencing_machine?=HSXt
 simulated_reads_log?=$(simulated_reads)_art_illumina.log
 
 # Clustering arguments
@@ -63,10 +65,10 @@ clusters_file?=$(output_prefix).clusters
 .PHONY: help correct simulate simulate_clean
 
 help:
-	@echo 'barcor: Correct tagged amplicon sequencing reads by clustering on barcodes and sequences'
-	@echo 'Usage: ./barcor-make [COMMAND]... [PARAMETER=VALUE]...'
-	@echo 'Example: barcor-make simulate'
-	@echo '			barcor-make cluster input_reads_prefix=Data/simulated_reads'
+	@echo 'bargoat: Correct tagged amplicon sequencing reads by clustering on barcodes and sequences'
+	@echo 'Usage: ./bargoat [COMMAND]... [PARAMETER=VALUE]...'
+	@echo 'Example: ./bargoat simulate'
+	@echo '			./bargoat cluster input_reads_prefix=Data/simulated_reads'
 	@echo 'We recommend checking the possible list of commands down here, and the parameter list up here.'
 
 $(simulated_barcodes):
@@ -104,7 +106,7 @@ $(amplified_barcoded_molecules): $(simulated_barcoded_molecules)
 
 simulate: $(amplified_barcoded_molecules)
 	$(art_illumina) \
-		--seqSys HSXt \
+		--seqSys $(sequencing_machine) \
 		--amplicon \
 		--paired \
 		--noALN \
@@ -131,6 +133,7 @@ cluster: $(clustering_path)bargoat.o $(forward_reads) $(reverse_reads)
 		--kmer-size $(kmer_size) \
 		--error-tolerance $(barcode_error_tolerance) \
 		--minimizer-threshold $(minimizers_threshold) \
+		#--silent
 
 accuracy: $(clusters_file)
 	$(python3) $(simulating_path)rand_index.py \
