@@ -1,9 +1,0 @@
-python3 Data/rand_index.py \
-		--input-clusters-file large_sim_dunovo.clusters \
-		--number-of-true-molecules 100000 \
-		--number-of-reads-per-true-molecule 20
-Rand Index: 0.9999999486354744
-Misclustered pairs: 102729
-All pairs: 1999999000000
-Correct clusters: 97712
-Incorrect clutsers: 2159

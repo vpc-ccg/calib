@@ -1,9 +1,0 @@
-python3 Data/rand_index.py \
-		--input-clusters-file simulated_reads.clusters \
-		--number-of-true-molecules 1000 \
-		--number-of-reads-per-true-molecule 20
-Rand Index: 0.9999999049952497
-Misclustered pairs: 19
-All pairs: 199990000
-Correct clusters: 999
-Incorrect clutsers: 2
