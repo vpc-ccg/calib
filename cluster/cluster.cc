@@ -116,8 +116,8 @@ void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_vectors &
 
 void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     vector<bool> mask(barcode_length*2, false);
-    std::fill(mask.begin() + error_tolerance*2, mask.end(), true);
-    masked_barcode_buffer[barcode_length*2-error_tolerance*2] = '\0';
+    std::fill(mask.begin() + error_tolerance, mask.end(), true);
+    masked_barcode_buffer[barcode_length*2-error_tolerance] = '\0';
 
     string template_barcode;
     for (char c = 'A'; c < 'A' + barcode_length*2; c++) {
