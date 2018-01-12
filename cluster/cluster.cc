@@ -137,7 +137,10 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
 
         //int buckets_processed = 0;
         start = time(NULL);
+        #pragma omp parallel
+        #pragma omp single
         for (auto bucket : lsh) {
+            #pragma omp task 
             sort(bucket.second.begin(), bucket.second.end());
             for (node_id_t node : bucket.second) {
                 vector<node_id_t> result;
