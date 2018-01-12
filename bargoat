@@ -7,7 +7,8 @@
 SHELL=/bin/bash -o pipefail
 cc?=g++
 python3?=python3
-cc_files?= cluster/bargoat.cc cluster/cluster.cc cluster/extract.cc cluster/parse_flags.cc cluster/cluster.h cluster/extract.h cluster/global.h cluster/parse_flags.h
+clustering_path?=clustering/
+cc_files?= $(clustering_path)bargoat.cc $(clustering_path)cluster.cc $(clustering_path)extract.cc $(clustering_path)parse_flags.cc $(clustering_path)cluster.h $(clustering_path)extract.h $(clustering_path)global.h $(clustering_path)parse_flags.h
 cc_args?= -O3 -std=c++11
 art_illumina?=art_illumina
 
@@ -21,12 +22,15 @@ molecule_size_mu?=250
 molecule_size_dev?=25
 read_length?=150
 barcode_length?=10
-reference?=Data/e_coli.fa.gz
-coverage?=20
+simulating_path?=simulating/
+reference_path?=$(simulating_path)genomes/
+reference_name?=e_coli
+reference?=$(reference_path)$(reference_name).fa.gz
 pcr_cycles?=7
 pcr_duplication_rate?=0.8
 pcr_error_rate?=0.00003
-simulation_prefix?=Data/simulated
+simulation_datasets_path?=$(simulating_path)datasets/
+simulation_prefix?=$(simulation_datasets_path)$(reference_name)
 simulated_barcodes?=$(simulation_prefix)_l$(barcode_length)_barcodes.txt
 simulated_molecules?=$(simulation_prefix)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_molecules.fa
 simulated_barcoded_molecules?=$(simulation_prefix)_l$(barcode_length)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_barcoded_molecules.fa
@@ -34,7 +38,7 @@ amplified_barcoded_molecules?=$(simulation_prefix)_l$(barcode_length)_mu$(molecu
 simulated_reads?=$(simulation_prefix)_l$(barcode_length)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_reads
 simulated_reads_log?=$(simulated_reads)_art_illumina.log
 
-# Clustering and correction arguments
+# Clustering arguments
 input_reads_prefix?=$(simulated_reads)
 forward_reads?=$(input_reads_prefix)_1.fq
 reverse_reads?=$(input_reads_prefix)_2.fq
@@ -45,7 +49,6 @@ kmer_size?=8
 barcode_error_tolerance?=2
 minimizers_threshold?=1
 
-output_corrected_reads?=False
 output_prefix?=$(input_reads_prefix)_l$(barcode_length)_m$(minimizers_num)_k$(kmer_size)_e$(barcode_error_tolerance)_t$(minimizers_threshold)
 
 # Rand Index Accuracy arguments
@@ -67,14 +70,14 @@ help:
 	@echo 'We recommend checking the possible list of commands down here, and the parameter list up here.'
 
 $(simulated_barcodes):
-	$(python3) Data/generate_barcodes.py \
+	$(python3) $(simulating_path)generate_barcodes.py \
 		--num-of-barcodes $(num_barcodes) \
 		--len-of-one-end-barcode $(barcode_length) \
 		--random-seed $(random_seed) \
 		--output-barcodes $(simulated_barcodes)
 
 $(simulated_molecules):
-	$(python3) Data/generate_molecules.py \
+	$(python3) $(simulating_path)generate_molecules.py \
 		--reference $(reference) \
 		--number-of-molecules $(num_molecules) \
 		--molecule-size-mean $(molecule_size_mu) \
@@ -84,14 +87,14 @@ $(simulated_molecules):
 		--output-molecules $(simulated_molecules)
 
 $(simulated_barcoded_molecules): $(simulated_barcodes) $(simulated_molecules)
-	$(python3) Data/attach_barcodes_to_molecules.py \
+	$(python3) $(simulating_path)attach_barcodes_to_molecules.py \
 		--input-barcodes $(simulated_barcodes) \
 		--input-molecules $(simulated_molecules) \
 		--random-seed $(random_seed) \
 		--output-barcoded-molecules $(simulated_barcoded_molecules)
 
 $(amplified_barcoded_molecules): $(simulated_barcoded_molecules)
-	$(python3) Data/pcr_duplication.py \
+	$(python3) $(simulating_path)pcr_duplication.py \
 		--molecules $(simulated_barcoded_molecules) \
 		--number-of-cycles $(pcr_cycles) \
 		--duplication-rate-per-cycle $(pcr_duplication_rate) \
@@ -113,15 +116,13 @@ simulate: $(amplified_barcoded_molecules)
 		> $(simulated_reads_log);
 
 simulate_clean:
-	rm -f $(simulated_barcodes); \
-	rm -f $(simulated_molecules); \
-	rm -f $(simulated_barcoded_molecules);
+	rm -f $(simulation_datasets_path)*
 
-cluster/bargoat.o: $(cc_files)
-	$(cc) $(cc_files) $(cc_args) -o cluster/bargoat.o
+$(clustering_path)bargoat.o: $(cc_files)
+	$(cc) $(cc_files) $(cc_args) -o $(clustering_path)bargoat.o
 
-cluster: cluster/bargoat.o $(forward_reads) $(reverse_reads)
-	cluster/bargoat.o \
+cluster: $(clustering_path)bargoat.o $(forward_reads) $(reverse_reads)
+	$(clustering_path)bargoat.o \
 		--input-forward $(forward_reads) \
 		--input-reverse $(reverse_reads) \
 		--output-prefix $(output_prefix) \
@@ -132,11 +133,11 @@ cluster: cluster/bargoat.o $(forward_reads) $(reverse_reads)
 		--minimizer-threshold $(minimizers_threshold) \
 
 accuracy: $(clusters_file)
-	$(python3) Data/rand_index.py \
+	$(python3) $(simulating_path)rand_index.py \
 		--input-clusters-file $(clusters_file) \
 		--number-of-true-molecules $(number_of_true_molecules) \
 		--number-of-reads-per-true-molecule $(number_of_reads_per_true_molecule)
 
 
 clean:
-	rm -f cluster/*.o
+	rm -f $(clustering_path)*.o
