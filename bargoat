@@ -16,27 +16,42 @@ art_illumina?=art_illumina
 # Common arguments
 random_seed?=42
 
-# Amplicon sequencing simulation
+# Simulation common
+simulating_path?=simulating/
+
+simulation_datasets_path?=$(simulating_path)datasets/
+simulation_prefix?=$(simulation_datasets_path)$(reference_name)_$(random_seed)
+
+reference_name?=e_coli
+references_path?=$(simulating_path)genomes/
+
+## Generating barcodes
 num_barcodes?=10000
-num_molecules?=1000
+barcode_length?=10
+barcodes_params?=_l$(barcode_length)_n$(num_barcodes)
+simulated_barcodes?=$(simulation_prefix)$(barcodes_params)_barcodes.txt
+
+## Generating molecules
 molecule_size_mu?=250
 molecule_size_dev?=25
+num_molecules?=1000
 read_length?=150
-barcode_length?=10
-simulating_path?=simulating/
-reference_path?=$(simulating_path)genomes/
-reference_name?=e_coli
-reference?=$(reference_path)$(reference_name).fa.gz
+reference?=$(references_path)$(reference_name).fa.gz
+molecules_params?=_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)
+simulated_molecules?=$(simulation_prefix)$(molecules_params)_molecules.fa
+
+## Barcoding molecules
+simulated_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_params)_barcoded_molecules.fa
+
+## PCR duplication
 pcr_cycles?=7
 pcr_duplication_rate?=0.8
 pcr_error_rate?=0.00003
-simulation_datasets_path?=$(simulating_path)datasets/
-simulation_prefix?=$(simulation_datasets_path)$(reference_name)
-simulated_barcodes?=$(simulation_prefix)_l$(barcode_length)_barcodes.txt
-simulated_molecules?=$(simulation_prefix)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_molecules.fa
-simulated_barcoded_molecules?=$(simulation_prefix)_l$(barcode_length)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_barcoded_molecules.fa
-amplified_barcoded_molecules?=$(simulation_prefix)_l$(barcode_length)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_amplified_barcoded_molecules.fa
-simulated_reads?=$(simulation_prefix)_l$(barcode_length)_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)_reads
+pcr_params?=_c$(pcr_cycles)_r$(pcr_duplication_rate)_e$(pcr_error_rate)
+amplified_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)_amplified_barcoded_molecules.fa
+
+## Generating reads
+simulated_reads?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)_reads
 sequencing_machine?=HSXt
 simulated_reads_log?=$(simulated_reads)_art_illumina.log
 
@@ -44,14 +59,14 @@ simulated_reads_log?=$(simulated_reads)_art_illumina.log
 input_reads_prefix?=$(simulated_reads)
 forward_reads?=$(input_reads_prefix)_1.fq
 reverse_reads?=$(input_reads_prefix)_2.fq
-
 minimizers_num?=3
 kmer_size?=8
-
 barcode_error_tolerance?=2
 minimizers_threshold?=1
+silent?=--silent
 
-output_prefix?=$(input_reads_prefix)_l$(barcode_length)_m$(minimizers_num)_k$(kmer_size)_e$(barcode_error_tolerance)_t$(minimizers_threshold)
+clustering_params?=_l$(barcode_length)_m$(minimizers_num)_k$(kmer_size)_e$(barcode_error_tolerance)_t$(minimizers_threshold)
+output_prefix?=$(input_reads_prefix)$(clustering_params)
 
 # Rand Index Accuracy arguments
 number_of_true_molecules?=$(num_molecules)
@@ -133,7 +148,7 @@ cluster: $(clustering_path)bargoat.o $(forward_reads) $(reverse_reads)
 		--kmer-size $(kmer_size) \
 		--error-tolerance $(barcode_error_tolerance) \
 		--minimizer-threshold $(minimizers_threshold) \
-		#--silent
+		$(silent)
 
 accuracy: $(clusters_file)
 	$(python3) $(simulating_path)rand_index.py \
