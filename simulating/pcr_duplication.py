@@ -111,14 +111,16 @@ def main():
         output = open(args.pcr_product, 'w')
     else:
         output = sys.stdout
+    final_molecule_count = 0
     for molecule_id, pcr_result in pcr_results.items():
         molecule_number = 0
         for mutations in pcr_result:
             molecule = molecules[molecule_id]
             for error_idx, mutation in mutations:
                 molecule = molecule[0:error_idx] + mutation + molecule[error_idx+1:]
-            print(molecule_id + "_{}".format(str(molecule_number)), file=output)
+            print(">{}_{}_{}".format(final_molecule_count, molecule_id[1:], str(molecule_number)), file=output)
             molecule_number += 1
+            final_molecule_count += 1
             print(molecule, file=output)
 
 
