@@ -8,7 +8,7 @@ SHELL=/bin/bash -o pipefail
 cc?=g++
 python3?=python3
 clustering_path?=clustering/
-cc_files?= $(clustering_path)bargoat.cc $(clustering_path)cluster.cc $(clustering_path)extract.cc $(clustering_path)parse_flags.cc $(clustering_path)cluster.h $(clustering_path)extract.h $(clustering_path)global.h $(clustering_path)parse_flags.h
+cc_files?= $(clustering_path)*.cc $(clustering_path)*.h
 cc_flags?=
 cc_args?= $(cc_flags)  -g -std=c++11
 art_illumina?=art_illumina
