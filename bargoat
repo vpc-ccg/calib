@@ -26,7 +26,7 @@ reference_name?=e_coli
 references_path?=$(simulating_path)genomes/
 
 ## Generating barcodes
-num_barcodes?=10000
+num_barcodes?=100
 barcode_length?=10
 barcodes_params?=_l$(barcode_length)_n$(num_barcodes)
 simulated_barcodes?=$(simulation_prefix)$(barcodes_params)_barcodes.txt
@@ -34,7 +34,7 @@ simulated_barcodes?=$(simulation_prefix)$(barcodes_params)_barcodes.txt
 ## Generating molecules
 molecule_size_mu?=250
 molecule_size_dev?=25
-num_molecules?=1000
+num_molecules?=500
 read_length?=150
 reference?=$(references_path)$(reference_name).fa.gz
 molecules_params?=_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)
