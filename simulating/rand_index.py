@@ -23,7 +23,7 @@ def main():
 
     read_true_cluster = dict()
     true_cluster_reads = dict()
-    predicted_clusters = list()
+    clustering_reads = list()
 
     for line in molecules_file.readlines():
         if line[0] != '>':
@@ -31,15 +31,15 @@ def main():
         line = line[1:].rstrip().split('_')
         read_id = line[0]
         cluster_id = line[3]
-        if cluster_id in true_clusters:
-            true_clusters[cluster_id].append(read_id)
+        if cluster_id in true_cluster_reads:
+            true_cluster_reads[cluster_id].append(read_id)
         else:
-            true_clusters[cluster_id] = [read_id]
-        reads[read_id] = cluster_id
+            true_cluster_reads[cluster_id] = [read_id]
+        read_true_cluster[read_id] = cluster_id
 
     for line in clusters_file.readlines():
         if line[0] != '#':
-            predicted_clusters.append(list())
+            clustering_reads.append(list())
             continue
         line = line.split('\t')[2][1:].split('_')
         read_id = line[0]
