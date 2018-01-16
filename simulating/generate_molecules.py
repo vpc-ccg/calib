@@ -53,6 +53,9 @@ def parse_args():
 
 def generate_random_molecule(mu, sigma, genome_length, min_molecule_size):
     start = random.randrange(0, genome_length)
+    end = min(
+        [start + abs(math.floor(random.normalvariate(mu=mu, sigma=sigma))),
+         genome_length])
     while end - start < 0:
         end = min(
             [start + abs(math.floor(random.normalvariate(mu=mu, sigma=sigma))),
