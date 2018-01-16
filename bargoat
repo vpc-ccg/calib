@@ -69,9 +69,8 @@ clustering_params?=_l$(barcode_length)_m$(minimizers_num)_k$(kmer_size)_e$(barco
 output_prefix?=$(input_reads_prefix)$(clustering_params)
 
 # Rand Index Accuracy arguments
-number_of_true_molecules?=$(num_molecules)
-number_of_reads_per_true_molecule?=$(coverage)
-clusters_file?=$(output_prefix).clusters
+cluster_file?=$(output_prefix).cluster
+input_amplified_molecules?=$(amplified_barcoded_molecules)
 # number
 
 
@@ -150,11 +149,10 @@ cluster: $(clustering_path)bargoat.o $(forward_reads) $(reverse_reads)
 		--minimizer-threshold $(minimizers_threshold) \
 		$(silent)
 
-accuracy: $(clusters_file)
+accuracy: $(cluster_file)
 	$(python3) $(simulating_path)rand_index.py \
-		--input-clusters-file $(clusters_file) \
-		--number-of-true-molecules $(number_of_true_molecules) \
-		--number-of-reads-per-true-molecule $(number_of_reads_per_true_molecule)
+		--input-cluster-file $(cluster_file) \
+		--input-amplified-molecule $(input_amplified_molecules)
 
 
 clean:
