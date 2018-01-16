@@ -25,81 +25,85 @@ def main():
     molecules_file = open(args.input_amplified_molecules)
     clusters_file = open(args.input_cluster_file)
 
-    read_id_to_true_cluster_id = dict()
-    read_id_to_predicted_cluster_id = dict()
+    # rid_to_tcid --> read_id_to_true_cluster_id
+    rid_to_tcid = dict()
+    # rid_to_pcid --> read_id_to_predicted_cluster_id
+    rid_to_pcid = dict()
+    # tcid_to_rid_set --> true_cluster_id_to_read_ids_set
+    tcid_to_rid_set = dict()
+    # pcid_to_rid_set --> predicted_cluster_id_to_read_ids_set
+    pcid_to_rid_set = dict()
+    # pcid_to_tcid_set --> predicted_cluster_id_to_true_cluster_ids_set
+    pcid_to_tcid_set = dict()
+    # tcid_to_pcid_set --> true_cluster_id_to_predicted_cluster_ids_set
+    tcid_to_pcid_set = dict()
 
-    true_cluster_id_to_read_id_list = dict()
-    predicted_cluster_id_to_read_id_list = list()
+    contigency_matrix = dict()
 
     for line in molecules_file.readlines():
         if line[0] != '>':
             continue
+
         line = line[1:].rstrip().split('_')
-        read_id = line[0]
-        cluster_id = line[3].split(':')[0]
-        # print(read_id, cluster_id)
-        if cluster_id in true_cluster_id_to_read_id_list:
-            true_cluster_id_to_read_id_list[cluster_id].append(read_id)
+        rid = line[0]
+        tcid = int(line[3].split(':')[0])
+
+        if tcid in tcid_to_rid_set:
+            tcid_to_rid_set[tcid].add(rid)
         else:
-            true_cluster_id_to_read_id_list[cluster_id] = [read_id]
-        read_id_to_true_cluster_id[read_id] = cluster_id
-    read_count = len(read_id_to_true_cluster_id)
-    # print('Read count is {}'.format(read_count))
+            tcid_to_rid_set[tcid] = {rid}
+        rid_to_tcid[rid] = tcid
 
-    contigency_matrix = dict()
-    predicted_cluster_count = 0
-
-    true_cluster_sum = 0
-    predicted_cluster_sum = 0
+    pcid_counter = 1
     for line in clusters_file.readlines():
         if line[0] == '#':
-            predicted_cluster_id_to_read_id_list.append(list())
-            predicted_cluster_count += 1
+            pcid_counter -= 1
             continue
+
         line = line.split('\t')[2][1:].split('_')
-        read_id = line[0]
-        read_id_to_predicted_cluster_id[read_id]=predicted_cluster_count
+        rid = line[0]
+        tcid = int(line[3].split(':')[0])
 
-        predicted_cluster_id_to_read_id_list[-1].append(read_id)
-        true_cluster_id = int(line[3].split(':')[0])
-        # print(predicted_cluster_count, true_cluster_id)
+        rid_to_pcid[rid] = pcid_counter
+        if pcid_counter in pcid_to_rid_set:
+            pcid_to_rid_set[pcid_counter].add(rid)
+        else:
+            pcid_to_rid_set[pcid_counter] = {rid}
 
-        key = tuple([true_cluster_id, predicted_cluster_count-1])
+        if pcid_counter in pcid_to_tcid_set:
+            pcid_to_tcid_set[pcid_counter].add(tcid)
+        else:
+            pcid_to_tcid_set[pcid_counter] = {tcid}
+
+        if tcid in tcid_to_pcid_set:
+            tcid_to_pcid_set[tcid].add(pcid_counter)
+        else:
+            tcid_to_pcid_set[tcid] = {pcid_counter}
+
+        key = tuple([tcid, pcid_counter])
         contigency_matrix[key] = contigency_matrix.get(key, 0) + 1
-        # print(key, contigency_matrix[key])
-    # print (len(contigency_matrix))
-    # for k in contigency_matrix:
-    #     print(k, contigency_matrix[k])
-    A_sum = sum((choose_2(len(a)) for a in true_cluster_id_to_read_id_list))
-    B_sum = sum((choose_2(len(b)) for b in predicted_cluster_id_to_read_id_list))
-    B = [len(b) for b in predicted_cluster_id_to_read_id_list]
-    I = [n for n in contigency_matrix.values()]
 
-    # index = sum((choose_2(n) for n in contigency_matrix.values()))
-    # expected_index = A_sum*B_sum/choose_2(read_count)
-    # max_index = (A_sum + B_sum)/2
-    # ARI = (index - expected_index)/(max_index - expected_index)
-    # print('A_sum {}\nB_sum {}\nindex {}\nexpected_index {}\nmax_index {}\nARI {}'.format(A_sum, B_sum, index, expected_index, max_index, ARI))
+
+    for pcid in pcid_to_tcid_set:
+        if len(pcid_to_tcid_set[pcid]) > 1:
+            print(pcid, '\t', len(pcid_to_rid_set[pcid]))
+            for tcid in pcid_to_tcid_set[pcid]:
+                print('\t|', pcid, '∩', tcid,'| =', len(tcid_to_rid_set[tcid].intersection(pcid_to_rid_set[pcid])))
+
+    print('====')
+    for tcid in tcid_to_pcid_set:
+        if len(tcid_to_pcid_set[tcid]) > 1:
+            print(tcid, '\t', len(tcid_to_rid_set[tcid]))
+            for pcid in tcid_to_pcid_set[tcid]:
+                print('\t|', tcid, '∩', pcid,'| =', len(pcid_to_rid_set[pcid].intersection(tcid_to_rid_set[tcid])))
+
 
     Y = []
     X = []
-    for read in read_id_to_true_cluster_id:
-        Y.append(read_id_to_true_cluster_id[read])
-        X.append(read_id_to_predicted_cluster_id[read])
+    for rid in rid_to_tcid:
+        Y.append(rid_to_tcid[rid])
+        X.append(rid_to_pcid[rid])
     print(adjusted_rand_score(X, Y))
-
-    # f = open('test', 'w+')
-    # for k in contigency_matrix:
-    #     print('{}\t{}\t{}'.format(k[0],k[1], contigency_matrix[k]) ,file=f)
-    # f = open('sett1', 'w+')
-    # for k in sorted(B):
-    #     print(k ,file=f)
-    # f = open('sett2', 'w+')
-    # for k in sorted(I):
-    #     print(k ,file=f)
-
-
-
 
 
 
