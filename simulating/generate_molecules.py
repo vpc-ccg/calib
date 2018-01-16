@@ -1,4 +1,6 @@
 from pyfaidx import Fasta
+import pandas as pd
+import numpy as np
 import sys
 import argparse
 import random
@@ -41,17 +43,32 @@ def parse_args():
                         type=str,
                         default=None,
                         help="Output molecules/amplicons fasta file (default: stdout)")
+    parser.add_argument("-b",
+                        "--bed",
+                        type=str,
+                        help="bed file that determines targeted regions of genome")
     args = parser.parse_args()
     return args
 
 
-def generate_molecule(genome_file_path,
-                      output_file_path=sys.stdout,
-                      molecule_size_mean=150,
-                      molecule_size_standard_dev=20,
-                      number_of_molecules=100,
-                      random_seed=None,
-                      min_molecule_size=150):
+def generate_random_molecule(mu, sigma, genome_length, min_molecule_size):
+    start = random.randrange(0, genome_length)
+    while end - start < 0:
+        end = min(
+            [start + abs(math.floor(random.normalvariate(mu=mu, sigma=sigma))),
+             genome_length])
+    if end - start < min_molecule_size:
+        start = end - min_molecule_size
+    return start, end
+
+
+def generate_random_molecules(genome_file_path,
+                              output_file_path=None,
+                              molecule_size_mean=150,
+                              molecule_size_standard_dev=20,
+                              number_of_molecules=100,
+                              random_seed=None,
+                              min_molecule_size=150):
 
     if output_file_path:
         output_file = open(output_file_path, 'w+')
@@ -60,26 +77,69 @@ def generate_molecule(genome_file_path,
     random.seed(random_seed)
     genome = Fasta(genome_file_path)
     genome_length = len(genome[0])
+
     for i in range(number_of_molecules):
-        start = random.randrange(0, genome_length)
-        end = min(
-            [start + abs(math.floor(random.normalvariate(mu=molecule_size_mean, sigma=molecule_size_standard_dev))),
-             genome_length])
-        if end-start < min_molecule_size:
-            start = end - min_molecule_size
+        start, end = generate_random_molecule(molecule_size_mean,
+                                              molecule_size_standard_dev,
+                                              genome_length,
+                                              min_molecule_size)
         print(">{}:{}-{}".format(i, start, end), file=output_file)
         print(genome[0][start:end], file=output_file)
 
 
+def generate_molecules_from_bed(genome_file_path,
+                                bed_file_path,
+                                output_file_path=None,
+                                molecule_size_mean=150,
+                                molecule_size_standard_dev=20,
+                                number_of_molecules=100,
+                                random_seed=None,
+                                min_molecule_size=150):
+    if output_file_path:
+        output_file = open(output_file_path, 'w+')
+    else:
+        output_file = sys.stdout
+    random.seed(random_seed)
+    genome = Fasta(genome_file_path)
+    genome_length = len(genome[0])
+    num_molecules = 0
+    bed_data = pd.read_csv(bed_file_path, sep='\t', header=0)
+
+    while num_molecules < number_of_molecules:
+        start, end = generate_random_molecule(molecule_size_mean,
+                                              molecule_size_standard_dev,
+                                              genome_length,
+                                              min_molecule_size)
+        logic = np.logical_or(np.logical_and(bed_data['chromStart'] >= start,
+                                             bed_data['chromStart'] <= end),
+                              np.logical_and(bed_data['chromEnd'] >= start,
+                                             bed_data['chromEnd'] >= end))
+        if logic.any():
+            num_molecules += 1
+            i = num_molecules - 1
+            print(">{}:{}-{}".format(i, start, end), file=output_file)
+            print(genome[0][start:end], file=output_file)
+
+
 def main():
     args = parse_args()
-    generate_molecule(genome_file_path=args.reference,
-                      output_file_path=args.output_molecules,
-                      molecule_size_mean=args.molecule_size_mean,
-                      molecule_size_standard_dev=args.molecule_size_standard_dev,
-                      number_of_molecules=args.number_of_molecules,
-                      random_seed=args.random_seed,
-                      min_molecule_size=args.min_molecule_size)
+    if args.bed:
+        generate_molecules_from_bed(genome_file_path=args.reference,
+                                    bed_file_path=args.bed,
+                                    output_file_path=args.output_molecules,
+                                    molecule_size_mean=args.molecule_size_mean,
+                                    molecule_size_standard_dev=args.molecule_size_standard_dev,
+                                    number_of_molecules=args.number_of_molecules,
+                                    random_seed=args.random_seed,
+                                    min_molecule_size=args.min_molecule_size)
+    else:
+        generate_random_molecules(genome_file_path=args.reference,
+                                  output_file_path=args.output_molecules,
+                                  molecule_size_mean=args.molecule_size_mean,
+                                  molecule_size_standard_dev=args.molecule_size_standard_dev,
+                                  number_of_molecules=args.number_of_molecules,
+                                  random_seed=args.random_seed,
+                                  min_molecule_size=args.min_molecule_size)
 
 
 if __name__ == "__main__":
