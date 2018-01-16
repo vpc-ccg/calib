@@ -25,11 +25,11 @@ def main():
     molecules_file = open(args.input_amplified_molecules)
     clusters_file = open(args.input_cluster_file)
 
-    read_true_cluster = dict()
-    read_predicted_cluster = dict()
+    read_id_to_true_cluster_id = dict()
+    read_id_to_predicted_cluster_id = dict()
 
-    true_cluster_reads = dict()
-    clustering_reads = list()
+    true_cluster_id_to_read_id_list = dict()
+    predicted_cluster_id_to_read_id_list = list()
 
     for line in molecules_file.readlines():
         if line[0] != '>':
@@ -38,12 +38,12 @@ def main():
         read_id = line[0]
         cluster_id = line[3].split(':')[0]
         # print(read_id, cluster_id)
-        if cluster_id in true_cluster_reads:
-            true_cluster_reads[cluster_id].append(read_id)
+        if cluster_id in true_cluster_id_to_read_id_list:
+            true_cluster_id_to_read_id_list[cluster_id].append(read_id)
         else:
-            true_cluster_reads[cluster_id] = [read_id]
-        read_true_cluster[read_id] = cluster_id
-    read_count = len(read_true_cluster)
+            true_cluster_id_to_read_id_list[cluster_id] = [read_id]
+        read_id_to_true_cluster_id[read_id] = cluster_id
+    read_count = len(read_id_to_true_cluster_id)
     # print('Read count is {}'.format(read_count))
 
     contigency_matrix = dict()
@@ -53,14 +53,14 @@ def main():
     predicted_cluster_sum = 0
     for line in clusters_file.readlines():
         if line[0] == '#':
-            clustering_reads.append(list())
+            predicted_cluster_id_to_read_id_list.append(list())
             predicted_cluster_count += 1
             continue
         line = line.split('\t')[2][1:].split('_')
         read_id = line[0]
-        read_predicted_cluster[read_id]=predicted_cluster_count
+        read_id_to_predicted_cluster_id[read_id]=predicted_cluster_count
 
-        clustering_reads[-1].append(read_id)
+        predicted_cluster_id_to_read_id_list[-1].append(read_id)
         true_cluster_id = int(line[3].split(':')[0])
         # print(predicted_cluster_count, true_cluster_id)
 
@@ -70,9 +70,9 @@ def main():
     # print (len(contigency_matrix))
     # for k in contigency_matrix:
     #     print(k, contigency_matrix[k])
-    A_sum = sum((choose_2(len(a)) for a in true_cluster_reads))
-    B_sum = sum((choose_2(len(b)) for b in clustering_reads))
-    B = [len(b) for b in clustering_reads]
+    A_sum = sum((choose_2(len(a)) for a in true_cluster_id_to_read_id_list))
+    B_sum = sum((choose_2(len(b)) for b in predicted_cluster_id_to_read_id_list))
+    B = [len(b) for b in predicted_cluster_id_to_read_id_list]
     I = [n for n in contigency_matrix.values()]
 
     # index = sum((choose_2(n) for n in contigency_matrix.values()))
@@ -83,9 +83,9 @@ def main():
 
     Y = []
     X = []
-    for read in read_true_cluster:
-        Y.append(read_true_cluster[read])
-        X.append(read_predicted_cluster[read])
+    for read in read_id_to_true_cluster_id:
+        Y.append(read_id_to_true_cluster_id[read])
+        X.append(read_id_to_predicted_cluster_id[read])
     print(adjusted_rand_score(X, Y))
 
     # f = open('test', 'w+')
