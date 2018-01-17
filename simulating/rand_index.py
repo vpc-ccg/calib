@@ -45,7 +45,7 @@ def main():
             continue
 
         line = line[1:].rstrip().split('_')
-        rid = line[0]
+        rid = int(line[0])
         tcid = int(line[3].split(':')[0])
 
         if tcid in tcid_to_rid_set:
@@ -61,8 +61,8 @@ def main():
             continue
 
         line = line.split('\t')[2][1:].split('_')
-        rid = line[0]
-        tcid = int(line[3].split(':')[0])
+        rid = int(line[0])
+        tcid = rid_to_tcid[rid]
 
         rid_to_pcid[rid] = pcid_counter
         if pcid_counter in pcid_to_rid_set:
