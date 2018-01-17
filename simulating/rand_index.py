@@ -86,14 +86,14 @@ def main():
 
     for pcid in pcid_to_tcid_set:
         if len(pcid_to_tcid_set[pcid]) > 1:
-            print(pcid, '\t', len(pcid_to_rid_set[pcid]))
+            print('|', pcid, '| =', len(pcid_to_rid_set[pcid]))
             for tcid in pcid_to_tcid_set[pcid]:
                 print('\t|', pcid, '∩', tcid,'| =', len(tcid_to_rid_set[tcid].intersection(pcid_to_rid_set[pcid])))
 
     print('====')
     for tcid in tcid_to_pcid_set:
         if len(tcid_to_pcid_set[tcid]) > 1:
-            print(tcid, '\t', len(tcid_to_rid_set[tcid]))
+            print('|', tcid, '| =', len(tcid_to_rid_set[tcid]))
             for pcid in tcid_to_pcid_set[tcid]:
                 print('\t|', tcid, '∩', pcid,'| =', len(pcid_to_rid_set[pcid].intersection(tcid_to_rid_set[tcid])))
 

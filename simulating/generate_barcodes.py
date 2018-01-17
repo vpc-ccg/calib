@@ -39,7 +39,9 @@ def generate_barcodes(output_file_path=None,
     while len(barcodes) < number_of_barcodes:
         barcode = "".join([random.sample(['A','C','G','T'], 1)[0] for _ in range(barcode_length)])
         barcodes.add(barcode)
-
+    barcodes = sorted(list(barcodes))
+    random.shuffle(barcodes)
+    
     if output_file_path:
         output_file = open(output_file_path, 'w+')
     else:
