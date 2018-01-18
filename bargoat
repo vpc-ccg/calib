@@ -4,21 +4,26 @@
 # bargoat simulate
 #
 
+# Figuring out where we are
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_dir :=  $(patsubst %/,%,$(dir $(mkfile_path)))/
+clustering_path?=$(current_dir)clustering/
+simulating_path?=$(current_dir)simulating/
+
 SHELL=/bin/bash -o pipefail
 cc?=g++
 python3?= PYTHONHASHSEED=0 python3
-clustering_path?=clustering/
 cc_files?= $(clustering_path)*.cc $(clustering_path)*.h
 cc_flags?=
 cc_args?= $(cc_flags) -O3 -std=c++11
 art_illumina?=art_illumina
 
+
+
 # Common arguments
 random_seed?=42
 
 # Simulation common
-simulating_path?=simulating/
-
 simulation_datasets_path?=$(simulating_path)datasets/
 simulation_prefix?=$(simulation_datasets_path)$(reference_name)_$(random_seed)
 
@@ -71,6 +76,7 @@ output_prefix?=$(input_reads_prefix)$(clustering_params)
 # Rand Index Accuracy arguments
 cluster_file?=$(output_prefix).cluster
 input_amplified_molecules?=$(amplified_barcoded_molecules)
+output_accuracy_results?=$(output_prefix).accuracy
 # number
 
 
@@ -152,8 +158,10 @@ cluster: $(clustering_path)bargoat.o $(forward_reads) $(reverse_reads)
 accuracy: $(cluster_file)
 	$(python3) $(simulating_path)rand_index.py \
 		--input-cluster-file $(cluster_file) \
-		--input-amplified-molecule $(input_amplified_molecules)
+		--input-amplified-molecule $(input_amplified_molecules) \
+		--output-accuracy-results $(output_accuracy_results)
 
 
 clean:
+	@echo $(mkfile_path) '____'  $(current_dir)  \
 	rm -f $(clustering_path)*.o
