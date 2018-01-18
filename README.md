@@ -7,15 +7,15 @@ BarGoat read clustering is implemented in C++11 and has been tested on Linux ope
 
 The simulatation module of BarGoat is implemented in Python 3. BarGoat read simulation has the following prerequisites:
 
-- [pyfaidx](https://pythonhosted.org/pyfaidx/)
-- [argparse](https://pypi.python.org/pypi/argparse)
+- [pyfaidx](https://pypi.python.org/pypi/pyfaidx)
+- [numpy](https://pypi.python.org/pypi/numpy)
+- [scipy](https://pypi.python.org/pypi/scipy)
+- [scikit-learn](https://pypi.python.org/pypi/scikit-learn)
+- [biopython](https://pypi.python.org/pypi/biopython)
+- [pandas](https://pypi.python.org/pypi/pandas)
 - [ART Illumina](https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm) (version 2.5.8)
 
-As of the time of updating this README, Anaconda's ART package is outdated. For that, you either have to compile your own or, even better, use [Linuxbrew](http://linuxbrew.sh/). Once you have Linuxbrew installed, you simply can run:
-
-```bash
-brew install homebrew/science/art
-```
+All these prerequisites can easily be satisfied using Anaconda.
 
 
 
