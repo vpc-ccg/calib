@@ -41,9 +41,14 @@ molecule_size_mu?=250
 molecule_size_dev?=25
 num_molecules?=500
 read_length?=150
+bed_file?=
+bed_flag=--bed $(bed_file)
 reference?=$(references_path)$(reference_name).fa
 molecules_params?=_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)
 simulated_molecules?=$(simulation_prefix)$(molecules_params)_molecules.fa
+ifeq ($(bed_file),)
+	bed_flag=
+endif
 
 ## Barcoding molecules
 simulated_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_params)_barcoded_molecules.fa
@@ -106,7 +111,8 @@ $(simulated_molecules):
 		--molecule-size-standard-dev $(molecule_size_dev) \
 		--min-molecule-size $(read_length) \
 		--random-seed $(random_seed) \
-		--output-molecules $(simulated_molecules)
+		--output-molecules $(simulated_molecules) \
+		$(bed_flag)
 
 $(simulated_barcoded_molecules): $(simulated_barcodes) $(simulated_molecules)
 	$(python3) $(simulating_path)attach_barcodes_to_molecules.py \
