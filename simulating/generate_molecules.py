@@ -51,18 +51,42 @@ def parse_args():
     return args
 
 
-def generate_random_molecule(mu, sigma, genome_length, min_molecule_size):
+def generate_random_molecule(mu, sigma, genome_length, chromosome_ends, min_molecule_size):
     start = random.randrange(0, genome_length)
+    chromosome_indices = np.array(list(chromosome_ends.values()))
+    distances = chromosome_indices - start
+    chrom_end = np.min(distances[distances > 0])
+    chromosome = np.where(distances == chrom_end)[0][0]
+
     end = min(
         [start + abs(math.floor(random.normalvariate(mu=mu, sigma=sigma))),
-         genome_length])
+         chrom_end])
     while end - start < 0:
         end = min(
             [start + abs(math.floor(random.normalvariate(mu=mu, sigma=sigma))),
              genome_length])
     if end - start < min_molecule_size:
         start = end - min_molecule_size
-    return start, end
+    return chromosome, start, end
+
+
+def process_genome(genome):
+    # genome is a pyfaidx.Fasta object
+    chromosome_strings = [str(genome[chrom_id]) for chrom_id in genome.keys()]
+    chromosome_ids = list(genome.keys())
+    hg38_chromosomes = [str(i) for i in range(1, 23)] + ['Y', 'X']
+    genome_str = "".join(chromosome_strings)
+    chromosome_indices = np.array([len(chrom) for chrom in chromosome_strings])
+    running_sum = 0
+    chromosome_ends = {}
+    for chrom_id, chrom_length in zip(chromosome_ids, chromosome_indices):
+        if chrom_id in hg38_chromosomes:
+            chrom_id = 'chr' + chrom_id
+        running_sum += chrom_length
+        chromosome_ends[chrom_id] = running_sum
+    chromosome_ids = list(chromosome_ends.keys())
+    genome_length = len(genome_str)
+    return chromosome_ids, chromosome_ends, genome_str, genome_length
 
 
 def generate_random_molecules(genome_file_path,
@@ -79,15 +103,17 @@ def generate_random_molecules(genome_file_path,
         output_file = sys.stdout
     random.seed(random_seed)
     genome = Fasta(genome_file_path)
-    genome_length = len(genome[0])
+    chromosome_ids, chromosome_ends, genome_str, genome_length = process_genome(genome)
 
     for i in range(number_of_molecules):
-        start, end = generate_random_molecule(molecule_size_mean,
-                                              molecule_size_standard_dev,
-                                              genome_length,
-                                              min_molecule_size)
-        print(">{}:{}-{}".format(i, start, end), file=output_file)
-        print(genome[0][start:end], file=output_file)
+        chromosome_idx, start, end = generate_random_molecule(molecule_size_mean,
+                                                              molecule_size_standard_dev,
+                                                              genome_length,
+                                                              chromosome_ends,
+                                                              min_molecule_size)
+        chromosome = chromosome_ids[chromosome_idx]
+        print(">{}:{}-{}".format(chromosome, start, end), file=output_file)
+        print(genome_str[start:end], file=output_file)
 
 
 def generate_molecules_from_bed(genome_file_path,
@@ -104,24 +130,39 @@ def generate_molecules_from_bed(genome_file_path,
         output_file = sys.stdout
     random.seed(random_seed)
     genome = Fasta(genome_file_path)
-    genome_length = len(genome[0])
-    num_molecules = 0
     bed_data = pd.read_csv(bed_file_path, sep='\t', header=0)
+    chromosome_ids, chromosome_ends, genome_str, genome_length = process_genome(genome)
+    ends = list(chromosome_ends.values())
+    chromosome_starts = {}
+    for i in range(len(chromosome_ids)):
+        if i > 0:
+            chromosome_starts[chromosome_ids[i]] = ends[i-1]
+        else:
+            chromosome_starts[chromosome_ids[i]] = 0
+
+    num_molecules = 0
+    bed_data['genomeStart'] = bed_data.apply(lambda row: chromosome_starts[row['chrom']] + row['chromStart'], axis=1)
+    bed_data['genomeEnd'] = bed_data.apply(lambda row: chromosome_ends[row['chrom']] + row['chromEnd'], axis=1)
 
     while num_molecules < number_of_molecules:
-        start, end = generate_random_molecule(molecule_size_mean,
-                                              molecule_size_standard_dev,
-                                              genome_length,
-                                              min_molecule_size)
-        logic = np.logical_or(np.logical_and(bed_data['chromStart'] >= start,
-                                             bed_data['chromStart'] <= end),
-                              np.logical_and(bed_data['chromEnd'] >= start,
-                                             bed_data['chromEnd'] >= end))
-        if logic.any():
+        chromosome_idx, start, end = generate_random_molecule(molecule_size_mean,
+                                                              molecule_size_standard_dev,
+                                                              genome_length,
+                                                              chromosome_ends,
+                                                              min_molecule_size)
+        chromosome_logic = np.any(bed_data['chrom'] == chromosome_ids[chromosome_idx])
+        if not chromosome_logic:
+            continue
+        position_logic = np.logical_or(np.logical_and(bed_data['genomeStart'] >= start,
+                                                      bed_data['genomeStart'] <= end),
+                                       np.logical_and(bed_data['genomeEnd'] >= start,
+                                                      bed_data['genomeEnd'] >= end))
+
+        if position_logic.any() and 'N' not in genome_str[start:end]:
             num_molecules += 1
-            i = num_molecules - 1
-            print(">{}:{}-{}".format(i, start, end), file=output_file)
-            print(genome[0][start:end], file=output_file)
+            chromosome = chromosome_ids[chromosome_idx]
+            print(">{}:{}-{}".format(chromosome, start, end), file=output_file)
+            print(genome_str[start:end], file=output_file)
 
 
 def main():
