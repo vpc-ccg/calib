@@ -40,15 +40,15 @@ references_path?=$(simulating_path)genomes/
 
 ## Generating barcodes
 num_barcodes?=100
-barcode_length?=10
+barcode_length?=8
 barcodes_params?=_l$(barcode_length)_n$(num_barcodes)
 simulated_barcodes?=$(simulation_prefix)$(barcodes_params)_barcodes.txt
 
 ## Generating molecules
-molecule_size_mu?=250
+molecule_size_mu?=200
 molecule_size_dev?=25
 num_molecules?=500
-read_length?=150
+read_length?=100
 reference?=$(references_path)$(reference_name).fa
 molecules_params?=_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)
 simulated_molecules?=$(simulation_prefix)$(molecules_params)_molecules.fa
@@ -60,13 +60,13 @@ simulated_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_
 ## PCR duplication
 pcr_cycles?=7
 pcr_duplication_rate?=0.8
-pcr_error_rate?=0.00003
+pcr_error_rate?=0.00005
 pcr_params?=_c$(pcr_cycles)_r$(pcr_duplication_rate)_e$(pcr_error_rate)
 amplified_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)_amplified_barcoded_molecules.fa
 
 ## Generating reads
-simulated_reads?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)_reads
-sequencing_machine?=HSXt
+sequencing_machine?=HS20
+simulated_reads?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)_$(sequencing_machine)
 simulated_reads_log?=$(simulated_reads)_art_illumina.log
 
 # Clustering arguments

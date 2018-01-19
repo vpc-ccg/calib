@@ -63,8 +63,8 @@ def pcr_cycle(molecules, duplication_rate, error_rate, pcr_results, cycles_left=
     choices = flatten_dictionary(pcr_results)
     num_duplications = int(math.floor(len(choices) * duplication_rate))
     duplicate_choice_idxs = np.random.choice(len(choices), size=num_duplications, replace=False)
-    print('PCR cycles left: ', cycles_left, file=sys.stderr)
-    print('Select {} out of {} molecules'.format(num_duplications, len(choices)), file=sys.stderr)
+    # print('PCR cycles left: ', cycles_left, file=sys.stderr)
+    # print('Select {} out of {} molecules'.format(num_duplications, len(choices)), file=sys.stderr)
     for i in duplicate_choice_idxs:
         molecule_id, existing_mutations = choices[i]
         molecule = molecules[molecule_id]
