@@ -41,7 +41,7 @@ molecule_size_mu?=250
 molecule_size_dev?=25
 num_molecules?=500
 read_length?=150
-reference?=$(references_path)$(reference_name).fa.gz
+reference?=$(references_path)$(reference_name).fa
 molecules_params?=_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)
 simulated_molecules?=$(simulation_prefix)$(molecules_params)_molecules.fa
 
@@ -163,5 +163,4 @@ accuracy: $(cluster_file)
 
 
 clean:
-	@echo $(mkfile_path) '____'  $(current_dir)  \
 	rm -f $(clustering_path)*.o
