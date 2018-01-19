@@ -112,7 +112,7 @@ def generate_random_molecules(genome_file_path,
                                                               chromosome_ends,
                                                               min_molecule_size)
         chromosome = chromosome_ids[chromosome_idx]
-        print(">{}:{}-{}".format(chromosome, start, end), file=output_file)
+        print(">{}:{}-{}-{}".format(i, chromosome, start, end), file=output_file)
         print(genome_str[start:end], file=output_file)
 
 
@@ -161,7 +161,7 @@ def generate_molecules_from_bed(genome_file_path,
         if position_logic.any() and 'N' not in genome_str[start:end]:
             num_molecules += 1
             chromosome = chromosome_ids[chromosome_idx]
-            print(">{}:{}-{}".format(chromosome, start, end), file=output_file)
+            print(">{}:{}-{}-{}".format(num_molecules, chromosome, start, end), file=output_file)
             print(genome_str[start:end], file=output_file)
 
 
