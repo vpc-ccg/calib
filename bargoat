@@ -25,9 +25,17 @@ random_seed?=42
 
 # Simulation common
 simulation_datasets_path?=$(simulating_path)datasets/
-simulation_prefix?=$(simulation_datasets_path)$(reference_name)_$(random_seed)
-
+bed?=
+bed_flag=--bed $(references_path)$(bed).bed
+bed_prefix=_bed$(bed)
+ifeq ($(bed),)
+	bed_flag=
+	bed_prefix=
+endif
 reference_name?=e_coli
+
+simulation_prefix?=$(simulation_datasets_path)$(reference_name)$(bed_prefix)_$(random_seed)
+
 references_path?=$(simulating_path)genomes/
 
 ## Generating barcodes
@@ -41,14 +49,10 @@ molecule_size_mu?=250
 molecule_size_dev?=25
 num_molecules?=500
 read_length?=150
-bed_file?=
-bed_flag=--bed $(bed_file)
 reference?=$(references_path)$(reference_name).fa
 molecules_params?=_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)
 simulated_molecules?=$(simulation_prefix)$(molecules_params)_molecules.fa
-ifeq ($(bed_file),)
-	bed_flag=
-endif
+
 
 ## Barcoding molecules
 simulated_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_params)_barcoded_molecules.fa
