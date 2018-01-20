@@ -11,13 +11,13 @@ clustering_path?=$(current_dir)clustering/
 simulating_path?=$(current_dir)simulating/
 
 SHELL=/bin/bash -o pipefail
+
 cc?=g++
 python3?= PYTHONHASHSEED=0 python3
 cc_files?= $(clustering_path)*.cc $(clustering_path)*.h
 cc_flags?=
 cc_args?= $(cc_flags) -O3 -std=c++11
 art_illumina?=art_illumina
-
 
 
 # Common arguments
@@ -30,19 +30,18 @@ bed_flag=--bed $(references_path)$(bed).bed
 bed_prefix=_bed$(bed)
 ifeq ($(bed),)
 	bed_flag=
-	bed_prefix=
+	bed_prefix=NA
 endif
 reference_name?=e_coli
-
-simulation_prefix?=$(simulation_datasets_path)$(reference_name)$(bed_prefix)_$(random_seed)
+simulation_prefix?=$(simulation_datasets_path)rs_$(random_seed).
 
 references_path?=$(simulating_path)genomes/
 
 ## Generating barcodes
 num_barcodes?=100
 barcode_length?=8
-barcodes_params?=_l$(barcode_length)_n$(num_barcodes)
-simulated_barcodes?=$(simulation_prefix)$(barcodes_params)_barcodes.txt
+barcodes_params?=bl_$(barcode_length).nb_$(num_barcodes).
+simulated_barcodes?=$(simulation_prefix)$(barcodes_params)barcodes.txt
 
 ## Generating molecules
 molecule_size_mu?=200
@@ -50,48 +49,47 @@ molecule_size_dev?=25
 num_molecules?=500
 read_length?=100
 reference?=$(references_path)$(reference_name).fa
-molecules_params?=_mu$(molecule_size_mu)_dev$(molecule_size_dev)_m$(num_molecules)
-simulated_molecules?=$(simulation_prefix)$(molecules_params)_molecules.fa
+molecules_params?=ref_$(reference_name).bed_$(bed_prefix).mu_$(molecule_size_mu).dev_$(molecule_size_dev).nm$(num_molecules).
+simulated_molecules?=$(simulation_prefix)$(molecules_params)molecules.fa
 
 
 ## Barcoding molecules
-simulated_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_params)_barcoded_molecules.fa
+simulated_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_params)barcoded_molecules.fa
 
 ## PCR duplication
 pcr_cycles?=7
 pcr_duplication_rate?=0.8
 pcr_error_rate?=0.00005
-pcr_params?=_c$(pcr_cycles)_r$(pcr_duplication_rate)_e$(pcr_error_rate)
-amplified_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)_amplified_barcoded_molecules.fa
+pcr_params?=pc_$(pcr_cycles).pdr_$(pcr_duplication_rate).per_$(pcr_error_rate).
+amplified_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)amplified_barcoded_molecules.fa
 
 ## Generating reads
 sequencing_machine?=HS20
-simulated_reads?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)_$(sequencing_machine)
-simulated_reads_log?=$(simulated_reads)_art_illumina.log
+simulated_reads?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)sm_$(sequencing_machine).
+simulated_reads_log?=$(simulated_reads)art_illumina.log
 
 # Clustering arguments
 input_reads_prefix?=$(simulated_reads)
-forward_reads?=$(input_reads_prefix)_1.fq
-reverse_reads?=$(input_reads_prefix)_2.fq
+forward_reads?=$(input_reads_prefix)1.fq
+reverse_reads?=$(input_reads_prefix)2.fq
 minimizers_num?=3
 kmer_size?=8
 barcode_error_tolerance?=2
 minimizers_threshold?=1
 silent?=--silent
 
-clustering_params?=_l$(barcode_length)_m$(minimizers_num)_k$(kmer_size)_e$(barcode_error_tolerance)_t$(minimizers_threshold)
-output_prefix?=$(input_reads_prefix)$(clustering_params)
+clustering_params?=bl_$(barcode_length).mn_$(minimizers_num).ks_$(kmer_size).bet_$(barcode_error_tolerance).mt_$(minimizers_threshold).
+output_prefix?=$(input_reads_prefix)$(clustering_params)bargoat
 
 # Rand Index Accuracy arguments
 cluster_file?=$(output_prefix).cluster
 input_amplified_molecules?=$(amplified_barcoded_molecules)
 output_accuracy_results?=$(output_prefix).accuracy
-# number
 
 
 .DELETE_ON_ERROR:
 .SECONDARY:
-.PHONY: help correct simulate simulate_clean
+.PHONY: help clean simulate_clean simulate cluster accuracy
 
 help:
 	@echo 'bargoat: Clustering tagged amplicon sequencing reads by barcode and sequence similarity'
@@ -134,7 +132,7 @@ $(amplified_barcoded_molecules): $(simulated_barcoded_molecules)
 		--random-seed $(random_seed) \
 		--pcr-product $(amplified_barcoded_molecules)
 
-simulate: $(amplified_barcoded_molecules)
+$(simulated_reads_log): $(amplified_barcoded_molecules)
 	$(art_illumina) \
 		--seqSys $(sequencing_machine) \
 		--amplicon \
@@ -144,14 +142,20 @@ simulate: $(amplified_barcoded_molecules)
 		--len $(read_length) \
 		--fcov 1 \
 		--rndSeed $(random_seed) \
-		--out $(simulated_reads)_ \
+		--out $(simulated_reads) \
 		> $(simulated_reads_log);
+
+
+$(reverse_reads): $(simulated_reads_log)
+$(forward_reads): $(reverse_reads)
+simulate: $(forward_reads) $(reverse_reads) $(simulated_reads_log)
 
 simulate_clean:
 	rm -f $(simulation_datasets_path)*
 
 $(clustering_path)bargoat.o: $(cc_files)
 	$(cc) $(cc_files) $(cc_args) -o $(clustering_path)bargoat.o
+
 
 cluster: $(clustering_path)bargoat.o $(forward_reads) $(reverse_reads)
 	$(clustering_path)bargoat.o \
@@ -171,6 +175,7 @@ accuracy: $(cluster_file)
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(output_accuracy_results)
 
+benchmark: $(clustering_path)bargoat.o $(forward_reads) $(reverse_reads)
 
 clean:
 	rm -f $(clustering_path)*.o
