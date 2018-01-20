@@ -1,0 +1,82 @@
+#!/usr/bin/make -rRf
+my_mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+my_current_dir :=  $(patsubst %/,%,$(dir $(my_mkfile_path)))/
+include $(my_current_dir)/bargoat
+
+
+rainbow?=rainbow
+rainbow_mismatch?=4
+rainbow_params=mismatch_$(rainbow_mismatch).
+rainbow_output_prefix=$(input_reads_prefix)$(rainbow_params)rainbow.
+rainbow_output=$(rainbow_output_prefix)out
+rainbow_accuracy=$(rainbow_output)accuracy
+rainbow_time=$(rainbow_output)time
+
+starcode?=starcode
+starcode_dist?=4
+starcode_params=dist_$(starcode_dist).
+starcode_output_prefix=$(input_reads_prefix)$(starcode_params)starcode.
+starcode_output=$(starcode_output_prefix)out
+starcode_accuracy=$(starcode_output)accuracy
+starcode_time=$(starcode_output)time
+
+
+bargoat_log?=$(simulated_reads)bargoat_benchmarks.tsv
+starcode_log?=$(simulated_reads)starcode_benchmarks.tsv
+rainbow_log?=$(simulated_reads)rainbow_benchmarks.tsv
+
+$(bargoat_log):
+	touch $(bargoat_log);
+	
+
+$(bargoat_log)
+$(starcode_log)
+$(rainbow_log)
+benchmark: $(bargoat_log) $(starcode_log) $(rainbow_log)
+
+bargoat_log: $(bargoat_accuracy)
+
+starcode_log: $(starcode_accuracy)
+
+rainbow_log: $(rainbow_accuracy)
+
+
+
+$(bargoat_accuracy): $(bargoat_time)
+
+$(starcode_accuracy): $(starcode_time)
+
+$(rainbow_accuracy): $(rainbow_time)
+
+
+$(bargoat_time): $(clustering_path)bargoat.o simulate
+	/usr/bin/time -v -o $(bargoat_time) \
+	$(clustering_path)bargoat.o \
+		--input-forward $(forward_reads) \
+		--input-reverse $(reverse_reads) \
+		--output-prefix $(output_prefix) \
+		--barcode-length $(barcode_length) \
+		--minimizer-count $(minimizers_num) \
+		--kmer-size $(kmer_size) \
+		--error-tolerance $(barcode_error_tolerance) \
+		--minimizer-threshold $(minimizers_threshold) \
+		$(silent)
+
+
+$(starcode_time): simulate
+	/usr/bin/time -v -o $(starcode_time) \
+	$(starcode) \
+	-1 $(forward_reads) \
+	-2 $(reverse_reads) \
+	-d $(starcode_dist) \
+	--print-clusters \
+	--seq-id \
+	> $(starcode_output)
+
+$(rainbow_time): simulate
+	/usr/bin/time -v -o $(rainbow_time) \
+	$(rainbow) \
+	-1 $(forward_reads) \
+	-2 $(reverse_reads) \
+	-m \
+	> $(rainbow_output)
