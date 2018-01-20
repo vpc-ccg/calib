@@ -17,22 +17,34 @@ void cluster(){
     node_id_to_node_id_vector_of_vectors adjacency_lists(node_count);
     time_t start;
 
-    cout << "Adding edges due to barcode barcode similarity\n";
+    if (!silent) {
+        cout << "Adding edges due to barcode barcode similarity\n";
+    }
     start = time(NULL);
     barcode_similarity(adjacency_lists);
-    cout << "Edges due to barcodes took: " << difftime(time(NULL), start) << "\n";
+    if (!silent) {
+        cout << "Edges due to barcodes took: " << difftime(time(NULL), start) << "\n";
+    }
     dog << "Edges due to barcodes took: " << difftime(time(NULL), start) << "\n";
 
-    cout << "Removing edges of unmatched minimizers\n";
+    if (!silent) {
+        cout << "Removing edges of unmatched minimizers\n";
+    }
     start = time(NULL);
     remove_edges_of_unmatched_minimizers(adjacency_lists);
-    cout << "Removing edges due to minimizers: " << difftime(time(NULL), start)<< "\n";
     dog << "Removing edges due to minimizers: " << difftime(time(NULL), start)<< "\n";
+    if (!silent) {
+        cout << "Removing edges due to minimizers: " << difftime(time(NULL), start)<< "\n";
+    }
 
-    cout << "Extracting and outputting clusters\n";
+    if (!silent) {
+        cout << "Extracting and outputting clusters\n";
+    }
     start = time(NULL);
     extract_clusters(adjacency_lists);
-    cout << "Extracting clusters and outputting took: " << difftime(time(NULL), start) << "\n";
+    if (!silent) {
+        cout << "Extracting clusters and outputting took: " << difftime(time(NULL), start) << "\n";
+    }
     dog << "Extracting clusters and outputting took: " << difftime(time(NULL), start) << "\n";
 
 }
@@ -51,13 +63,17 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     do {
         start = time(NULL);
         masked_barcode_to_node_id_unordered_map lsh;
-        cout << mask_barcode(string(template_barcode), mask) << "\n";
+        if (!silent) {
+            cout << mask_barcode(string(template_barcode), mask) << "\n";
+        }
         dog << mask_barcode(string(template_barcode), mask) << "\n";
         for (node_id_t i = 0; i < node_count; i++) {
             lsh[mask_barcode(nodes[i].barcode, mask)].push_back(i);
         }
         build_time += difftime(time(NULL), start);
-        cout << "Building LSH took: " << difftime(time(NULL), start) << "\n";
+        if (!silent) {
+            cout << "Building LSH took: " << difftime(time(NULL), start) << "\n";
+        }
         dog << "Building LSH took: " << difftime(time(NULL), start) << "\n";
         start = time(NULL);
         for (auto bucket : lsh) {
@@ -72,12 +88,18 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
             }
         }
         process_time += difftime(time(NULL), start);
-        cout << "Processing LSH took: " << difftime(time(NULL), start) << "\n";
+        if (!silent) {
+            cout << "Processing LSH took: " << difftime(time(NULL), start) << "\n";
+        }
         dog << "Processing LSH took: " << difftime(time(NULL), start) << "\n";
     } while (std::next_permutation(mask.begin(), mask.end()));
-    cout << "Building all LSH took: " << build_time << "\n";
+    if (!silent) {
+        cout << "Building all LSH took: " << build_time << "\n";
+    }
     dog << "Building all LSH took: " << build_time << "\n";
-    cout << "Processing all LSH took: " << process_time << "\n";
+    if (!silent) {
+        cout << "Processing all LSH took: " << process_time << "\n";
+    }
     dog << "Processing all LSH took: " << process_time << "\n";
 }
 
@@ -134,7 +156,6 @@ void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
 
     for (node_id_t node = 0; node < node_count; node++) {
         if (!pushed[node]) {
-            // cout << "cluster # " << cluster_count << ":\t";
             clusters << "# "<< cluster_count <<"\n";
             opened.push(node);
             pushed[node] = true;

@@ -129,9 +129,13 @@ void extract_barcodes_and_minimizers() {
     read_count = reads.size();
     node_count = node_to_read_map.size();
 
-    cout << "Read count: " << read_count << "\n";
+    if (!silent) {
+        cout << "Read count: " << read_count << "\n";
+    }
     dog << "Read count: " << read_count << "\n";
-    cout << "Node count: " << node_count << "\n";
+    if (!silent) {
+        cout << "Node count: " << node_count << "\n";
+    }
     dog << "Node count: " << node_count << "\n";
 
     nodes.reserve(node_count);
