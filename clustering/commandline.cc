@@ -69,6 +69,10 @@ void parse_flags(int argc, char *argv[]){
         cout << "Thread count must be between 1 and 8!\n";
         exit(-1);
     }
+    if (minimizer_threshold > minimizer_count || minimizer_threshold < 1) {
+        cout << "Minimizer threshold must be <= minimizer count and >= 1\n";
+        exit(-1);
+    }
 }
 
 void print_flags(ofstream &out){
