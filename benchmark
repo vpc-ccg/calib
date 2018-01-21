@@ -31,7 +31,7 @@ bargoat_log_file?=$(input_reads_prefix)bargoat_benchmarks.tsv
 starcode_log_file?=$(input_reads_prefix)starcode_benchmarks.tsv
 rainbow_log_file?=$(input_reads_prefix)rainbow_benchmarks.tsv
 
-benchmark: bargoat_log starcode_log rainbow_log
+run: bargoat_log starcode_log rainbow_log
 
 
 bargoat_log: $(bargoat_log_file) $(bargoat_accuracy)
