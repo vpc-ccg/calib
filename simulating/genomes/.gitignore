@@ -1,5 +1,4 @@
-# Ignore everything in this directory
+# Ignore the human genome 
 hg38.fa*
 # Except this file
 !.gitignore
-
