@@ -11,6 +11,7 @@ string input_1 = "";
 string input_2 = "";
 string output_prefix = "";
 bool silent = false;
+bool keep_qual = false;
 int barcode_length = -1;
 int minimizer_count = -1;
 int error_tolerance = -1;
@@ -32,6 +33,9 @@ void parse_flags(int argc, char *argv[]){
         }
         if (current_param == "-s" || current_param == "--silent") {
             silent = true;
+        }
+        if (current_param == "-q" || current_param == "--keep-qual") {
+            keep_qual = true;
         }
         if (current_param == "-l" || current_param == "--barcode-length") {
             barcode_length = atoi(argv[i+1]);

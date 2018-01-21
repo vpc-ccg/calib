@@ -56,11 +56,21 @@ void extract_barcodes_and_minimizers() {
     while (getline(fastq1, reads.back().name_1)) {
         getline(fastq1, reads.back().sequence_1);
         getline(fastq1, trash);
-        getline(fastq1, reads.back().quality_1);
+        if (keep_qual){
+            getline(fastq1, reads.back().quality_1);
+        } else {
+            getline(fastq1, trash);
+            reads.back().quality_1 = "Q1";
+        }
         getline(fastq2, reads.back().name_2);
         getline(fastq2, reads.back().sequence_2);
         getline(fastq2, trash);
-        getline(fastq2, reads.back().quality_2);
+        if (keep_qual){
+            getline(fastq2, reads.back().quality_2);
+        } else {
+            getline(fastq2, trash);
+            reads.back().quality_2 = "Q2";
+        }
 
         int s1_length = reads.back().sequence_1.size();
         int s2_length = reads.back().sequence_2.size();
