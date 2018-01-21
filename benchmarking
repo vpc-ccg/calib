@@ -23,13 +23,13 @@ starcode_output=$(starcode_output_prefix)out
 starcode_accuracy=$(starcode_output)accuracy
 starcode_time=$(starcode_output)time
 
-bargoat_output_prefix=$(input_reads_prefix)$(clustering_params)
+bargoat_output_prefix=$(input_reads_prefix)bargoat.$(clustering_params)
 bargoat_accuracy=$(bargoat_output_prefix)accuracy
 bargoat_time=$(bargoat_output_prefix)time
 
-bargoat_log_file?=$(simulated_reads)bargoat_benchmarks.tsv
-starcode_log_file?=$(simulated_reads)starcode_benchmarks.tsv
-rainbow_log_file?=$(simulated_reads)rainbow_benchmarks.tsv
+bargoat_log_file?=$(input_reads_prefix)bargoat_benchmarks.tsv
+starcode_log_file?=$(input_reads_prefix)starcode_benchmarks.tsv
+rainbow_log_file?=$(input_reads_prefix)rainbow_benchmarks.tsv
 
 benchmark: bargoat_log starcode_log rainbow_log
 
@@ -38,31 +38,17 @@ bargoat_log: $(bargoat_log_file) $(bargoat_accuracy)
 	$(eval my_time := $(shell $(GET_TIME) $(bargoat_time)))
 	$(eval my_mem := $(shell $(GET_MEM) $(bargoat_time)))
 	$(eval my_accuracy := $(shell $(GET_ACCURACY) $(bargoat_accuracy)))
-	$(ECHO) "$(barcode_length)\t$(minimizers_num)\t$(kmer_size)\t$(barcode_error_tolerance)\t$(minimizers_threshold)\t$(my_time)\t$(my_mem)\t$(my_accuracy)" >> $(bargoat_log_file);
+	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
+	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(barcode_length)\t$(minimizers_num)\t$(kmer_size)\t$(barcode_error_tolerance)\t$(minimizers_threshold)" >> $(bargoat_log_file);
 
 $(bargoat_log_file):
-	$(ECHO) "barcode_length\tminimizers_num\tkmer_size\tbarcode_error_tolerance\tminimizers_threshold\ttime\tmem\tARI" > $(bargoat_log_file)
-
-
-starcode_log: $(starcode_accuracy)
-	touch $(starcode_log_file)
-
-
-
-rainbow_log: $(rainbow_accuracy)
-	touch $(rainbow_log_file)
-
+	$(ECHO) "my_timestamp\ttime\tmem\tARI\tbarcode_length\tminimizers_num\tkmer_size\tbarcode_error_tolerance\tminimizers_threshold" > $(bargoat_log_file)
 
 $(bargoat_accuracy): $(bargoat_time)
 	$(python3) $(simulating_path)rand_index.py \
 		--input-cluster-file $(cluster_file) \
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(bargoat_accuracy)
-
-$(starcode_accuracy): $(starcode_time)
-
-$(rainbow_accuracy): $(rainbow_time)
-
 
 $(bargoat_time): $(clustering_path)bargoat.o simulate
 	/usr/bin/time -v -o $(bargoat_time) \
@@ -76,6 +62,22 @@ $(bargoat_time): $(clustering_path)bargoat.o simulate
 		--error-tolerance $(barcode_error_tolerance) \
 		--minimizer-threshold $(minimizers_threshold) \
 		$(silent)
+
+starcode_log: $(starcode_accuracy)
+	touch $(starcode_log_file)
+
+
+
+rainbow_log: $(rainbow_accuracy)
+	touch $(rainbow_log_file)
+
+
+
+$(starcode_accuracy): $(starcode_time)
+
+$(rainbow_accuracy): $(rainbow_time)
+
+
 
 
 $(starcode_time): simulate
