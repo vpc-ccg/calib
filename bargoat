@@ -79,12 +79,12 @@ minimizers_threshold?=1
 silent?=--silent
 
 clustering_params?=bl_$(barcode_length).mn_$(minimizers_num).ks_$(kmer_size).bet_$(barcode_error_tolerance).mt_$(minimizers_threshold).
-output_prefix?=$(input_reads_prefix)$(clustering_params)bargoat
+output_prefix?=$(input_reads_prefix)bargoat.$(clustering_params)
 
 # Rand Index Accuracy arguments
-cluster_file?=$(output_prefix).cluster
+cluster_file?=$(output_prefix)cluster
 input_amplified_molecules?=$(amplified_barcoded_molecules)
-output_accuracy_results?=$(output_prefix).accuracy
+output_accuracy_results?=$(output_prefix)accuracy
 
 
 .DELETE_ON_ERROR:

@@ -152,7 +152,7 @@ void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     stack<node_id_t> opened;
     size_t cluster_count = 0;
     ofstream clusters;
-    clusters = ofstream(output_prefix + ".cluster");
+    clusters = ofstream(output_prefix + "cluster");
 
     for (node_id_t node = 0; node < node_count; node++) {
         if (!pushed[node]) {

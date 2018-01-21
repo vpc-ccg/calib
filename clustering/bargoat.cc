@@ -17,7 +17,7 @@ ofstream dog;
 int main(int argc, char *argv[]){
     parse_flags(argc, argv);
 
-    dog = ofstream(output_prefix + ".cluster.log");
+    dog = ofstream(output_prefix + "cluster.log");
     print_flags(dog);
 
     if (!silent) {
