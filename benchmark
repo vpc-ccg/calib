@@ -3,25 +3,32 @@ my_mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 my_current_dir :=  $(patsubst %/,%,$(dir $(my_mkfile_path)))/
 include $(my_current_dir)/bargoat
 ECHO := echo -e
-GET_TIME := $(my_current_dir)/benchmark_aux/get_time.awk
-GET_MEM := $(my_current_dir)/benchmark_aux/get_mem.awk
-GET_ACCURACY := $(my_current_dir)/benchmark_aux/get_accuracy.awk
+benchmark_aux_path = $(my_current_dir)/benchmark_aux/
+GET_TIME := $(benchmark_aux_path)get_time.awk
+GET_MEM := $(benchmark_aux_path)get_mem.awk
+GET_ACCURACY := $(benchmark_aux_path)get_accuracy.awk
+CONVERT_STARCODE := $(benchmark_aux_path)convert_starcode_to_cluster.sh
+CONVERT_RAINBOW := $(benchmark_aux_path)convert_rainbow_to_cluster.sh
+CONVERT_dunovo := $(benchmark_aux_path)convert_dunovo_to_cluster.sh
+
 
 rainbow?=rainbow
 rainbow_mismatch?=4
 rainbow_params=mismatch_$(rainbow_mismatch).
-rainbow_output_prefix=$(input_reads_prefix)$(rainbow_params)rainbow.
+rainbow_output_prefix=$(input_reads_prefix)rainbow.$(rainbow_params)
 rainbow_output=$(rainbow_output_prefix)out
-rainbow_accuracy=$(rainbow_output)accuracy
-rainbow_time=$(rainbow_output)time
+rainbow_cluster=$(rainbow_output_prefix)cluster
+rainbow_accuracy=$(rainbow_output_prefix)accuracy
+rainbow_time=$(rainbow_output_prefix)time
 
 starcode?=starcode
 starcode_dist?=4
 starcode_params=dist_$(starcode_dist).
-starcode_output_prefix=$(input_reads_prefix)$(starcode_params)starcode.
+starcode_output_prefix=$(input_reads_prefix)starcode.$(starcode_params)
 starcode_output=$(starcode_output_prefix)out
-starcode_accuracy=$(starcode_output)accuracy
-starcode_time=$(starcode_output)time
+starcode_cluster=$(starcode_output_prefix)cluster
+starcode_accuracy=$(starcode_output_prefix)accuracy
+starcode_time=$(starcode_output_prefix)time
 
 bargoat_output_prefix=$(input_reads_prefix)bargoat.$(clustering_params)
 bargoat_accuracy=$(bargoat_output_prefix)accuracy
@@ -63,37 +70,40 @@ $(bargoat_time): $(clustering_path)bargoat.o simulate
 		--minimizer-threshold $(minimizers_threshold) \
 		$(silent)
 
-starcode_log: $(starcode_accuracy)
-	touch $(starcode_log_file)
+starcode_log: $(starcode_log_file) $(starcode_accuracy)
+	$(eval my_time := $(shell $(GET_TIME) $(starcode_time)))
+	$(eval my_mem := $(shell $(GET_MEM) $(starcode_time)))
+	$(eval my_accuracy := $(shell $(GET_ACCURACY) $(starcode_accuracy)))
+	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
+	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(starcode_dist)" >> $(starcode_log_file);
 
-
-
-rainbow_log: $(rainbow_accuracy)
-	touch $(rainbow_log_file)
-
-
+$(starcode_log_file):
+	$(ECHO) "my_timestamp\ttime\tmem\tARI\tstarcode_dist" > $(starcode_log_file)
 
 $(starcode_accuracy): $(starcode_time)
-
-$(rainbow_accuracy): $(rainbow_time)
-
-
+	$(CONVERT_STARCODE) $(starcode_output) > $(starcode_cluster);
+	$(python3) $(simulating_path)rand_index.py \
+		--input-cluster-file $(starcode_cluster) \
+		--input-amplified-molecule $(input_amplified_molecules) \
+		--output-accuracy-results $(starcode_accuracy)
 
 
 $(starcode_time): simulate
 	/usr/bin/time -v -o $(starcode_time) \
-	$(starcode) \
-	-1 $(forward_reads) \
-	-2 $(reverse_reads) \
-	-d $(starcode_dist) \
-	--print-clusters \
-	--seq-id \
-	> $(starcode_output)
+		$(starcode) \
+			-1 $(forward_reads) \
+			-2 $(reverse_reads) \
+			-d $(starcode_dist) \
+			--print-clusters \
+			--seq-id \
+			> $(starcode_output)
 
-$(rainbow_time): simulate
-	/usr/bin/time -v -o $(rainbow_time) \
-	$(rainbow) \
-	-1 $(forward_reads) \
-	-2 $(reverse_reads) \
-	-m \
-	> $(rainbow_output)
+
+
+# $(rainbow_time): simulate
+# 	/usr/bin/time -v -o $(rainbow_time) \
+# 	$(rainbow) \
+# 	-1 $(forward_reads) \
+# 	-2 $(reverse_reads) \
+# 	-m \
+# 	> $(rainbow_output)
