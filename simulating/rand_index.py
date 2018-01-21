@@ -96,9 +96,14 @@ def main():
 
     Y = []
     X = []
+    lonely_read_cluster_counter = -1
     for rid in rid_to_tcid:
         Y.append(rid_to_tcid[rid])
-        X.append(rid_to_pcid[rid])
+        if rid in rid_to_pcid:
+            X.append(rid_to_pcid[rid])
+        else:
+            X.append(lonely_read_cluster_counter)
+            lonely_read_cluster_counter -= 1
     print(adjusted_rand_score(X, Y), file=results)
 
     for pcid in pcid_to_tcid_set:

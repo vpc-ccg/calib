@@ -11,6 +11,14 @@ CONVERT_STARCODE := $(benchmark_aux_path)convert_starcode_to_cluster.sh
 CONVERT_RAINBOW := $(benchmark_aux_path)convert_rainbow_to_cluster.sh
 CONVERT_dunovo := $(benchmark_aux_path)convert_dunovo_to_cluster.sh
 
+starcode?=starcode
+starcode_dist?=4
+starcode_params=dist_$(starcode_dist).
+starcode_output_prefix=$(input_reads_prefix)starcode.$(starcode_params)
+starcode_output=$(starcode_output_prefix)out
+starcode_cluster=$(starcode_output_prefix)cluster
+starcode_accuracy=$(starcode_output_prefix)accuracy
+starcode_time=$(starcode_output_prefix)time
 
 rainbow?=rainbow
 rainbow_mismatch?=4
@@ -20,15 +28,6 @@ rainbow_output=$(rainbow_output_prefix)out
 rainbow_cluster=$(rainbow_output_prefix)cluster
 rainbow_accuracy=$(rainbow_output_prefix)accuracy
 rainbow_time=$(rainbow_output_prefix)time
-
-starcode?=starcode
-starcode_dist?=4
-starcode_params=dist_$(starcode_dist).
-starcode_output_prefix=$(input_reads_prefix)starcode.$(starcode_params)
-starcode_output=$(starcode_output_prefix)out
-starcode_cluster=$(starcode_output_prefix)cluster
-starcode_accuracy=$(starcode_output_prefix)accuracy
-starcode_time=$(starcode_output_prefix)time
 
 bargoat_output_prefix=$(input_reads_prefix)bargoat.$(clustering_params)
 bargoat_accuracy=$(bargoat_output_prefix)accuracy
@@ -70,6 +69,7 @@ $(bargoat_time): $(clustering_path)bargoat.o simulate
 		--minimizer-threshold $(minimizers_threshold) \
 		$(silent)
 
+# Starcode
 starcode_log: $(starcode_log_file) $(starcode_accuracy)
 	$(eval my_time := $(shell $(GET_TIME) $(starcode_time)))
 	$(eval my_mem := $(shell $(GET_MEM) $(starcode_time)))
@@ -98,7 +98,32 @@ $(starcode_time): simulate
 			--seq-id \
 			> $(starcode_output)
 
+# Rainbow
+rainbow_log: $(rainbow_log_file) $(rainbow_accuracy)
+	$(eval my_time := $(shell $(GET_TIME) $(rainbow_time)))
+	$(eval my_mem := $(shell $(GET_MEM) $(rainbow_time)))
+	$(eval my_accuracy := $(shell $(GET_ACCURACY) $(rainbow_accuracy)))
+	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
+	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(rainbow_mismatch)" >> $(rainbow_log_file);
 
+$(rainbow_log_file):
+	$(ECHO) "my_timestamp\ttime\tmem\tARI\trainbow_mismatch" > $(rainbow_log_file)
+
+$(rainbow_accuracy): $(rainbow_time)
+	$(CONVERT_RAINBOW) $(rainbow_output) > $(rainbow_cluster);
+	$(python3) $(simulating_path)rand_index.py \
+		--input-cluster-file $(rainbow_cluster) \
+		--input-amplified-molecule $(input_amplified_molecules) \
+		--output-accuracy-results $(rainbow_accuracy)
+
+
+$(rainbow_time): simulate
+	/usr/bin/time -v -o $(rainbow_time) \
+		$(rainbow) cluster \
+			-1 $(forward_reads) \
+			-2 $(reverse_reads) \
+			-m $(rainbow_mismatch) \
+			> $(rainbow_output)
 
 # $(rainbow_time): simulate
 # 	/usr/bin/time -v -o $(rainbow_time) \
