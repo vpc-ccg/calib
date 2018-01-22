@@ -21,8 +21,9 @@ starcode_accuracy=$(starcode_output_prefix)accuracy
 starcode_time=$(starcode_output_prefix)time
 
 rainbow?=rainbow
+rainbow_div?=false
 rainbow_mismatch?=4
-rainbow_params=mismatch_$(rainbow_mismatch).
+rainbow_params=mismatch_$(rainbow_mismatch).div_$(rainbow_div).
 rainbow_output_prefix=$(input_reads_prefix)rainbow.$(rainbow_params)
 rainbow_output=$(rainbow_output_prefix)out
 rainbow_cluster=$(rainbow_output_prefix)cluster
@@ -104,10 +105,10 @@ rainbow_log: $(rainbow_log_file) $(rainbow_accuracy)
 	$(eval my_mem := $(shell $(GET_MEM) $(rainbow_time)))
 	$(eval my_accuracy := $(shell $(GET_ACCURACY) $(rainbow_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
-	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(rainbow_mismatch)" >> $(rainbow_log_file);
+	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(rainbow_mismatch)\t$(rainbow_div)" >> $(rainbow_log_file);
 
 $(rainbow_log_file):
-	$(ECHO) "my_timestamp\ttime\tmem\tARI\trainbow_mismatch" > $(rainbow_log_file)
+	$(ECHO) "my_timestamp\ttime\tmem\tARI\trainbow_mismatch\trainbow_div" > $(rainbow_log_file)
 
 $(rainbow_accuracy): $(rainbow_time)
 	$(CONVERT_RAINBOW) $(rainbow_output) > $(rainbow_cluster);
@@ -118,12 +119,23 @@ $(rainbow_accuracy): $(rainbow_time)
 
 
 $(rainbow_time): simulate
+ifeq ($(rainbow_div),false)
 	/usr/bin/time -v -o $(rainbow_time) \
 		$(rainbow) cluster \
 			-1 $(forward_reads) \
 			-2 $(reverse_reads) \
 			-m $(rainbow_mismatch) \
 			> $(rainbow_output)
+else
+	/usr/bin/time -v -o $(rainbow_time) \
+		$(rainbow) cluster \
+			-1 $(forward_reads) \
+			-2 $(reverse_reads) \
+			-m $(rainbow_mismatch) \
+			| $(rainbow) div \
+			> $(rainbow_output)
+endif
+
 
 # $(rainbow_time): simulate
 # 	/usr/bin/time -v -o $(rainbow_time) \
