@@ -136,7 +136,7 @@ $(dunovo_time): simulate
 	mkdir -p $(dunovo_temp_directory)/refdir
 	paste $(forward_reads) $(reverse_reads) | \
 		paste - - - - | \
-		awk -f -v INVARIANT=$(dunovo_invariant) TAG_LEN=$(barcode_length) $(dunovo_prefix)/make-barcodes.awk | \
+		awk -f $(dunovo_prefix)/make-barcodes.awk -v INVARIANT=$(dunovo_invariant) TAG_LEN=$(barcode_length) | \
 		sort > $(dunovo_temp_directory)/uncorrected_families.tsv;
 	# Aligning families
 	$(dunovo_prefix)/baralign.sh $(dunovo_temp_directory)/uncorrected_families.tsv $(dunovo_temp_directory)/refdir $(dunovo_temp_directory)/temp.bam;
