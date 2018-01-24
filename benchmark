@@ -9,7 +9,7 @@ GET_MEM := $(benchmark_aux_path)get_mem.awk
 GET_ACCURACY := $(benchmark_aux_path)get_accuracy.awk
 CONVERT_STARCODE := $(benchmark_aux_path)convert_starcode_to_cluster.sh
 CONVERT_RAINBOW := $(benchmark_aux_path)convert_rainbow_to_cluster.sh
-CONVERT_dunovo := $(benchmark_aux_path)convert_dunovo_to_cluster.sh
+CONVERT_DUNOVO := $(benchmark_aux_path)convert_dunovo_to_cluster.sh
 
 starcode?=starcode
 starcode_dist?=4
@@ -37,7 +37,12 @@ dunovo_temp_directory?=$(my_current_dir)/temp
 dunovo_dist?=2
 dunovo_barcode_length?=$(barcode_length)
 dunovo_invariant?=0
-dunovo_output_prefix?=$(input_reads_prefix)dunovo.$(dunovo_dist)
+dunovo_params=dist_$(dunovo_dist).
+dunovo_output_prefix=$(input_reads_prefix)dunovo.$(dunovo_params)
+dunovo_output=$(dunovo_output_prefix)out
+dunovo_cluster=$(dunovo_output_prefix)cluster
+dunovo_accuracy=$(dunovo_output_prefix)accuracy
+dunovo_time=$(dunovo_output_prefix)time
 
 bargoat_output_prefix=$(input_reads_prefix)bargoat.$(clustering_params)
 bargoat_accuracy=$(bargoat_output_prefix)accuracy
@@ -97,7 +102,6 @@ $(starcode_accuracy): $(starcode_time)
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(starcode_accuracy)
 
-
 $(starcode_time): simulate
 	/usr/bin/time -v -o $(starcode_time) \
 		$(starcode) \
@@ -108,21 +112,40 @@ $(starcode_time): simulate
 			--seq-id \
 			> $(starcode_output)
 
-#Du Novo
+# Du Novo
+dunovo_log: $(dunovo_log_file) $(dunovo_accuracy)
+	$(eval my_time := $(shell $(GET_TIME) $(dunovo_time)))
+	$(eval my_mem := $(shell $(GET_MEM) $(dunovo_time)))
+	$(eval my_accuracy := $(shell $(GET_ACCURACY) $(dunovo_accuracy)))
+	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
+	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(dunovo_dist)" >> $(dunovo_log_file);
+
+$(dunovo_log_file):
+	$(ECHO) "my_timestamp\ttime\tmem\tARI\tdunovo_dist" > $(dunovo_log_file)
+
+$(dunovo_accuracy): $(dunovo_time)
+	$(CONVERT_DUNOVO) $(dunovo_output) > $(dunovo_cluster);
+	$(python3) $(simulating_path)rand_index.py \
+		--input-cluster-file $(dunovo_cluster) \
+		--input-amplified-molecule $(input_amplified_molecules) \
+		--output-accuracy-results $(dunovo_accuracy)
+
 $(dunovo_time): simulate
 	# Making families
 	mkdir -p $(dunovo_temp_directory)/refdir
 	paste $(forward_reads) $(reverse_reads) | \
 		paste - - - - | \
 		awk -f -v INVARIANT=$(dunovo_invariant) TAG_LEN=$(barcode_length) $(dunovo_prefix)/make-barcodes.awk | \
-		sort > $(dunovo_temp_directory)/uncorrected_families.tsv
+		sort > $(dunovo_temp_directory)/uncorrected_families.tsv;
 	# Aligning families
-	$(dunovo_prefix)/baralign.sh $(dunovo_temp_directory)/uncorrected_families.tsv $(dunovo_temp_directory)/refdir $(dunovo_temp_directory)/temp.bam
+	$(dunovo_prefix)/baralign.sh $(dunovo_temp_directory)/uncorrected_families.tsv $(dunovo_temp_directory)/refdir $(dunovo_temp_directory)/temp.bam;
 	# Correcting barcodes
-	samtools view -f 256 $(dunovo_temp_directory)/temp.bam | $(dunovo_prefix)/correct.py -d $(dunovo_dist) $(dunovo_temp_directory)/uncorrected_families.tsv $(dunovo_temp_directory)/refdir/barcodes.fa | sort > $(dunovo_output)
+	samtools view -f 256 $(dunovo_temp_directory)/temp.bam | \
+		$(dunovo_prefix)/correct.py -d $(dunovo_dist) $(dunovo_temp_directory)/uncorrected_families.tsv $(dunovo_temp_directory)/refdir/barcodes.fa | \
+		sort > $(dunovo_output)
 	#_families.corrected.tsv
 	# Cleaning intermediate files...
-	rm -r $(dunovo_temp_directory)
+	rm -rf $(dunovo_temp_directory)
 
 
 # Rainbow
@@ -161,12 +184,3 @@ else
 			| $(rainbow) div \
 			> $(rainbow_output)
 endif
-
-
-# $(rainbow_time): simulate
-# 	/usr/bin/time -v -o $(rainbow_time) \
-# 	$(rainbow) \
-# 	-1 $(forward_reads) \
-# 	-2 $(reverse_reads) \
-# 	-m \
-# 	> $(rainbow_output)
