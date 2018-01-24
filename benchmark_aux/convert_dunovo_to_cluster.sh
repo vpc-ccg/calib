@@ -1,1 +1,1 @@
-awk 'BEGIN{prev_line="";first = 1}  {if (first==1) {printf "#"n++"\n"prev_line; prev=$1; first=0} if ($1 != prev) {prev = $1; prev_line = $0"\n"; first = 1} else{ print $0}}' $1 | awk '{if ($3) print $3; else print $0}'
+awk 'BEGIN{prev=""; n=1} {if ($1!=prev){prev =$1; print "# "n++} print "1\t2\t@"$3}' $1
