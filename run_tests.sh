@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for dataset in 1 2 3
+for dataset in 4
 do
   case $dataset in
     1) echo "Test dataset one"
