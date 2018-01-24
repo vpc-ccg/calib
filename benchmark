@@ -30,6 +30,15 @@ rainbow_cluster=$(rainbow_output_prefix)cluster
 rainbow_accuracy=$(rainbow_output_prefix)accuracy
 rainbow_time=$(rainbow_output_prefix)time
 
+# dunovo_prefix is the directory where dunovo is cloned
+dunovo_prefix?=
+# temporary directory deleted after each run
+dunovo_temp_directory?=$(my_current_dir)/temp
+dunovo_dist?=2
+dunovo_barcode_length?=$(barcode_length)
+dunovo_invariant?=0
+dunovo_output_prefix?=$(input_reads_prefix)dunovo.$(dunovo_dist)
+
 bargoat_output_prefix=$(input_reads_prefix)bargoat.$(clustering_params)
 bargoat_accuracy=$(bargoat_output_prefix)accuracy
 bargoat_time=$(bargoat_output_prefix)time
@@ -98,6 +107,23 @@ $(starcode_time): simulate
 			--print-clusters \
 			--seq-id \
 			> $(starcode_output)
+
+#Du Novo
+$(dunovo_time): simulate
+	# Making families
+	mkdir -p $(dunovo_temp_directory)/refdir
+	paste $(forward_reads) $(reverse_reads) | \
+		paste - - - - | \
+		awk -f -v INVARIANT=$(dunovo_invariant) TAG_LEN=$(barcode_length) $(dunovo_prefix)/make-barcodes.awk | \
+		sort > $(dunovo_temp_directory)/uncorrected_families.tsv
+	# Aligning families
+	$(dunovo_prefix)/baralign.sh $(dunovo_temp_directory)/uncorrected_families.tsv $(dunovo_temp_directory)/refdir $(dunovo_temp_directory)/temp.bam
+	# Correcting barcodes
+	samtools view -f 256 $(dunovo_temp_directory)/temp.bam | $(dunovo_prefix)/correct.py -d $(dunovo_dist) $(dunovo_temp_directory)/uncorrected_families.tsv $(dunovo_temp_directory)/refdir/barcodes.fa | sort > $(dunovo_output)
+	#_families.corrected.tsv
+	# Cleaning intermediate files...
+	rm -r $(dunovo_temp_directory)
+
 
 # Rainbow
 rainbow_log: $(rainbow_log_file) $(rainbow_accuracy)
