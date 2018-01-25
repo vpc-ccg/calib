@@ -4,14 +4,14 @@ my_current_dir :=  $(patsubst %/,%,$(dir $(my_mkfile_path)))/
 include $(my_current_dir)/bargoat
 ECHO := echo -e
 AWK := awk -f
-GNU_TIME := /usr/bin/time -v 
-benchmark_aux_path = $(my_current_dir)/benchmark_aux/
-GET_TIME := $(benchmark_aux_path)get_time.awk
-GET_MEM := $(benchmark_aux_path)get_mem.awk
-GET_ACCURACY := $(benchmark_aux_path)get_accuracy.awk
-CONVERT_STARCODE := $(benchmark_aux_path)convert_starcode_to_cluster.sh
-CONVERT_RAINBOW := $(benchmark_aux_path)convert_rainbow_to_cluster.sh
-CONVERT_DUNOVO := $(benchmark_aux_path)convert_dunovo_to_cluster.sh
+GNU_TIME := /usr/bin/time -v
+benchmark_aux_path = $(my_current_dir)benchmark_aux
+GET_TIME := $(benchmark_aux_path)/get_time.awk
+GET_MEM := $(benchmark_aux_path)/get_mem.awk
+GET_ACCURACY := $(benchmark_aux_path)/get_accuracy.awk
+CONVERT_STARCODE := $(benchmark_aux_path)/convert_starcode_to_cluster.sh
+CONVERT_RAINBOW := $(benchmark_aux_path)/convert_rainbow_to_cluster.sh
+CONVERT_DUNOVO := $(benchmark_aux_path)/convert_dunovo_to_cluster.sh
 
 starcode?=starcode
 starcode_dist?=4
@@ -34,8 +34,8 @@ rainbow_time=$(rainbow_output_prefix)time
 
 # dunovo_prefix is the directory where dunovo is cloned
 dunovo_prefix?=
-# temporary directory deleted after each run
-dunovo_temp_directory?=$(my_current_dir)/temp
+DUNOVO_RUN=$(benchmark_aux_path)/run_dunovo.sh
+dunovo_temp_directory?=$(my_current_dir)temp
 dunovo_dist?=2
 dunovo_barcode_length?=$(barcode_length)
 dunovo_invariant?=0
@@ -134,22 +134,22 @@ $(dunovo_accuracy): $(dunovo_time)
 		--output-accuracy-results $(dunovo_accuracy)
 
 $(dunovo_time): simulate
-	# Making families
-	mkdir -p $(dunovo_temp_directory)/refdir
-	paste $(forward_reads) $(reverse_reads) | \
-		paste - - - - | \
-		awk -f $(dunovo_prefix)/make-barcodes.awk -v INVARIANT=$(dunovo_invariant) TAG_LEN=$(barcode_length) | \
-		sort > $(dunovo_temp_directory)/uncorrected_families.tsv;
-	# Aligning families
-	$(dunovo_prefix)/baralign.sh $(dunovo_temp_directory)/uncorrected_families.tsv $(dunovo_temp_directory)/refdir $(dunovo_temp_directory)/temp.bam;
-	# Correcting barcodes
-	samtools view -f 256 $(dunovo_temp_directory)/temp.bam | \
-		$(dunovo_prefix)/correct.py -d $(dunovo_dist) $(dunovo_temp_directory)/uncorrected_families.tsv $(dunovo_temp_directory)/refdir/barcodes.fa | \
-		sort > $(dunovo_output)
-	#_families.corrected.tsv
-	# Cleaning intermediate files...
-	rm -rf $(dunovo_temp_directory)
+	$(GNU_TIME) -o $(dunovo_time) \
+		$(DUNOVO_RUN) \
+			$(dunovo_temp_directory) \
+			$(forward_reads) \
+			$(reverse_reads) \
+			$(dunovo_prefix) \
+			$(dunovo_invariant) \
+			$(barcode_length) \
+			$(dunovo_dist) \
+			$(dunovo_output)
 
+dunovo_conda:
+	conda create --name bargoat_dunovo -c faircloth-lab samtools python=2.7 networkx
+
+dunovo_conda_clean:
+	conda remove --name bargoat_dunovo --all
 
 # Rainbow
 rainbow_log: $(rainbow_log_file) $(rainbow_accuracy)
