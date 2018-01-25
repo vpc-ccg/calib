@@ -24,7 +24,7 @@ do
     ;;
   esac
   # bargoat_log
-  for error_tolerance in 1
+  for barcode_error_tolerance in 1
   do
     for kmer_size in 8
     do
