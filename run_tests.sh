@@ -21,18 +21,18 @@ do
     ;;
   esac
   # bargoat_log
-  for error_tolerance in 1 2
+  for barcode_error_tolerance in 1 2
   do
     for kmer_size in 4 8
     do
-      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=3 minimizers_threshold=1
-      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=3 minimizers_threshold=2
-      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=4 minimizers_threshold=1
-      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=4 minimizers_threshold=2
-      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=4 minimizers_threshold=3
-      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=5 minimizers_threshold=2
-      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=5 minimizers_threshold=3
-      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=5 minimizers_threshold=4
+      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=3 minimizers_threshold=1
+      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=3 minimizers_threshold=2
+      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=4 minimizers_threshold=1
+      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=4 minimizers_threshold=2
+      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=4 minimizers_threshold=3
+      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=5 minimizers_threshold=2
+      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=5 minimizers_threshold=3
+      ./benchmark bargoat_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=5 minimizers_threshold=4
     done
   done
   # starcode_log
