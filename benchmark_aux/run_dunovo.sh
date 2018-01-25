@@ -10,7 +10,6 @@
 
 # Making families
 source activate bargoat_dunovo
-samtools sort
 rm -rf $1
 mkdir -p "$1"/refdir
 paste $2 $3 | \
@@ -19,7 +18,6 @@ paste $2 $3 | \
     sort > "$1"/uncorrected_families.tsv;
 # Aligning families
 "$4"/baralign.sh "$1"/uncorrected_families.tsv "$1"/refdir "$1"/temp.bam;
-echo ALL GOOD
 # Correcting barcodes
 samtools view -f 256 "$1"/temp.bam | \
     "$4"/correct.py -d $7 "$1"/uncorrected_families.tsv "$1"/refdir/barcodes.fa | \
