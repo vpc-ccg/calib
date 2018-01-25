@@ -146,7 +146,7 @@ $(dunovo_time): simulate
 			$(dunovo_output)
 
 dunovo_conda:
-	conda create --name bargoat_dunovo -c faircloth-lab samtools python=2.7 networkx -y
+	conda create --name bargoat_dunovo -c faircloth-lab samtools python=2.7 networkx -c bioconda bowtie2 -y
 
 dunovo_conda_clean:
 	conda remove --name bargoat_dunovo --all -y
