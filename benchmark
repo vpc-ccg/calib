@@ -3,6 +3,8 @@ my_mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 my_current_dir :=  $(patsubst %/,%,$(dir $(my_mkfile_path)))/
 include $(my_current_dir)/bargoat
 ECHO := echo -e
+AWK := awk -f
+GNU_TIME := /usr/bin/time -v 
 benchmark_aux_path = $(my_current_dir)/benchmark_aux/
 GET_TIME := $(benchmark_aux_path)get_time.awk
 GET_MEM := $(benchmark_aux_path)get_mem.awk
@@ -57,9 +59,9 @@ run: bargoat_log starcode_log rainbow_log
 
 
 bargoat_log: $(bargoat_log_file) $(bargoat_accuracy)
-	$(eval my_time := $(shell $(GET_TIME) $(bargoat_time)))
-	$(eval my_mem := $(shell $(GET_MEM) $(bargoat_time)))
-	$(eval my_accuracy := $(shell $(GET_ACCURACY) $(bargoat_accuracy)))
+	$(eval my_time := $(shell $(AWK) $(GET_TIME) $(bargoat_time)))
+	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(bargoat_time)))
+	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(bargoat_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(barcode_length)\t$(minimizers_num)\t$(kmer_size)\t$(barcode_error_tolerance)\t$(minimizers_threshold)" >> $(bargoat_log_file);
 
@@ -73,7 +75,7 @@ $(bargoat_accuracy): $(bargoat_time)
 		--output-accuracy-results $(bargoat_accuracy)
 
 $(bargoat_time): $(clustering_path)bargoat.o simulate
-	/usr/bin/time -v -o $(bargoat_time) \
+	$(GNU_TIME) -o $(bargoat_time) \
 	$(clustering_path)bargoat.o \
 		--input-forward $(forward_reads) \
 		--input-reverse $(reverse_reads) \
@@ -87,9 +89,9 @@ $(bargoat_time): $(clustering_path)bargoat.o simulate
 
 # Starcode
 starcode_log: $(starcode_log_file) $(starcode_accuracy)
-	$(eval my_time := $(shell $(GET_TIME) $(starcode_time)))
-	$(eval my_mem := $(shell $(GET_MEM) $(starcode_time)))
-	$(eval my_accuracy := $(shell $(GET_ACCURACY) $(starcode_accuracy)))
+	$(eval my_time := $(shell $(AWK) $(GET_TIME) $(starcode_time)))
+	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(starcode_time)))
+	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(starcode_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(starcode_dist)" >> $(starcode_log_file);
 
@@ -104,7 +106,7 @@ $(starcode_accuracy): $(starcode_time)
 		--output-accuracy-results $(starcode_accuracy)
 
 $(starcode_time): simulate
-	/usr/bin/time -v -o $(starcode_time) \
+	$(GNU_TIME) -o $(starcode_time) \
 		$(starcode) \
 			-1 $(forward_reads) \
 			-2 $(reverse_reads) \
@@ -115,9 +117,9 @@ $(starcode_time): simulate
 
 # Du Novo
 dunovo_log: $(dunovo_log_file) $(dunovo_accuracy)
-	$(eval my_time := $(shell $(GET_TIME) $(dunovo_time)))
-	$(eval my_mem := $(shell $(GET_MEM) $(dunovo_time)))
-	$(eval my_accuracy := $(shell $(GET_ACCURACY) $(dunovo_accuracy)))
+	$(eval my_time := $(shell $(AWK) $(GET_TIME) $(dunovo_time)))
+	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(dunovo_time)))
+	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(dunovo_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(dunovo_dist)" >> $(dunovo_log_file);
 
@@ -151,9 +153,9 @@ $(dunovo_time): simulate
 
 # Rainbow
 rainbow_log: $(rainbow_log_file) $(rainbow_accuracy)
-	$(eval my_time := $(shell $(GET_TIME) $(rainbow_time)))
-	$(eval my_mem := $(shell $(GET_MEM) $(rainbow_time)))
-	$(eval my_accuracy := $(shell $(GET_ACCURACY) $(rainbow_accuracy)))
+	$(eval my_time := $(shell $(AWK) $(GET_TIME) $(rainbow_time)))
+	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(rainbow_time)))
+	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(rainbow_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(rainbow_mismatch)\t$(rainbow_div)" >> $(rainbow_log_file);
 
@@ -170,14 +172,14 @@ $(rainbow_accuracy): $(rainbow_time)
 
 $(rainbow_time): simulate
 ifeq ($(rainbow_div),false)
-	/usr/bin/time -v -o $(rainbow_time) \
+	$(GNU_TIME) -o $(rainbow_time) \
 		$(rainbow) cluster \
 			-1 $(forward_reads) \
 			-2 $(reverse_reads) \
 			-m $(rainbow_mismatch) \
 			> $(rainbow_output)
 else
-	/usr/bin/time -v -o $(rainbow_time) \
+	$(GNU_TIME) -o $(rainbow_time) \
 		$(rainbow) cluster \
 			-1 $(forward_reads) \
 			-2 $(reverse_reads) \
