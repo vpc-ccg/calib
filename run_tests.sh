@@ -4,16 +4,16 @@ for dataset in $@
 do
   case $dataset in
     "small") echo "Test dataset one"
-    num_barcodes=5000
-    num_molecules=1000000
-    ;;
-    "medium")  echo "Test dataset two"
     num_barcodes=100
     num_molecules=100000
     ;;
-    "large")  echo "Test dataset three"
+    "medium")  echo "Test dataset two"
     num_barcodes=5000
-    num_molecules=500000
+    num_molecules=1000000
+    ;;
+    "large")  echo "Test dataset three"
+    num_barcodes=25000
+    num_molecules=1000000
     ;;
     "tiny")  echo "Test dataset three"
     num_barcodes=100
