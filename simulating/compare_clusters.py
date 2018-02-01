@@ -94,7 +94,7 @@ def main():
         contigency_matrix[key] = contigency_matrix.get(key, 0) + 1
 
     if (args.output_accuracy_results):
-        results = open(args.output_accuracy_results, 'w+')
+        results = open(args.output_accuracy_results+'.ari', 'w+')
     else:
         results = sys.stdout
 
@@ -110,7 +110,12 @@ def main():
             lonely_read_cluster_counter -= 1
     print(adjusted_rand_score(X, Y), file=results)
 
-    print('Clusters merged in prediction:\n===', file=results)
+    if (args.output_accuracy_results):
+        results = open(args.output_accuracy_results+'.merged', 'w+')
+    else:
+        results = sys.stdout
+
+    # print('Clusters merged in prediction:\n===', file=results)
     for pcid in pcid_to_tcid_set:
         if len(pcid_to_tcid_set[pcid]) > 1:
             true_clusters = [(x, len(tcid_to_rid_set[x])) for x in pcid_to_tcid_set[pcid]]
@@ -121,7 +126,12 @@ def main():
                     print('{}\t{}\t{}\t{}'.format(tcid, rid_to_pcid[rid], rid, reads[rid]), file=results)
                 # print(file=results)
 
-    print('Clusters split in prediction:\n===', file=results)
+    if (args.output_accuracy_results):
+        results = open(args.output_accuracy_results+'.split', 'w+')
+    else:
+        results = sys.stdout
+
+    # print('Clusters split in prediction:\n===', file=results)
     for tcid in tcid_to_pcid_set:
         if len(tcid_to_pcid_set[tcid]) > 1:
             predicted_clusters = [(x, len(pcid_to_rid_set[x])) for x in tcid_to_pcid_set[tcid]]
