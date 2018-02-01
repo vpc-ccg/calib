@@ -72,6 +72,7 @@ simulated_reads_log?=$(simulated_reads)art_illumina.log
 input_reads_prefix?=$(simulated_reads)
 forward_reads?=$(input_reads_prefix)1.fq
 reverse_reads?=$(input_reads_prefix)2.fq
+ignored_sequence_prefix_length?=0
 minimizers_num?=3
 kmer_size?=8
 barcode_error_tolerance?=2
@@ -163,6 +164,7 @@ cluster: $(clustering_path)bargoat.o $(forward_reads) $(reverse_reads)
 		--input-reverse $(reverse_reads) \
 		--output-prefix $(output_prefix) \
 		--barcode-length $(barcode_length) \
+		--ignored-sequence-prefix-length $(ignored_sequence_prefix_length) \
 		--minimizer-count $(minimizers_num) \
 		--kmer-size $(kmer_size) \
 		--error-tolerance $(barcode_error_tolerance) \

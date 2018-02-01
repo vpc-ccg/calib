@@ -14,6 +14,7 @@ extern std::string input_1;
 extern std::string input_2;
 extern std::string output_prefix;
 extern int barcode_length;
+extern int ignored_sequence_prefix_length;
 extern int minimizer_count;
 extern int kmer_size;
 extern int error_tolerance;

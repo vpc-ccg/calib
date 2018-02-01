@@ -13,6 +13,7 @@ string output_prefix = "";
 bool silent = false;
 bool keep_qual = false;
 int barcode_length = -1;
+int ignored_sequence_prefix_length = 0;
 int minimizer_count = -1;
 int error_tolerance = -1;
 int minimizer_threshold = -1;
@@ -39,6 +40,9 @@ void parse_flags(int argc, char *argv[]){
         }
         if (current_param == "-l" || current_param == "--barcode-length") {
             barcode_length = atoi(argv[i+1]);
+        }
+        if (current_param == "-p" || current_param == "--ignored-sequence-prefix-length") {
+            ignored_sequence_prefix_length = atoi(argv[i+1]);
         }
         if (current_param == "-m" || current_param == "--minimizer-count") {
             minimizer_count = atoi(argv[i+1]);
@@ -81,6 +85,7 @@ void print_flags(ofstream &out){
     out << "\tinput_2:\t" << input_2 << "\n";
     out << "\toutput_prefix:\t" << output_prefix << "\n";
     out << "\tbarcode_length:\t" << barcode_length << "\n";
+    out << "\tignored_sequence_prefix_length:\t" << ignored_sequence_prefix_length << "\n";
     out << "\tminimizer_count:\t" << minimizer_count << "\n";
     out << "\tkmer_size:\t" << kmer_size << "\n";
     out << "\terror_tolerance:\t" << error_tolerance << "\n";
