@@ -123,7 +123,7 @@ def main():
             print('#\t{} have reads merged into {}'.format(true_clusters, tuple([pcid, len(pcid_to_rid_set[pcid])]) ), file=results)
             for tcid in pcid_to_tcid_set[pcid]:
                 for rid in tcid_to_rid_set[tcid].intersection(pcid_to_rid_set[pcid]):
-                    print('{}\t{}\t{}\t{}'.format(rid, reads[rid], tcid, rid_to_pcid[rid]), file=results)
+                    print('{}\t{}\t{}\t{}'.format(reads[rid], rid, tcid, rid_to_pcid[rid]), file=results)
                 # print(file=results)
 
     if (args.output_accuracy_results):
@@ -138,7 +138,7 @@ def main():
             print('#\t{} have reads split into {}'.format(tuple([tcid, len(tcid_to_rid_set[tcid])]), predicted_clusters), file=results)
             for pcid in tcid_to_pcid_set[tcid]:
                 for rid in pcid_to_rid_set[pcid].intersection(tcid_to_rid_set[tcid]):
-                    print('{}\t{}\t{}\t{}'.format(rid, reads[rid], tcid, rid_to_pcid[rid]), file=results)
+                    print('{}\t{}\t{}\t{}'.format(reads[rid], rid, tcid, rid_to_pcid[rid]), file=results)
 
 
     # for tcid in tcid_to_pcid_set:
