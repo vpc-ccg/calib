@@ -11,6 +11,9 @@
 using namespace std;
 
 char masked_barcode_buffer[150];
+#define ASCII_SIZE 256
+bool valid_base [ASCII_SIZE];
+
 
 
 void cluster(){
@@ -50,6 +53,18 @@ void cluster(){
 }
 
 void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
+    for (int i = 0; i < ASCII_SIZE; i++) {
+        valid_base[i] = false;
+    }
+    valid_base['A'] = true;
+    valid_base['C'] = true;
+    valid_base['G'] = true;
+    valid_base['T'] = true;
+    valid_base['a'] = true;
+    valid_base['c'] = true;
+    valid_base['g'] = true;
+    valid_base['t'] = true;
+
     vector<bool> mask(barcode_length*2, false);
     std::fill(mask.begin() + error_tolerance, mask.end(), true);
     masked_barcode_buffer[barcode_length*2-error_tolerance] = '\0';
@@ -67,8 +82,12 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
             cout << mask_barcode(string(template_barcode), mask) << "\n";
         }
         dog << mask_barcode(string(template_barcode), mask) << "\n";
+        string masked_barcode;
         for (node_id_t i = 0; i < node_count; i++) {
-            lsh[mask_barcode(nodes[i].barcode, mask)].push_back(i);
+            masked_barcode = mask_barcode(nodes[i].barcode, mask);
+            if (masked_barcode != "0"){
+                lsh[masked_barcode].push_back(i);
+            }
         }
         build_time += difftime(time(NULL), start);
         if (!silent) {
@@ -108,6 +127,9 @@ string mask_barcode(const string& barcode, const vector<bool>& mask){
     int pos = 0;
     for (int i = 0; i < barcode_length*2; i++) {
         if (mask[i]) {
+            if (valid_base[(uint8_t) barcode.at(i)] == false) {
+                return "0";
+            }
             masked_barcode_buffer[pos] = barcode.at(i);
             pos++;
         }
