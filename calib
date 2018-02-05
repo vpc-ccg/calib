@@ -1,7 +1,7 @@
 #!/usr/bin/make -rRf
 # Usage:
-# bargoat correct reads1=reads1.fq reads2=reads2.fq
-# bargoat simulate
+# calib correct reads1=reads1.fq reads2=reads2.fq
+# calib simulate
 #
 
 # Figuring out where we are
@@ -80,7 +80,7 @@ minimizers_threshold?=1
 silent?=--silent
 
 clustering_params?=bl_$(barcode_length).mn_$(minimizers_num).ks_$(kmer_size).bet_$(barcode_error_tolerance).mt_$(minimizers_threshold).
-output_prefix?=$(input_reads_prefix)bargoat.$(clustering_params)
+output_prefix?=$(input_reads_prefix)calib.$(clustering_params)
 
 # Rand Index Accuracy arguments
 cluster_file?=$(output_prefix)cluster
@@ -93,10 +93,10 @@ output_accuracy_results?=$(output_prefix)accuracy
 .PHONY: help clean simulate_clean simulate cluster accuracy
 
 help:
-	@echo 'bargoat: Clustering tagged amplicon sequencing reads by barcode and sequence similarity'
-	@echo 'Usage: ./bargoat [COMMAND]... [PARAMETER=VALUE]...'
-	@echo 'Example: ./bargoat simulate'
-	@echo '			./bargoat cluster input_reads_prefix=simulating/simulated_reads_'
+	@echo 'calib: Clustering tagged amplicon sequencing reads by barcode and sequence similarity'
+	@echo 'Usage: ./calib [COMMAND]... [PARAMETER=VALUE]...'
+	@echo 'Example: ./calib simulate'
+	@echo '			./calib cluster input_reads_prefix=simulating/simulated_reads_'
 	@echo 'Checking the possible list of commands down here, and the parameter list up here.'
 
 $(simulated_barcodes):
@@ -154,12 +154,12 @@ simulate: $(forward_reads) $(reverse_reads) $(simulated_reads_log)
 simulate_clean:
 	rm -f $(simulation_datasets_path)*
 
-$(clustering_path)bargoat.o: $(cc_files)
-	$(cc) $(cc_files) $(cc_args) -o $(clustering_path)bargoat.o
+$(clustering_path)calib.o: $(cc_files)
+	$(cc) $(cc_files) $(cc_args) -o $(clustering_path)calib.o
 
 
-cluster: $(clustering_path)bargoat.o $(forward_reads) $(reverse_reads)
-	$(clustering_path)bargoat.o \
+cluster: $(clustering_path)calib.o $(forward_reads) $(reverse_reads)
+	$(clustering_path)calib.o \
 		--input-forward $(forward_reads) \
 		--input-reverse $(reverse_reads) \
 		--output-prefix $(output_prefix) \
@@ -177,7 +177,7 @@ accuracy: $(cluster_file)
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(output_accuracy_results)
 
-benchmark: $(clustering_path)bargoat.o $(forward_reads) $(reverse_reads)
+benchmark: $(clustering_path)calib.o $(forward_reads) $(reverse_reads)
 
 clean:
 	rm -f $(clustering_path)*.o

@@ -9,7 +9,7 @@
 # 8 = dunovo_output
 
 # Making families
-source activate bargoat_dunovo
+source activate calib_dunovo
 rm -rf $1
 mkdir -p "$1"/refdir
 paste $2 $3 | \

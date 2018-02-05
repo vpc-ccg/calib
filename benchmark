@@ -1,7 +1,7 @@
 #!/usr/bin/make -rRf
 my_mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 my_current_dir :=  $(patsubst %/,%,$(dir $(my_mkfile_path)))/
-include $(my_current_dir)/bargoat
+include $(my_current_dir)/calib
 ECHO := echo -e
 AWK := awk -f
 GNU_TIME?=~/bin/time
@@ -46,37 +46,37 @@ dunovo_cluster=$(dunovo_output_prefix)cluster
 dunovo_accuracy=$(dunovo_output_prefix)accuracy
 dunovo_time=$(dunovo_output_prefix)time
 
-bargoat_output_prefix=$(input_reads_prefix)bargoat.$(clustering_params)
-bargoat_accuracy=$(bargoat_output_prefix)accuracy
-bargoat_time=$(bargoat_output_prefix)time
+calib_output_prefix=$(input_reads_prefix)calib.$(clustering_params)
+calib_accuracy=$(calib_output_prefix)accuracy
+calib_time=$(calib_output_prefix)time
 
-bargoat_log_file?=$(input_reads_prefix)bargoat_benchmarks.tsv
+calib_log_file?=$(input_reads_prefix)calib_benchmarks.tsv
 starcode_log_file?=$(input_reads_prefix)starcode_benchmarks.tsv
 dunovo_log_file?=$(input_reads_prefix)dunovo_benchmarks.tsv
 rainbow_log_file?=$(input_reads_prefix)rainbow_benchmarks.tsv
 
-run: bargoat_log starcode_log rainbow_log
+run: calib_log starcode_log rainbow_log
 
 
-bargoat_log: $(bargoat_log_file) $(bargoat_accuracy)
-	$(eval my_time := $(shell $(AWK) $(GET_TIME) $(bargoat_time)))
-	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(bargoat_time)))
-	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(bargoat_accuracy)))
+calib_log: $(calib_log_file) $(calib_accuracy)
+	$(eval my_time := $(shell $(AWK) $(GET_TIME) $(calib_time)))
+	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(calib_time)))
+	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(calib_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
-	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(barcode_length)\t$(minimizers_num)\t$(kmer_size)\t$(barcode_error_tolerance)\t$(minimizers_threshold)" >> $(bargoat_log_file);
+	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(barcode_length)\t$(minimizers_num)\t$(kmer_size)\t$(barcode_error_tolerance)\t$(minimizers_threshold)" >> $(calib_log_file);
 
-$(bargoat_log_file):
-	$(ECHO) "my_timestamp\ttime\tmem\tARI\tbarcode_length\tminimizers_num\tkmer_size\tbarcode_error_tolerance\tminimizers_threshold" > $(bargoat_log_file)
+$(calib_log_file):
+	$(ECHO) "my_timestamp\ttime\tmem\tARI\tbarcode_length\tminimizers_num\tkmer_size\tbarcode_error_tolerance\tminimizers_threshold" > $(calib_log_file)
 
-$(bargoat_accuracy): $(bargoat_time)
+$(calib_accuracy): $(calib_time)
 	$(python3) $(simulating_path)rand_index.py \
 		--input-cluster-file $(cluster_file) \
 		--input-amplified-molecule $(input_amplified_molecules) \
-		--output-accuracy-results $(bargoat_accuracy)
+		--output-accuracy-results $(calib_accuracy)
 
-$(bargoat_time): $(clustering_path)bargoat.o simulate
-	$(GNU_TIME) -v -o $(bargoat_time) \
-	$(clustering_path)bargoat.o \
+$(calib_time): $(clustering_path)calib.o simulate
+	$(GNU_TIME) -v -o $(calib_time) \
+	$(clustering_path)calib.o \
 		--input-forward $(forward_reads) \
 		--input-reverse $(reverse_reads) \
 		--output-prefix $(output_prefix) \
@@ -146,10 +146,10 @@ $(dunovo_time): simulate
 			$(dunovo_output)
 
 dunovo_conda:
-	 conda create --name bargoat_dunovo -c faircloth-lab -c bioconda samtools python=2.7 networkx bowtie2 -y
+	 conda create --name calib_dunovo -c faircloth-lab -c bioconda samtools python=2.7 networkx bowtie2 -y
 
 dunovo_conda_clean:
-	conda remove --name bargoat_dunovo --all -y
+	conda remove --name calib_dunovo --all -y
 
 # Rainbow
 rainbow_log: $(rainbow_log_file) $(rainbow_accuracy)
