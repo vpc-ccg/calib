@@ -1,11 +1,11 @@
-# BarGoat
-BarGoat clusters paired-end reads using their barcodes and sequences. BarGoat is suitable for amplicon sequencing where a molecule is tagged, then PCR amplified with high depth.
+# Calib
+Calib clusters paired-end reads using their barcodes and sequences. Calib is suitable for amplicon sequencing where a molecule is tagged, then PCR amplified with high depth.
 
 ## Prerequisites
 
-BarGoat read clustering is implemented in C++11 and has been tested on Linux operating system.
+Calib read clustering is implemented in C++11 and has been tested on Linux operating system.
 
-The simulatation module of BarGoat is implemented in Python 3. BarGoat read simulation has the following prerequisites:
+The simulatation module of Calib is implemented in Python 3. Calib read simulation has the following prerequisites:
 
 - [pyfaidx](https://pypi.python.org/pypi/pyfaidx)
 - [numpy](https://pypi.python.org/pypi/numpy)
@@ -19,25 +19,25 @@ All these prerequisites can easily be satisfied using Anaconda.
 
 
 
-## BarGoat "Hello world..." Run
+## Calib "Hello world..." Run
 
-The simplest way to run BarGoat is using its Makefile as an executable. You can modify any of the command-line parameters by passing them to the executable. Let us first try simulating an amplicon sequencing run. This can be easily done using the `simulate` command:
+The simplest way to run Calib is using its Makefile as an executable. You can modify any of the command-line parameters by passing them to the executable. Let us first try simulating an amplicon sequencing run. This can be easily done using the `simulate` command:
 
 ```bash
-./bargoat simulate
+./calib simulate
 ```
 
 This will generate the following files under Data subdirectory:
 
 - `simulated_barcodes.txt`: List of 10000 barcodes each of length 10 each in a new line
-- `simulated_molecules.fa`: FASTA file of 1000 molecules with mean length of 250, standard deviation of 25, and minimum length of 150 generated randomly for E. Coli FASTA file (included with BarGoat).
+- `simulated_molecules.fa`: FASTA file of 1000 molecules with mean length of 250, standard deviation of 25, and minimum length of 150 generated randomly for E. Coli FASTA file (included with Calib).
 - `simulated_barcoded_molecules.fa`: FASTA file of the same molecules prepended and appended by a random barcode from `simulated_barcodes.txt`.
 - `simulated_reads_1.fq` and `simulated_reads_2.fq`: Paired-end reads generated from `simulated_barcoded_molecules.fa` by ART Illumina
 
 Note that any of the specified parameters can easily be changed by passing to the Makefile. For example:
 
 ```bash
-./bargoat simulate molecule_size_mu=400
+./calib simulate molecule_size_mu=400
 ```
 
 Will generate molecules with mean size of 400 nucleotides.
@@ -45,7 +45,7 @@ Will generate molecules with mean size of 400 nucleotides.
 Now let us try clustering the simulated reads:
 
 ```bash
-./bargoat cluster
+./calib cluster
 ```
 
 By default, `cluster` will run on the simulated reads. This will output the following files:
@@ -54,7 +54,7 @@ By default, `cluster` will run on the simulated reads. This will output the foll
 - `simulated_reads_l10_m3_k8_e2_t1_q1.0.log`: A log file containing what was printed to std.out
 - `simulated_reads_l10_m3_k8_e2_t1_q1.0.tsv`: A tab delimited file that contains the extracted barcode and minimizers of the reads.
 
-BarGoat `cluster` has some parameters. Most important of them are the following six:
+Calib `cluster` has some parameters. Most important of them are the following six:
 
 - `barcode_length`: Barcode length on a single side of the read. Default is 10.
 
@@ -64,12 +64,12 @@ BarGoat `cluster` has some parameters. Most important of them are the following 
 - `minimizers_threshold`: Minimum number of matching minimizers on each mate to be considered similar. Default is 1.
 - `ratio`: The ratio of the subsample of nodes to consider for each template of barcode similarity checking. Default is 1.0.
 
-You may note that these parameters are included in the output prefix of all `cluster` output files for convenience. 
+You may note that these parameters are included in the output prefix of all `cluster` output files for convenience.
 
-Finally, if you ran a simulated dataset, you can check BarGoat `cluster` accuracy using the `accuracy` command:
+Finally, if you ran a simulated dataset, you can check Calib `cluster` accuracy using the `accuracy` command:
 
 ```bash
-./bargoat accuracy
+./calib accuracy
 ```
 
 Which will take the default simulated reads clusters produced by `cluster` command. Accuracy is measured using [Rand Index](https://en.wikipedia.org/wiki/Rand_index).
@@ -79,15 +79,9 @@ Which will take the default simulated reads clusters produced by `cluster` comma
 To reporucede any of the benchmarks in our report, run a command like this:
 
 ```bash
-./bargoat simulate cluster accuracy num_molecules=300000 num_barcodes=30000 barcode_length=8 minimizers_num=5 kmer_size=4 barcode_error_tolerance=1 minimizers_threshold=3 
+./calib simulate cluster accuracy num_molecules=300000 num_barcodes=30000 barcode_length=8 minimizers_num=5 kmer_size=4 barcode_error_tolerance=1 minimizers_threshold=3
 ```
 Where you may change the value of any parameters to match any of the reported datasets (or a new dataset for that matter).
 
 ## Report
 Our report is hosted at Overleaf at [https://www.overleaf.com/read/jywsyjsmtrdp](https://www.overleaf.com/read/jywsyjsmtrdp). Our manuscript is hosted at ShareLaTeX at [https://www.sharelatex.com/read/gwqvswwjndgf](https://www.sharelatex.com/read/gwqvswwjndgf).
-
-
-
-
-
-

@@ -6,8 +6,8 @@
 #include <fstream>
 #include <stdio.h>
 
-#ifndef BARGOAT_GLOBAL_H
-#define BARGOAT_GLOBAL_H
+#ifndef CALIB_GLOBAL_H
+#define CALIB_GLOBAL_H
 
 
 extern std::string input_1;
@@ -27,4 +27,4 @@ extern std::ofstream dog;
 
 
 
-#endif //BARGOAT_GLOBAL_H
+#endif //CALIB_GLOBAL_H
