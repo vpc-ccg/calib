@@ -93,11 +93,40 @@ output_accuracy_results?=$(output_prefix)accuracy
 .PHONY: help clean simulate_clean simulate cluster accuracy
 
 help:
-	@echo 'calib: Clustering tagged amplicon sequencing reads by barcode and sequence similarity'
+	@echo 'calib: Clustering without alignment using LSH and MinHashing of barcoded reads'
 	@echo 'Usage: ./calib [COMMAND]... [PARAMETER=VALUE]...'
 	@echo 'Example: ./calib simulate'
-	@echo '			./calib cluster input_reads_prefix=simulating/simulated_reads_'
-	@echo 'Checking the possible list of commands down here, and the parameter list up here.'
+	@echo '			./calib cluster forward_reads=R1.fastq reverse_reads=R2.fastq barcode_length=8'
+	@echo 'Checking the possible list in calib file. The main ones for cluster command are:'
+	@echo '        forward_reads (string)'
+	@echo '        reverse_reads (string)'
+	@echo '        output_prefix (string)'
+	@echo '        barcode_length (int)'
+	@echo '        ignored_sequence_prefix_length (int)'
+	@echo '        minimizers_num (int)'
+	@echo '        kmer_size (int)'
+	@echo '        barcode_error_tolerance (int < barcode length)'
+	@echo '        minimizers_threshold (int < number of minimizers)'
+	@echo '        silent (no value)'
+	@echo 'Note that you can run Calib clustering module from the executable in clustering/cluster.o:'
+	@echo 'The main ones for simulate command are:'
+	@echo '        random_seed (int)'
+	@echo '        bed (bed file should be in simulating/genomes/<bed>.bed)'
+	@echo '        reference_name (fasta file should be in simulating/genomes/<reference_name>.fa)'
+	@echo '        num_barcodes (int)'
+	@echo '        barcode_length (int)'
+	@echo '        molecule_size_mu (int)'
+	@echo '        molecule_size_dev (int)'
+	@echo '        num_molecules (int)'
+	@echo '        read_length (int)'
+	@echo '        pcr_cycles (int)'
+	@echo '        pcr_duplication_rate (float (0,1))'
+	@echo '        pcr_error_rate (float (0,1))'
+	@echo '        sequencing_machine (string from (HS10, HS20, HS25, HSXn, HSXt, MinS, MSv1, MSv3, NS50'
+	@echo 'You can pipeline the whole process in a single run:'
+	@echo '        ./calib simulate cluster accuracy'
+	@echo 'The results will be stored in simulating/datasets/* with file names for every part of this pipeline'
+
 
 $(simulated_barcodes):
 	$(python3) $(simulating_path)generate_barcodes.py \
