@@ -7,10 +7,11 @@ If you are insterested in reprodcuing our paper's benchmarks, please switch to t
 
 
 ## Prerequisites
+### Calib cluster
+Calib read clustering is implemented in C++11 and has been tested on Linux operating system using GCC 5.2 but older GCC versions that support C++11 should work.
 
-Calib read clustering is implemented in C++11 and has been tested on Linux operating system.
-
-The simulatation module of Calib is implemented in Python 3. Calib read simulation has the following prerequisites:
+### Calib simulate
+The simulatation module of Calib is implemented in Python 3 and requires that the following Python packages to be installed and importable:
 
 - [pyfaidx](https://pypi.python.org/pypi/pyfaidx)
 - [numpy](https://pypi.python.org/pypi/numpy)
@@ -18,10 +19,9 @@ The simulatation module of Calib is implemented in Python 3. Calib read simulati
 - [scikit-learn](https://pypi.python.org/pypi/scikit-learn)
 - [biopython](https://pypi.python.org/pypi/biopython)
 - [pandas](https://pypi.python.org/pypi/pandas)
+
+In addition, ART Illumina version 2.5.8 need to be in your `PATH`.
 - [ART Illumina](https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm) (version 2.5.8)
-
-All these prerequisites can easily be satisfied using Anaconda.
-
 
 
 ## Calib "Hello world..." Run
