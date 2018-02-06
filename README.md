@@ -49,7 +49,7 @@ Note that any of the specified parameters can easily be changed by passing to th
 Will generate molecules with mean size of 400 nucleotides. The main simulating parameters are:
 
 - random_seed (int)'
-- bed (bed file should be in simulating/genomes/<bed>.bed)'
+- bed (bed file should be in simulating/genomes/\<bed\>.bed)'
 - reference_name (fasta file should be in simulating/genomes/<reference_name>.fa)'
 - num_barcodes (int)'
 - barcode_length (int)'
