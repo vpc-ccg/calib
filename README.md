@@ -3,8 +3,6 @@ Calib clusters paired-end reads using their barcodes and sequences. Calib is sui
 
 ## Prerequisites
 
-Calib read clustering is implemented in C++11 and has been tested on Linux operating system. We compiled Calib and the other tools using GCC 5.2, but earlier versions supporting C++11 should work.
-
 ### Simulation Prerequisites
 The simulatation module of Calib is implemented in Python 3 and requires that the following Python packages to be installed and importable:
 
@@ -29,10 +27,11 @@ Please ensure the correct naming of the reference genome FASTA file is used.
 
 All these prerequisites can easily be satisfied using [Anaconda](https://docs.anaconda.com/anaconda/install/linux).
 
-### Tools Tested
-We are benchmarking Calib against [Rainbow](https://github.com/ChongLab/rainbow), [starcode](https://github.com/gui11aume/starcode), and [Du Novo](https://github.com/galaxyproject/dunovo). Rainbow and starcode need to be downloaded, compiled, and their executables in your `PATH`. Du Novo is trickier, since it doesn't have its own wrapper. For that, we have seperated Du Novo's benchmarking into a separate script.
+### Calib, Rainbow, and starcode Prerequisites
+We are benchmarking Calib against [Rainbow](https://github.com/ChongLab/rainbow), [starcode](https://github.com/gui11aume/starcode), and [Du Novo](https://github.com/galaxyproject/dunovo). Rainbow and starcode need to be downloaded, compiled, and their executables to be in your `PATH`. Calib was tested using GCC 5.2, but earlier versions supporting C++11 should work.
 
-### Du Novo Special Prerequistes
+
+### Du Novo Prerequistes
 Do Novo requires using Python 2.7, and some old version of samtools. We handled this by a script that creates a special Anaconda environment for Du Novo to run in. All what you need is:
 - Install [Anaconda](https://docs.anaconda.com/anaconda/install/linux)
 - Download [Du Novo](https://github.com/galaxyproject/dunovo) to `~/bin/dunovo` or make sure to modify the line in `run_dunovo_test.sh` to reflect where dunovo is installed. Make sure to not add `/` at the end:
