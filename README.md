@@ -26,6 +26,8 @@ All these prerequisites can easily be satisfied using Anaconda.
 
 ## Calib "Hello world..." Run
 
+## Simulate
+
 The simplest way to run Calib is using its Makefile as an executable. You can modify any of the command-line parameters by passing them to the executable. Let us first try simulating an amplicon sequencing run. This can be easily done using the `simulate` command:
 
 ```bash
@@ -62,7 +64,7 @@ Will generate molecules with mean size of 400 nucleotides. The main simulating p
 - pcr_error_rate (float (0,1))'
 - sequencing_machine (string from (HS10, HS20, HS25, HSXn, HSXt, MinS, MSv1, MSv3, NS50))'
 
-
+## Cluster
 
 Now let us try clustering the simulated reads:
 
@@ -95,10 +97,18 @@ Calib `cluster` has some parameters. Most important of them are the following:
 - minimizers_threshold (int < number of minimizers)'
 - silent (no value)'
 
-Finally, if you ran a simulated dataset, you can check Calib `cluster` accuracy using the `accuracy` command:
+## Accuracy
+If you ran a simulated dataset, you can check Calib `cluster` accuracy using the `accuracy` command:
 
 ```bash
 ./calib accuracy
 ```
 
-The results of accuracy are stored in `rs_42.bl_8.nb_100.ref_e_coli.bed_NA.mu_200.dev_25.nm500.pc_7.pdr_0.6.per_0.000005.sm_HS20.calib.bl_8.mn_3.ks_8.bet_2.mt_1.accuracy`. Note that accuracy is measured using [justed Rand Index](https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index).
+The results of accuracy are stored in `rs_42.bl_8.nb_100.ref_e_coli.bed_NA.mu_200.dev_25.nm500.pc_7.pdr_0.6.per_0.000005.sm_HS20.calib.bl_8.mn_3.ks_8.bet_2.mt_1.accuracy`. Note that accuracy is measured using [Adusted Rand Index](https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index).
+
+## Run Everything
+You can of course run all three steps together by running:
+```bash
+./calib simulate cluster accuracy
+```
+
