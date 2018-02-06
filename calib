@@ -122,7 +122,7 @@ help:
 	@echo '        pcr_cycles (int)'
 	@echo '        pcr_duplication_rate (float (0,1))'
 	@echo '        pcr_error_rate (float (0,1))'
-	@echo '        sequencing_machine (string from (HS10, HS20, HS25, HSXn, HSXt, MinS, MSv1, MSv3, NS50'
+	@echo '        sequencing_machine (string from (HS10, HS20, HS25, HSXn, HSXt, MinS, MSv1, MSv3, NS50))'
 	@echo 'You can pipeline the whole process in a single run:'
 	@echo '        ./calib simulate cluster accuracy'
 	@echo 'The results will be stored in simulating/datasets/* with file names for every part of this pipeline'
