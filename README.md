@@ -84,4 +84,4 @@ To reporucede any of the benchmarks in our report, run a command like this:
 Where you may change the value of any parameters to match any of the reported datasets (or a new dataset for that matter).
 
 ## Report
-Our report is hosted at Overleaf at [https://www.overleaf.com/read/jywsyjsmtrdp](https://www.overleaf.com/read/jywsyjsmtrdp). Our manuscript is hosted at ShareLaTeX at [https://www.sharelatex.com/read/gwqvswwjndgf](https://www.sharelatex.com/read/gwqvswwjndgf).
+Our report is hosted at Overleaf at [https://www.overleaf.com/read/jywsyjsmtrdp](https://www.overleaf.com/read/jywsyjsmtrdp).
