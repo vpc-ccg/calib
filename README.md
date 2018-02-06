@@ -18,6 +18,15 @@ The simulatation module of Calib is implemented in Python 3 and requires that th
 In addition, ART Illumina version 2.5.8 need to be in your `PATH`.
 - [ART Illumina](https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm) (version 2.5.8)
 
+Finally, our tests are run on hg38 reference genome. Please download it and have it in `simulaing/genomes` directory. To do this, assuming you are in Calib's directory:
+
+```bash
+wget http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz 
+zcat hg38.fa.gz simulating/genomes/hg38.fa
+```
+
+Please ensure the correct naming of the reference genome FASTA file is used.
+
 All these prerequisites can easily be satisfied using [Anaconda](https://docs.anaconda.com/anaconda/install/linux).
 
 ### Tools being tested
