@@ -62,7 +62,6 @@ Calib `cluster` has some parameters. Most important of them are the following si
 - `kmer_size`: Size of each minimizer. Default is 3.
 - `barcode_error_tolerance`: Max hamming distance between two barcodes (of length `barcode_length` *2) to be counted as similar. Default is 2.
 - `minimizers_threshold`: Minimum number of matching minimizers on each mate to be considered similar. Default is 1.
-- `ratio`: The ratio of the subsample of nodes to consider for each template of barcode similarity checking. Default is 1.0.
 
 You may note that these parameters are included in the output prefix of all `cluster` output files for convenience.
 
@@ -76,12 +75,4 @@ Which will take the default simulated reads clusters produced by `cluster` comma
 
 ## Reproducing Benchmarks
 
-To reporucede any of the benchmarks in our report, run a command like this:
-
-```bash
-./calib simulate cluster accuracy num_molecules=300000 num_barcodes=30000 barcode_length=8 minimizers_num=5 kmer_size=4 barcode_error_tolerance=1 minimizers_threshold=3
-```
-Where you may change the value of any parameters to match any of the reported datasets (or a new dataset for that matter).
-
-## Report
-Our report is hosted at Overleaf at [https://www.overleaf.com/read/jywsyjsmtrdp](https://www.overleaf.com/read/jywsyjsmtrdp).
+To reporucede any of the benchmarks in our paper, please switch to the paper git branch, and follow instructions at [Paper Branch](https://github.com/vpc-ccg/calib/tree/paper/)
