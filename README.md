@@ -29,7 +29,7 @@ Please ensure the correct naming of the reference genome FASTA file is used.
 
 All these prerequisites can easily be satisfied using [Anaconda](https://docs.anaconda.com/anaconda/install/linux).
 
-### Tools being tested
+### Tools Tested
 We are benchmarking Calib against [Rainbow](https://github.com/ChongLab/rainbow), [starcode](https://github.com/gui11aume/starcode), and [Du Novo](https://github.com/galaxyproject/dunovo). Rainbow and starcode need to be downloaded, compiled, and their executables in your `PATH`. Du Novo is trickier, since it doesn't have its own wrapper. For that, we have seperated Du Novo's benchmarking into a separate script.
 
 ### Du Novo Special Prerequistes
