@@ -32,12 +32,13 @@ The simplest way to run Calib is using its Makefile as an executable. You can mo
 ./calib simulate
 ```
 
-This will generate the following files under Data subdirectory:
+This will generate the following files under `simulating/datasets/` subdirectory:
 
-- `simulated_barcodes.txt`: List of 10000 barcodes each of length 10 each in a new line
-- `simulated_molecules.fa`: FASTA file of 1000 molecules with mean length of 250, standard deviation of 25, and minimum length of 150 generated randomly for E. Coli FASTA file (included with Calib).
-- `simulated_barcoded_molecules.fa`: FASTA file of the same molecules prepended and appended by a random barcode from `simulated_barcodes.txt`.
-- `simulated_reads_1.fq` and `simulated_reads_2.fq`: Paired-end reads generated from `simulated_barcoded_molecules.fa` by ART Illumina
+- `rs_42.bl_8.nb_100.barcodes.txt`: List of 100 barcode tags each of length 8 each in a new line
+- `rs_42.ref_e_coli.bed_NA.mu_200.dev_25.nm500.molecules.fa`: FASTA file of 500 molecules with mean length of 200, standard deviation of 25 generated from uniformly random starting positions from E. Coli FASTA file (included with Calib).
+- `rs_42.bl_8.nb_100.ref_e_coli.bed_NA.mu_200.dev_25.nm500.barcoded_molecules.fa`: FASTA file of the same molecules prepended and appended by a randomly sampled barcode tag with replacement from `rs_42.bl_8.nb_100.barcodes.txt`.
+- `rs_42.bl_8.nb_100.ref_e_coli.bed_NA.mu_200.dev_25.nm500.pc_7.pdr_0.6.per_0.000005.amplified_barcoded_molecules.fa`: FASTA file of the PCR product of the generated molecules with 7 PCR cycles, 0.6 efficiency rate, 0.000005 substitution error rate.
+- `rs_42.bl_8.nb_100.ref_e_coli.bed_NA.mu_200.dev_25.nm500.pc_7.pdr_0.6.per_0.000005.sm_HS20.1.fq` and `rs_42.bl_8.nb_100.ref_e_coli.bed_NA.mu_200.dev_25.nm500.pc_7.pdr_0.6.per_0.000005.sm_HS20.2.fq`: Paired-end reads generated from the PCR product by ART Illumina simulating HiSeq 2000.
 
 Note that any of the specified parameters can easily be changed by passing to the Makefile. For example:
 
@@ -45,7 +46,23 @@ Note that any of the specified parameters can easily be changed by passing to th
 ./calib simulate molecule_size_mu=400
 ```
 
-Will generate molecules with mean size of 400 nucleotides.
+Will generate molecules with mean size of 400 nucleotides. The main simulating parameters are:
+
+- random_seed (int)'
+- bed (bed file should be in simulating/genomes/<bed>.bed)'
+- reference_name (fasta file should be in simulating/genomes/<reference_name>.fa)'
+- num_barcodes (int)'
+- barcode_length (int)'
+- molecule_size_mu (int)'
+- molecule_size_dev (int)'
+- num_molecules (int)'
+- read_length (int)'
+- pcr_cycles (int)'
+- pcr_duplication_rate (float (0,1))'
+- pcr_error_rate (float (0,1))'
+- sequencing_machine (string from (HS10, HS20, HS25, HSXn, HSXt, MinS, MSv1, MSv3, NS50))'
+
+
 
 Now let us try clustering the simulated reads:
 
@@ -55,20 +72,28 @@ Now let us try clustering the simulated reads:
 
 By default, `cluster` will run on the simulated reads. This will output the following files:
 
-- `simulated_reads_l10_m3_k8_e2_t1_q1.0.clusters`: A tab delimited file of the clusters. The header of each cluster starts with a `#` sign followed without a space with the cluster ID (incremental counter). The header then includes the number of nodes, the number of edges, the number of reads, and the graph density (function of number of nodes and edges) of the cluster.
-- `simulated_reads_l10_m3_k8_e2_t1_q1.0.log`: A log file containing what was printed to std.out
-- `simulated_reads_l10_m3_k8_e2_t1_q1.0.tsv`: A tab delimited file that contains the extracted barcode and minimizers of the reads.
+- `rs_42.bl_8.nb_100.ref_e_coli.bed_NA.mu_200.dev_25.nm500.pc_7.pdr_0.6.per_0.000005.sm_HS20.calib.bl_8.mn_3.ks_8.bet_2.mt_1.cluster`: A tab delimited file of the clusters. The header of each cluster starts with a `#` sign followed without a space with the cluster ID (incremental counter). Each line following that is a read pair belonging to this cluster with the following columns:
+-- Node ID: The node in the graph that represented this read
+-- Read ID: The order of the read in the input FASTQ files.
+-- Read Name 1
+-- Read Sequence 1
+-- Read Quality 1 (if not kept, then Q1)
+-- Read Name 2
+-- Read Sequence 2
+-- Read Quality 2 (if not kept, then Q2)
+- `rs_42.bl_8.nb_100.ref_e_coli.bed_NA.mu_200.dev_25.nm500.pc_7.pdr_0.6.per_0.000005.sm_HS20.calib.bl_8.mn_3.ks_8.bet_2.mt_1.cluster.log`: A log file containing what was printed to std.out in addition to time logging
 
-Calib `cluster` has some parameters. Most important of them are the following six:
-
-- `barcode_length`: Barcode length on a single side of the read. Default is 10.
-
-- `minimizers_num`: Number of minimizers to extract per mate. Default is 3.
-- `kmer_size`: Size of each minimizer. Default is 3.
-- `barcode_error_tolerance`: Max hamming distance between two barcodes (of length `barcode_length` *2) to be counted as similar. Default is 2.
-- `minimizers_threshold`: Minimum number of matching minimizers on each mate to be considered similar. Default is 1.
-
-You may note that these parameters are included in the output prefix of all `cluster` output files for convenience.
+Calib `cluster` has some parameters. Most important of them are the following:
+- forward_reads (string)'
+- reverse_reads (string)'
+- output_prefix (string)'
+- barcode_length (int)'
+- ignored_sequence_prefix_length (int)'
+- minimizers_num (int)'
+- kmer_size (int)'
+- barcode_error_tolerance (int < barcode length)'
+- minimizers_threshold (int < number of minimizers)'
+- silent (no value)'
 
 Finally, if you ran a simulated dataset, you can check Calib `cluster` accuracy using the `accuracy` command:
 
@@ -76,5 +101,4 @@ Finally, if you ran a simulated dataset, you can check Calib `cluster` accuracy 
 ./calib accuracy
 ```
 
-Which will take the default simulated reads clusters produced by `cluster` command. Accuracy is measured using [Rand Index](https://en.wikipedia.org/wiki/Rand_index).
-
+The results of accuracy are stored in `rs_42.bl_8.nb_100.ref_e_coli.bed_NA.mu_200.dev_25.nm500.pc_7.pdr_0.6.per_0.000005.sm_HS20.calib.bl_8.mn_3.ks_8.bet_2.mt_1.accuracy`. Note that accuracy is measured using [justed Rand Index](https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index).
