@@ -15,44 +15,27 @@ do
     num_barcodes=25000
     num_molecules=1000000
     ;;
-    "tiny")  echo "Test dataset three"
+    "tiny")  echo "Test dataset Four"
     num_barcodes=100
     num_molecules=10
     ;;
   esac
   # calib_log
-  ./benchmark calib_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=1 kmer_size=8 minimizers_num=5 minimizers_threshold=2 num_molecules=$num_molecules num_barcodes=$num_barcodes
-  ./benchmark calib_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=1 kmer_size=4 minimizers_num=5 minimizers_threshold=2 num_molecules=$num_molecules num_barcodes=$num_barcodes
-  ./benchmark calib_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=1 kmer_size=8 minimizers_num=4 minimizers_threshold=1 num_molecules=$num_molecules num_barcodes=$num_barcodes
-  ./benchmark calib_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=2 kmer_size=8 minimizers_num=5 minimizers_threshold=2 num_molecules=$num_molecules num_barcodes=$num_barcodes
-  ./benchmark calib_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=2 kmer_size=8 minimizers_num=4 minimizers_threshold=1 num_molecules=$num_molecules num_barcodes=$num_barcodes
-  ./benchmark calib_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=2 kmer_size=8 minimizers_num=3 minimizers_threshold=1 num_molecules=$num_molecules num_barcodes=$num_barcodes
-
-  # for barcode_error_tolerance in 1 2
-  # do
-  #   for kmer_size in 4 8
-  #   do
-  #     ./benchmark calib_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=3 minimizers_threshold=1
-  #     ./benchmark calib_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=3 minimizers_threshold=2
-  #     ./benchmark calib_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=4 minimizers_threshold=1
-  #     ./benchmark calib_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=4 minimizers_threshold=2
-  #     ./benchmark calib_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=4 minimizers_threshold=3
-  #     ./benchmark calib_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=5 minimizers_threshold=2
-  #     ./benchmark calib_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=5 minimizers_threshold=3
-  #     ./benchmark calib_log reference_name=hg38 bed=RCCPanelV2.hg38 barcode_error_tolerance=$barcode_error_tolerance num_molecules=$num_molecules num_barcodes=$num_barcodes kmer_size=$kmer_size minimizers_num=5 minimizers_threshold=4
-  #   done
-  # done
+  ./benchmark calib_log reference_name=hg38 bed=Panel.hg38 barcode_error_tolerance=1 kmer_size=8 minimizers_num=5 minimizers_threshold=2 num_molecules=$num_molecules num_barcodes=$num_barcodes
+  ./benchmark calib_log reference_name=hg38 bed=Panel.hg38 barcode_error_tolerance=1 kmer_size=4 minimizers_num=5 minimizers_threshold=2 num_molecules=$num_molecules num_barcodes=$num_barcodes
+  ./benchmark calib_log reference_name=hg38 bed=Panel.hg38 barcode_error_tolerance=2 kmer_size=8 minimizers_num=5 minimizers_threshold=2 num_molecules=$num_molecules num_barcodes=$num_barcodes
+  ./benchmark calib_log reference_name=hg38 bed=Panel.hg38 barcode_error_tolerance=2 kmer_size=4 minimizers_num=5 minimizers_threshold=2 num_molecules=$num_molecules num_barcodes=$num_barcodes
 
   # starcode_log
-  for starcode_dist in 1 2 3 4
+  for starcode_dist in 1 2 3 4 5 6 7 8 9
   do
-    ./benchmark starcode_log reference_name=hg38 bed=RCCPanelV2.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes starcode_dist=$starcode_dist
+    ./benchmark starcode_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes starcode_dist=$starcode_dist
   done
   # rainbow_log
   for rainbow_mismatch in 1 2 3 4
   do
-    ./benchmark rainbow_log reference_name=hg38 bed=RCCPanelV2.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes rainbow_mismatch=$rainbow_mismatch
-    ./benchmark rainbow_log reference_name=hg38 bed=RCCPanelV2.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes rainbow_mismatch=$rainbow_mismatch rainbow_div=true
+    ./benchmark rainbow_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes rainbow_mismatch=$rainbow_mismatch
+    ./benchmark rainbow_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes rainbow_mismatch=$rainbow_mismatch rainbow_div=true
   done
 
 done
