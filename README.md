@@ -1,6 +1,11 @@
 # Calib
 Calib clusters paired-end reads using their barcodes and sequences. Calib is suitable for amplicon sequencing where a molecule is tagged, then PCR amplified with high depth.
 
+## Reproducing Benchmarks
+
+If you are insterested in reprodcuing our paper's benchmarks, please switch to the paper git branch, and follow instructions at [Paper Branch](https://github.com/vpc-ccg/calib/tree/paper/)
+
+
 ## Prerequisites
 
 Calib read clustering is implemented in C++11 and has been tested on Linux operating system.
@@ -73,6 +78,3 @@ Finally, if you ran a simulated dataset, you can check Calib `cluster` accuracy 
 
 Which will take the default simulated reads clusters produced by `cluster` command. Accuracy is measured using [Rand Index](https://en.wikipedia.org/wiki/Rand_index).
 
-## Reproducing Benchmarks
-
-To reporucede any of the benchmarks in our paper, please switch to the paper git branch, and follow instructions at [Paper Branch](https://github.com/vpc-ccg/calib/tree/paper/)
