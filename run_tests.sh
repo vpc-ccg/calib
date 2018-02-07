@@ -27,12 +27,12 @@ do
   ./benchmark calib_log reference_name=hg38 bed=Panel.hg38 barcode_error_tolerance=2 kmer_size=4 minimizers_num=5 minimizers_threshold=2 num_molecules=$num_molecules num_barcodes=$num_barcodes
 
   # starcode_log
-  for starcode_dist in 1 2 3 4 5 6 7 8 9
+  for starcode_dist in 1 2 3 4
   do
     ./benchmark starcode_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes starcode_dist=$starcode_dist
   done
   # rainbow_log
-  for rainbow_mismatch in 1 2 3 4
+  for rainbow_mismatch in 1 2 3 4 5 6 7 8 9
   do
     ./benchmark rainbow_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes rainbow_mismatch=$rainbow_mismatch
     ./benchmark rainbow_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes rainbow_mismatch=$rainbow_mismatch rainbow_div=true
