@@ -4,7 +4,7 @@ my_current_dir :=  $(patsubst %/,%,$(dir $(my_mkfile_path)))/
 include $(my_current_dir)/calib
 ECHO := echo -e
 AWK := awk -f
-GNU_TIME?=~/bin/time
+GNU_TIME?=/usr/bin/time
 benchmark_aux_path = $(my_current_dir)benchmark_aux
 GET_TIME := $(benchmark_aux_path)/get_time.awk
 GET_MEM := $(benchmark_aux_path)/get_mem.awk
