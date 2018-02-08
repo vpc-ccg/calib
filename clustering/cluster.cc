@@ -75,11 +75,16 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     }
     time_t start;
     time_t build_time = 0, process_time = 0;
+    // int template_id
     do {
         start = time(NULL);
         masked_barcode_to_node_id_unordered_map lsh;
         if (!silent) {
-            cout << mask_barcode(string(template_barcode), mask) << "\n";
+            string current_mask_bin;
+            for (bool p: mask) {
+                current_mask_bin += p ? "1" : "0";
+            }
+            cout << current_mask_bin << "\n";
         }
         dog << mask_barcode(string(template_barcode), mask) << "\n";
         string masked_barcode;
@@ -165,6 +170,8 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
         dog << "M\t";
         dog << !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold) << "\t";
         dog << matched_minimimizers_1 << "\t" << matched_minimimizers_2 << "\t" << hamming_distance <<"\n";
+        dog << "\t" << reads[node_to_read_vector[node_id].front()].sequence_1 << "\t" << reads[node_to_read_vector[node_id].front()].sequence_1 <<"\n";
+        dog << "\t" << reads[node_to_read_vector[neighbor_id].front()].sequence_1 << "\t" << reads[node_to_read_vector[neighbor_id].front()].sequence_1 <<"\n";
     }
     return !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold);
 }
