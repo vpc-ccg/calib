@@ -20,7 +20,7 @@ Finally, our tests are run on hg38 reference genome. Please download it and have
 
 ```bash
 wget http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz 
-zcat hg38.fa.gz simulating/genomes/hg38.fa
+zcat hg38.fa.gz > simulating/genomes/hg38.fa
 ```
 
 Please ensure the correct naming of the reference genome FASTA file is used.
