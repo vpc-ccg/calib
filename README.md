@@ -41,6 +41,12 @@ dunovo_path=~/bin/dunovo
 
 ## Running Tests
 
+To run tests [GNU Time](https://ftp.gnu.org/gnu/time/) must be installed in `/usr/bin/time`. If it is installed somewhere else, please edit the line in `benchmark` file:
+```bash
+GNU_TIME?=/usr/bin/time
+```
+To reflect where GNU Time is installed. Reported tests were collected using GNU Time 1.8.
+
 There are 3 different datasets we preconfigured, and one tiny additional dataset. To run any of those just run:
 ```bash
 ./run_tests.sh tiny small medium huge
