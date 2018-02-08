@@ -157,6 +157,15 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
         matched_minimimizers_1 += nodes[node_id].minimizers_1[i] == nodes[neighbor_id].minimizers_1[i];
         matched_minimimizers_2 += nodes[node_id].minimizers_2[i] == nodes[neighbor_id].minimizers_2[i];
     }
+    if (debug) {
+        int hamming_distance = 0;
+        for (int i = 0; i < barcode_length*2; i++) {
+            hamming_distance += nodes[node_id].barcode.at(i) != nodes[neighbor_id].barcode.at(i);
+        }
+        dog << "M\t";
+        dog << !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold) << "\t";
+        dog << matched_minimimizers_1 << "\t" << matched_minimimizers_2 << "\t" << hamming_distance <<"\n";
+    }
     return !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold);
 }
 

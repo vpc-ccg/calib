@@ -12,6 +12,7 @@ string input_2 = "";
 string output_prefix = "";
 bool silent = false;
 bool keep_qual = false;
+bool debug = false;
 int barcode_length = -1;
 int ignored_sequence_prefix_length = 0;
 int minimizer_count = -1;
@@ -34,6 +35,9 @@ void parse_flags(int argc, char *argv[]){
         }
         if (current_param == "-s" || current_param == "--silent") {
             silent = true;
+        }
+        if (current_param == "-D" || current_param == "--debug") {
+            debug = true;
         }
         if (current_param == "-q" || current_param == "--keep-qual") {
             keep_qual = true;

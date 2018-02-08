@@ -22,6 +22,7 @@ extern int minimizer_threshold;
 extern int thread_count;
 extern bool silent;
 extern bool keep_qual;
+extern bool debug;
 extern std::ofstream dog;
 
 
