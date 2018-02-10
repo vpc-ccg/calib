@@ -7,6 +7,9 @@
 #include <stack>
 #include <algorithm>
 #include <time.h>
+// Debug includes
+#include <sstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -146,7 +149,7 @@ void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_vectors &
     for (node_id_t node = 0; node < node_count; node++) {
         vector<node_id_t> good_neighbors;
         for (node_id_t neighbor : adjacency_lists[node]) {
-            if (!unmatched_minimimizers(node, neighbor)) {
+            if (node != neighbor && !unmatched_minimimizers(node, neighbor)) {
                 good_neighbors.push_back(neighbor);
             }
         }
@@ -170,20 +173,40 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
         dog << "M\t";
         dog << !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold) << "\t";
         dog << matched_minimimizers_1 << "\t" << matched_minimimizers_2 << "\t" << hamming_distance <<"\n";
-        dog << "\t" << reads[node_to_read_vector[node_id].front()].sequence_1 << "\t" << reads[node_to_read_vector[node_id].front()].sequence_1 <<"\n";
-        dog << "\t" << reads[node_to_read_vector[neighbor_id].front()].sequence_1 << "\t" << reads[node_to_read_vector[neighbor_id].front()].sequence_1 <<"\n";
+
+        dog << "M1\t";
+        for (int i =0; i < minimizer_count; i++) {
+            dog << nodes[node_id].minimizers_1[i] << "\t";
+        }
+        for (int i =0; i < minimizer_count; i++) {
+            dog << nodes[node_id].minimizers_2[i] << "\t";
+        }
+        dog << nodes[node_id].barcode << "\t";
+        dog << reads[node_to_read_vector[node_id].front()].sequence_1 << "\t" << reads[node_to_read_vector[node_id].front()].sequence_2 <<"\n";
+
+        dog << "M2\t";
+        for (int i =0; i < minimizer_count; i++) {
+            dog << nodes[neighbor_id].minimizers_1[i] << "\t";
+        }
+        for (int i =0; i < minimizer_count; i++) {
+            dog << nodes[neighbor_id].minimizers_2[i] << "\t";
+        }
+        dog << nodes[neighbor_id].barcode << "\t";
+        dog << reads[node_to_read_vector[neighbor_id].front()].sequence_1 << "\t" << reads[node_to_read_vector[neighbor_id].front()].sequence_2 <<"\n";
+
     }
     return !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold);
 }
 
 
-void process_lsh(masked_barcode_to_node_id_unordered_map &lsh,
-                 node_id_to_node_id_vector_of_vectors adjacency_lists,
-                 size_t reminder,
-                 size_t divisor){
+// void process_lsh(masked_barcode_to_node_id_unordered_map &lsh,
+//                  node_id_to_node_id_vector_of_vectors adjacency_lists,
+//                  size_t reminder,
+//                  size_t divisor){
+//
+//
+// }
 
-
-}
 
 void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     vector<bool> pushed(node_count, false);
@@ -192,11 +215,23 @@ void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     ofstream clusters;
     clusters = ofstream(output_prefix + "cluster");
 
+    ofstream cluster_debug;
+    ofstream cluster_R1;
+    ofstream cluster_R2;
+    if (debug) {
+        cluster_debug = ofstream(output_prefix + "cluster.debug");
+        cluster_R1 = ofstream(output_prefix + "cluster.R1.fastq");
+        cluster_R2 = ofstream(output_prefix + "cluster.R2.fastq");
+    }
     for (node_id_t node = 0; node < node_count; node++) {
         if (!pushed[node]) {
             clusters << "# "<< cluster_count <<"\n";
+            if (debug) {
+                cluster_debug << "#\t" << cluster_count << "\n";
+            }
             opened.push(node);
             pushed[node] = true;
+            int matching_minimizers = 0;
             while(!opened.empty()) {
                 for (node_id_t neighbor: adjacency_lists[opened.top()]) {
                     if (!pushed[neighbor]) {
@@ -210,6 +245,52 @@ void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
                         "\t";
                     clusters << reads[read].name_2 << "\t" << reads[read].sequence_2 << "\t" << reads[read].quality_2 <<
                         "\n";
+                }
+                if (debug) {
+                    node_id_t current_node = opened.top();
+                    double matching_minimizers = 0.0;
+                    double hamming_distance = 0.0;
+
+                    for (node_id_t neighbor: adjacency_lists[current_node]) {
+                        for (int i = 0; i < minimizer_count; i++) {
+                            matching_minimizers += nodes[current_node].minimizers_1[i] == nodes[neighbor].minimizers_1[i];
+                            matching_minimizers += nodes[current_node].minimizers_2[i] == nodes[neighbor].minimizers_2[i];
+                        }
+                        for (int i = 0; i < barcode_length*2; i++) {
+                            hamming_distance += nodes[current_node].barcode.at(i) != nodes[neighbor].barcode.at(i);
+                        }
+                    }
+                    double average_connectivity;
+                    double average_hamming;
+                    if (adjacency_lists[current_node].size() == 0) {
+                        average_connectivity = 0.0;
+                        average_hamming = 0.0;
+                    } else {
+                        average_connectivity = matching_minimizers/adjacency_lists[current_node].size();
+                        average_hamming = hamming_distance/adjacency_lists[current_node].size();
+                    }
+                    stringstream stream;
+                    stream.precision(4);
+                    stream << fixed;
+                    stream << cluster_count << "\t";
+                    stream << std::setfill (' ') << std::setw (10) << current_node << "\t";
+                    stream << std::setfill (' ') << std::setw (3) << adjacency_lists[current_node].size() << "\t";
+                    stream << std::setfill (' ') << std::setw (2) << node_to_read_vector[current_node].size() << "\t";
+                    stream << average_connectivity << "\t" << average_hamming;
+                    cluster_debug << stream.str() << "\n";
+
+                    for (read_id_t read : node_to_read_vector[current_node]) {
+                        cluster_R1 << "@" << cluster_count << "_" << current_node << "_" << read << "/1\n";
+                        cluster_R1 << reads[read].sequence_1 << "\n";
+                        cluster_R1 << "+\n";
+                        cluster_R1 << string(reads[read].sequence_1.size(), 'K') << "\n";
+
+                        cluster_R2 << "@" << cluster_count << "_" << current_node << "_" << read << "/2\n";
+                        cluster_R2 << reads[read].sequence_2 << "\n";
+                        cluster_R2 << "+\n";
+                        cluster_R2 << string(reads[read].sequence_2.size(), 'K') << "\n";
+                    }
+
                 }
                 opened.pop();
             }
