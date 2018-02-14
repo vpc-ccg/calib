@@ -91,6 +91,8 @@ output_accuracy_results?=$(output_prefix)accuracy
 .DELETE_ON_ERROR:
 .SECONDARY:
 .PHONY: help clean simulate_clean simulate cluster accuracy
+calib: $(cc_files)
+	$(cc) $(cc_files) $(cc_args) -o $(current_dir)calib
 
 help:
 	@echo 'calib: Clustering without alignment using LSH and MinHashing of barcoded reads'
@@ -183,11 +185,9 @@ simulate: $(forward_reads) $(reverse_reads) $(simulated_reads_log)
 simulate_clean:
 	rm -f $(simulation_datasets_path)*
 
-$(clustering_path)calib.o: $(cc_files)
-	$(cc) $(cc_files) $(cc_args) -o $(clustering_path)calib.o
 
 
-cluster: $(clustering_path)calib.o $(forward_reads) $(reverse_reads)
+cluster: calib $(forward_reads) $(reverse_reads)
 	$(clustering_path)calib.o \
 		--input-forward $(forward_reads) \
 		--input-reverse $(reverse_reads) \
@@ -209,4 +209,4 @@ accuracy: $(cluster_file)
 benchmark: $(clustering_path)calib.o $(forward_reads) $(reverse_reads)
 
 clean:
-	rm -f $(clustering_path)*.o
+	rm -f $(current_dir)calib
