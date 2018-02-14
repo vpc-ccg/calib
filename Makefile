@@ -96,10 +96,10 @@ calib: $(cc_files)
 
 help:
 	@echo 'calib: Clustering without alignment using LSH and MinHashing of barcoded reads'
-	@echo 'Usage: ./calib [COMMAND]... [PARAMETER=VALUE]...'
-	@echo 'Example: ./calib simulate'
-	@echo '			./calib cluster forward_reads=R1.fastq reverse_reads=R2.fastq barcode_length=8'
-	@echo 'Checking the possible list in calib file. The main ones for cluster command are:'
+	@echo 'Usage: make [COMMAND]... [PARAMETER=VALUE]...'
+	@echo 'Example: make simulate'
+	@echo '			make cluster forward_reads=R1.fastq reverse_reads=R2.fastq barcode_length=8'
+	@echo 'Checking the possible list in Makefile file. The main ones for cluster command are:'
 	@echo '        forward_reads (string)'
 	@echo '        reverse_reads (string)'
 	@echo '        output_prefix (string)'
@@ -110,7 +110,7 @@ help:
 	@echo '        barcode_error_tolerance (int < barcode length)'
 	@echo '        minimizers_threshold (int < number of minimizers)'
 	@echo '        silent (no value)'
-	@echo 'Note that you can run Calib clustering module from the executable in clustering/cluster.o:'
+	@echo 'Note that you can run Calib clustering module from the executable in CURRENT_DIR/calib:'
 	@echo 'The main ones for simulate command are:'
 	@echo '        random_seed (int)'
 	@echo '        bed (bed file should be in simulating/genomes/<bed>.bed)'
@@ -126,7 +126,7 @@ help:
 	@echo '        pcr_error_rate (float (0,1))'
 	@echo '        sequencing_machine (string from (HS10, HS20, HS25, HSXn, HSXt, MinS, MSv1, MSv3, NS50))'
 	@echo 'You can pipeline the whole process in a single run:'
-	@echo '        ./calib simulate cluster accuracy'
+	@echo '        make simulate cluster accuracy'
 	@echo 'The results will be stored in simulating/datasets/* with file names for every part of this pipeline'
 
 
@@ -188,7 +188,7 @@ simulate_clean:
 
 
 cluster: calib $(forward_reads) $(reverse_reads)
-	$(clustering_path)calib.o \
+	$(current_dir)calib \
 		--input-forward $(forward_reads) \
 		--input-reverse $(reverse_reads) \
 		--output-prefix $(output_prefix) \
