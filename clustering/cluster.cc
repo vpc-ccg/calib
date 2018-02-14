@@ -213,7 +213,11 @@ void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     stack<node_id_t> opened;
     size_t cluster_count = 0;
     ofstream clusters;
-    clusters = ofstream(output_prefix + "cluster");
+    if (bc_format) {
+        clusters = ofstream(output_prefix + "bc");
+    } else {
+        clusters = ofstream(output_prefix + "cluster");
+    }
 
     ofstream cluster_debug;
     ofstream cluster_R1;
@@ -225,7 +229,11 @@ void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     }
     for (node_id_t node = 0; node < node_count; node++) {
         if (!pushed[node]) {
-            clusters << "# "<< cluster_count <<"\n";
+            if (bc_format) {
+
+            } else {
+                clusters << "# "<< cluster_count <<"\n";                
+            }
             if (debug) {
                 cluster_debug << "#\t" << cluster_count << "\n";
             }
@@ -240,11 +248,15 @@ void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
                     }
                 }
                 for (read_id_t read : node_to_read_vector[opened.top()]) {
-                    clusters << opened.top() << "\t" << read << "\t";
-                    clusters << reads[read].name_1 << "\t" << reads[read].sequence_1 << "\t" << reads[read].quality_1 <<
+                    if (bc_format) {
+                        clusters << cluster_count << "\t" << reads[read].sequence_1 << "\t" << reads[read].sequence_2 << "\n";
+                    } else {
+                        clusters << opened.top() << "\t" << read << "\t";
+                        clusters << reads[read].name_1 << "\t" << reads[read].sequence_1 << "\t" << reads[read].quality_1 <<
                         "\t";
-                    clusters << reads[read].name_2 << "\t" << reads[read].sequence_2 << "\t" << reads[read].quality_2 <<
+                        clusters << reads[read].name_2 << "\t" << reads[read].sequence_2 << "\t" << reads[read].quality_2 <<
                         "\n";
+                    }
                 }
                 if (debug) {
                     node_id_t current_node = opened.top();
