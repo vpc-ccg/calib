@@ -232,14 +232,13 @@ void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
             if (bc_format) {
 
             } else {
-                clusters << "# "<< cluster_count <<"\n";                
+                clusters << "# "<< cluster_count <<"\n";
             }
             if (debug) {
                 cluster_debug << "#\t" << cluster_count << "\n";
             }
             opened.push(node);
             pushed[node] = true;
-            int matching_minimizers = 0;
             while(!opened.empty()) {
                 for (node_id_t neighbor: adjacency_lists[opened.top()]) {
                     if (!pushed[neighbor]) {
