@@ -115,20 +115,20 @@ void print_help(){
 	cout << "Usage: calib [--PARAMETER VALUE]" << "\n";
 	cout << "Example: calib -f R1.fastq -r R2.fastq -o my_out -e 1 -l 8 -m 5 -t 2 --silent" << "\n";
 	cout << "Calib's paramters arguments:" << "\n";
-    cout << "\t-f\t--input-forward (type: string; REQUIRED paramter)\n";
-    cout << "\t-r\t--input-reverse (type: string; REQUIRED paramter)\n";
-    cout << "\t-o\t--output-prefix (type: string; REQUIRED paramter)\n";
-    cout << "\t-s\t--silent (type: no value; default: unset)\n";
-    cout << "\t-D\t--debug (type:  no value; default:  unset)\n";
-    cout << "\t-q\t--keep-qual (type:  no value; default:  unset)\n";
-    cout << "\t-B\t--bc-format (type:  no value; default:  unset)\n";
-    cout << "\t-l\t--barcode-length (type: int; REQUIRED paramter)\n";
-    cout << "\t-p\t--ignored-sequence-prefix-length (type: int; REQUIRED paramter)\n";
-    cout << "\t-m\t--minimizer-count (type: int; REQUIRED paramter)\n";
-    cout << "\t-k\t--kmer-size (type: int; REQUIRED paramter)\n";
-    cout << "\t-e\t--error-tolerance (type: int; REQUIRED paramter)\n";
-    cout << "\t-t\t--minimizer-threshold (type: int; REQUIRED paramter)\n";
-    cout << "\t-c\t--threads (type: int; default: 1)\n";
+    cout << "\t-f\t--input-forward                 \t(type: string;   REQUIRED paramter)\n";
+    cout << "\t-r\t--input-reverse                 \t(type: string;   REQUIRED paramter)\n";
+    cout << "\t-o\t--output-prefix                 \t(type: string;   REQUIRED paramter)\n";
+    cout << "\t-s\t--silent                        \t(type: no value; default: unset)\n";
+    cout << "\t-D\t--debug                         \t(type: no value; default:  unset)\n";
+    cout << "\t-q\t--keep-qual                     \t(type: no value; default:  unset)\n";
+    cout << "\t-B\t--bc-format                     \t(type: no value; default:  unset)\n";
+    cout << "\t-l\t--barcode-length                \t(type: int;      REQUIRED paramter)\n";
+    cout << "\t-p\t--ignored-sequence-prefix-length\t(type: int;      REQUIRED paramter)\n";
+    cout << "\t-m\t--minimizer-count               \t(type: int;      REQUIRED paramter)\n";
+    cout << "\t-k\t--kmer-size                     \t(type: int;      REQUIRED paramter)\n";
+    cout << "\t-e\t--error-tolerance               \t(type: int;      REQUIRED paramter)\n";
+    cout << "\t-t\t--minimizer-threshold           \t(type: int;      REQUIRED paramter)\n";
+    cout << "\t-c\t--threads                       \t(type: int;      default: 1; STILL NON-FUNCTIONAL)\n";
     cout << "\t-h\t--help\n";
 }
 
