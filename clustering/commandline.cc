@@ -25,6 +25,10 @@ int kmer_size = -1;
 void parse_flags(int argc, char *argv[]){
     for (int i = 0; i < argc; i++) {
         string current_param(argv[i]);
+        if (current_param == "-h" || current_param == "--help") {
+            print_help();
+            exit(0);
+        }
         if (current_param == "-f" || current_param == "--input-forward") {
             input_1 = string(argv[i+1]);
         }
@@ -71,18 +75,22 @@ void parse_flags(int argc, char *argv[]){
 
     if (barcode_length < 0 || minimizer_count < 0 || error_tolerance < 0 || minimizer_threshold < 0 || kmer_size < 0) {
         cout << "Missing parameters!\n";
+        print_help();
         exit(-1);
     }
     if (input_1 == "" || input_2 == "" || output_prefix == "") {
         cout << "Missing parameters!\n";
+        print_help();
         exit(-1);
     }
     if (thread_count < 1 || thread_count > 8) {
         cout << "Thread count must be between 1 and 8!\n";
+        print_help();
         exit(-1);
     }
     if (minimizer_threshold > minimizer_count || minimizer_threshold < 1) {
         cout << "Minimizer threshold must be <= minimizer count and >= 1\n";
+        print_help();
         exit(-1);
     }
 }
@@ -101,6 +109,30 @@ void print_flags(ofstream &out){
     out << "\tthreads:\t" << thread_count << "\n";
 
 }
+
+void print_help(){
+    cout << "Calib: Clustering without alignment using LSH and MinHashing of barcoded reads" << "\n";
+	cout << "Usage: calib [--PARAMETER VALUE]" << "\n";
+	cout << "Example: calib -f R1.fastq -r R2.fastq -o my_out -e 1 -l 8 -m 5 -t 2 --silent" << "\n";
+	cout << "Calib's paramters arguments:" << "\n";
+    cout << "\t-f\t--input-forward (type: string; REQUIRED paramter)\n";
+    cout << "\t-r\t--input-reverse (type: string; REQUIRED paramter)\n";
+    cout << "\t-o\t--output-prefix (type: string; REQUIRED paramter)\n";
+    cout << "\t-s\t--silent (type: no value; default: unset)\n";
+    cout << "\t-D\t--debug (type:  no value; default:  unset)\n";
+    cout << "\t-q\t--keep-qual (type:  no value; default:  unset)\n";
+    cout << "\t-B\t--bc-format (type:  no value; default:  unset)\n";
+    cout << "\t-l\t--barcode-length (type: int; REQUIRED paramter)\n";
+    cout << "\t-p\t--ignored-sequence-prefix-length (type: int; REQUIRED paramter)\n";
+    cout << "\t-m\t--minimizer-count (type: int; REQUIRED paramter)\n";
+    cout << "\t-k\t--kmer-size (type: int; REQUIRED paramter)\n";
+    cout << "\t-e\t--error-tolerance (type: int; REQUIRED paramter)\n";
+    cout << "\t-t\t--minimizer-threshold (type: int; REQUIRED paramter)\n";
+    cout << "\t-c\t--threads (type: int; default: 1)\n";
+    cout << "\t-h\t--help\n";
+}
+
+
 // void print_flags(ofstream &out){
 //
 // }
