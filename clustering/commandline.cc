@@ -113,7 +113,7 @@ void print_flags(ofstream &out){
 void print_help(){
     cout << "Calib: Clustering without alignment using LSH and MinHashing of barcoded reads" << "\n";
 	cout << "Usage: calib [--PARAMETER VALUE]" << "\n";
-	cout << "Example: calib -f R1.fastq -r R2.fastq -o my_out -e 1 -l 8 -m 5 -t 2 -k 4 --silent" << "\n";
+	cout << "Example: calib -f R1.fastq -r R2.fastq -o my_out. -e 1 -l 8 -m 5 -t 2 -k 4 --silent" << "\n";
 	cout << "Calib's paramters arguments:" << "\n";
     cout << "\t-f\t--input-forward                 \t(type: string;   REQUIRED paramter)\n";
     cout << "\t-r\t--input-reverse                 \t(type: string;   REQUIRED paramter)\n";
