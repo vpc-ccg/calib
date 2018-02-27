@@ -6,6 +6,10 @@
 #include "global.h"
 #include <algorithm>
 
+// Debug includes
+#include <sstream>
+#include <iomanip>
+
 using namespace std;
 
 
@@ -186,7 +190,9 @@ void extract_barcodes_and_minimizers() {
                     if (current_node.minimizers_1[i] != invalid_kmer) {
                         reads.back().sequence_1 += "-" + minimizer_t_to_dna(current_node.minimizers_1[i], kmer_size);
                     } else {
-                        reads.back().sequence_1 += "-" + current_node.minimizers_1[i];
+                        stringstream ss;
+                        ss << "0x" << std::uppercase << std::setfill('0') << std::setw(64/4) << std::hex << current_node.minimizers_1[i];
+                        reads.back().sequence_1 += "-" + ss.str();
                     }
                 }
             }
@@ -206,7 +212,9 @@ void extract_barcodes_and_minimizers() {
                     if (current_node.minimizers_2[i] != invalid_kmer) {
                         reads.back().sequence_2 += "-" + minimizer_t_to_dna(current_node.minimizers_2[i], kmer_size);
                     } else {
-                        reads.back().sequence_2 += "-" + current_node.minimizers_2[i];
+                        stringstream ss;
+                        ss << "0x" << std::uppercase << std::setfill('0') << std::setw(64/4) << std::hex << current_node.minimizers_2[i];
+                        reads.back().sequence_2 += "-" + ss.str();
                     }
                 }
 
