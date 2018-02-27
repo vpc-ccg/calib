@@ -24,6 +24,7 @@ extern bool silent;
 extern bool keep_qual;
 extern bool bc_format;
 extern bool debug;
+extern bool no_triplets;
 extern std::ofstream dog;
 
 

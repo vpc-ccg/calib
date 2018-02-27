@@ -113,7 +113,15 @@ void extract_barcodes_and_minimizers() {
     encode['c'] = 0x1;
     encode['g'] = 0x2;
     encode['t'] = 0x3;
-    make_invalid_minimizer_vector();
+    if (no_triplets) {
+        make_invalid_minimizer_vector();
+    } else {
+        minimizer_t max_minimizer = 1;
+        for (int i = 0; i < kmer_size*ENCODE_SIZE; i++) {
+            max_minimizer *= 2;
+        }
+        invalid_minimizers = vector<bool>((size_t) max_minimizer, false);
+    }
 
     // for (minimizer_t i =0; i < invalid_minimizers.size(); i++) {
     //     printf("%s\t%s\n", minimizer_t_to_dna(i, kmer_size).c_str(), invalid_minimizers[i]? "true" : "false");
@@ -174,6 +182,13 @@ void extract_barcodes_and_minimizers() {
             for (int i = 0; i < minimizer_count; i++) {
                 current_node.minimizers_1[i] = minimizer(reads.back().sequence_1, start, s1_seg_length);
                 start += s1_seg_length;
+                if (debug) {
+                    if (current_node.minimizers_1[i] != invalid_kmer) {
+                        reads.back().sequence_1 += "-" + minimizer_t_to_dna(current_node.minimizers_1[i], kmer_size);
+                    } else {
+                        reads.back().sequence_1 += "-" + current_node.minimizers_1[i];
+                    }
+                }
             }
         } else {
             for (int i = 0; i < minimizer_count; i++) {
@@ -187,6 +202,14 @@ void extract_barcodes_and_minimizers() {
             for (int i = 0; i < minimizer_count; i++) {
                 current_node.minimizers_2[i] = minimizer(reads.back().sequence_2, start, s2_seg_length);
                 start += s2_seg_length;
+                if (debug) {
+                    if (current_node.minimizers_2[i] != invalid_kmer) {
+                        reads.back().sequence_2 += "-" + minimizer_t_to_dna(current_node.minimizers_2[i], kmer_size);
+                    } else {
+                        reads.back().sequence_2 += "-" + current_node.minimizers_2[i];
+                    }
+                }
+
             }
         } else {
             for (int i = 0; i < minimizer_count; i++) {

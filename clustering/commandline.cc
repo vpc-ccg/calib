@@ -14,6 +14,7 @@ bool silent = false;
 bool keep_qual = false;
 bool bc_format = false;
 bool debug = false;
+bool no_triplets = false;
 int barcode_length = -1;
 int ignored_sequence_prefix_length = 0;
 int minimizer_count = -1;
@@ -49,6 +50,9 @@ void parse_flags(int argc, char *argv[]){
         }
         if (current_param == "-B" || current_param == "--bc-format") {
             bc_format = true;
+        }
+        if (current_param == "--no-triplets") {
+            no_triplets = true;
         }
         if (current_param == "-l" || current_param == "--barcode-length") {
             barcode_length = atoi(argv[i+1]);
