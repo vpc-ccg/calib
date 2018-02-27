@@ -40,22 +40,22 @@ vector<bool> invalid_minimizers;
 string minimizer_t_to_dna(minimizer_t minimizer, size_t size) {
     string s = "";
     // printf("0x%x\t", minimizer);
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < (int) size; i++) {
         // cout << "\t" << (minimizer & 0x3);
 
         switch (minimizer & 0x3) {
-            case 0x0:
-                s = "A" + s;
-                break;
-            case 0x1:
-                s = "C" + s;
-                break;
-            case 0x2:
-                s = "G" + s;
-                break;
-            case 0x3:
-                s = "T" + s;
-                break;
+        case 0x0:
+            s = "A" + s;
+            break;
+        case 0x1:
+            s = "C" + s;
+            break;
+        case 0x2:
+            s = "G" + s;
+            break;
+        case 0x3:
+            s = "T" + s;
+            break;
         }
         // cout << "-" + s << "\t";
         minimizer = minimizer >> ENCODE_SIZE;
@@ -73,25 +73,25 @@ void make_invalid_minimizer_vector() {
     minimizer_t triplet_mask = (minimizer_t) -1;
     triplet_mask = triplet_mask >> (sizeof(minimizer_t)*BYTE_SIZE - INVALID_LENGTH*ENCODE_SIZE);
     max_minimizer--;
-    while (max_minimizer != -1) {
+    while (max_minimizer != (minimizer_t)-1) {
         minimizer_t temp_minimizer = max_minimizer;
 
-        for (unsigned int i = 0; i < kmer_size - INVALID_LENGTH + 1; i++) {
+        for (int i = 0; i < kmer_size - INVALID_LENGTH + 1; i++) {
             // printf("0x%x\t0x%x\t0x%x\n", max_minimizer, temp_minimizer, temp_minimizer & triplet_mask);
             // cout << minimizer_t_to_dna(max_minimizer, kmer_size - i) << "\t" <<  minimizer_t_to_dna(temp_minimizer, kmer_size - i) << "\t" <<  minimizer_t_to_dna(temp_minimizer & triplet_mask, INVALID_LENGTH) << "\n";
             switch (temp_minimizer & triplet_mask) {
-                case INVALID_A:
-                    invalid_minimizers[max_minimizer] = true;
-                    break;
-                case INVALID_C:
-                    invalid_minimizers[max_minimizer] = true;
-                    break;
-                case INVALID_G:
-                    invalid_minimizers[max_minimizer] = true;
-                    break;
-                case INVALID_T:
-                    invalid_minimizers[max_minimizer] = true;
-                    break;
+            case INVALID_A:
+                invalid_minimizers[max_minimizer] = true;
+                break;
+            case INVALID_C:
+                invalid_minimizers[max_minimizer] = true;
+                break;
+            case INVALID_G:
+                invalid_minimizers[max_minimizer] = true;
+                break;
+            case INVALID_T:
+                invalid_minimizers[max_minimizer] = true;
+                break;
             }
             temp_minimizer = temp_minimizer >> ENCODE_SIZE;
         }
@@ -133,7 +133,7 @@ void extract_barcodes_and_minimizers() {
     while (getline(fastq1, reads.back().name_1)) {
         getline(fastq1, reads.back().sequence_1);
         getline(fastq1, trash);
-        if (keep_qual){
+        if (keep_qual) {
             getline(fastq1, reads.back().quality_1);
         } else {
             getline(fastq1, trash);
@@ -142,7 +142,7 @@ void extract_barcodes_and_minimizers() {
         getline(fastq2, reads.back().name_2);
         getline(fastq2, reads.back().sequence_2);
         getline(fastq2, trash);
-        if (keep_qual){
+        if (keep_qual) {
             getline(fastq2, reads.back().quality_2);
         } else {
             getline(fastq2, trash);
@@ -280,7 +280,7 @@ minimizer_t minimizer(string& seq, int start, int length){
     }
     current_k_mer &= kmer_size_mask;
 
-    min_k_mer = ((min_k_mer < current_k_mer) && !invalid_minimizers[current_k_mer]) ? min_k_mer : current_k_mer;
+    min_k_mer = ((min_k_mer < current_k_mer) || invalid_minimizers[current_k_mer]) ? min_k_mer : current_k_mer;
     // min_k_mer = min_k_mer < current_k_mer ? min_k_mer : current_k_mer;
 
     // Bit shifting to get new k-mers, and masking to keep k-mer size fixed
@@ -324,7 +324,7 @@ minimizer_t minimizer(string& seq, int start, int length){
             i=j;
         }
 
-        min_k_mer = min_k_mer < current_k_mer && !invalid_minimizers[current_k_mer] ? min_k_mer : current_k_mer;
+        min_k_mer = ((min_k_mer < current_k_mer) || invalid_minimizers[current_k_mer]) ? min_k_mer : current_k_mer;
         // min_k_mer = min_k_mer < current_k_mer ? min_k_mer : current_k_mer;
         // printf("0x%08X\n", min_k_mer);
 
