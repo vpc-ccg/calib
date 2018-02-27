@@ -20,7 +20,7 @@ def parse_args():
                         "--output-accuracy-results",
                         type=str,
                         required=False,
-                        help="Output file where accuracy results and contents of any clutsters with clustering mistakes will be printed. Default: stdout")
+                        help="Output file where accuracy results and contents of any clusters with clustering discordances will be printed. Default: stdout")
     args = parser.parse_args()
     return args
 
