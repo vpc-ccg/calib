@@ -92,8 +92,8 @@ void parse_flags(int argc, char *argv[]){
         print_help();
         exit(-1);
     }
-    if (minimizer_threshold > minimizer_count || minimizer_threshold < 1) {
-        cout << "Minimizer threshold must be <= minimizer count and >= 1\n";
+    if (minimizer_threshold > minimizer_count || minimizer_threshold < 0) {
+        cout << "Minimizer threshold must be <= minimizer count and >= 0\n";
         print_help();
         exit(-1);
     }
