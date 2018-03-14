@@ -26,8 +26,9 @@ def draw(in_file, out_file):
         f = open(in_file)
         # lines = f.readlines()
 
-        colors = { 1 : 'b', 0 : 'g'}
+        colors = { 1 : 'blue', 0 : 'green'}
         G = nx.Graph()
+        color_map = []
         for line in f:
             line = line.rstrip().split('\t')
             # for x in line[:-1]:
@@ -40,6 +41,7 @@ def draw(in_file, out_file):
             left_avg = float(line[4])
             right_avg = float(line[5])
             hamming_avg = float(line[6])
+            if read_count < 10:
 
             for neighbor in line[7].rstrip().split(','):
                 if len(neighbor) < 1:
@@ -51,24 +53,26 @@ def draw(in_file, out_file):
                 dist = int(fields[3])
 
 
-                G.add_edge(node_id, neighbor_id, color=colors[dist],weight=(left+right)/5)
+                G.add_edge(node_id, neighbor_id, color=colors[dist],weight=left+right)
+            d = nx.degree(g)
 
             plt.figure(figsize=(30,30))
-            nx.draw(G)#, pos, edges=edges, edge_color=colors, width=weights)
+            nx.draw(G, nodelist=d.keys(), node_size=25, alpha=0.15)#, pos, edges=edges, edge_color=colors, width=weights)
             plt.savefig(out_file+"_basic.pdf")
 
             edges = G.edges()
             colors = [G[u][v]['color'] for u,v in edges]
             weights = [G[u][v]['weight'] for u,v in edges]
+            node_sizes = [v * 100 for v in d.values()]
 
             plt.figure(figsize=(30,30))
             pos = nx.spring_layout(G)
-            nx.draw(G, pos, edges=edges, edge_color=colors, width=weights, alpha=0.1, node_size=25)
+            nx.draw(G, pos, edges=edges, edge_color=colors, width=weights, alpha=0.15, node_size=node_sizes)
             plt.savefig(out_file+"_spring.pdf")
 
-            plt.figure(figsize=(18,18))
+            plt.figure(figsize=(30,30))
             pos = nx.spectral_layout(G)
-            nx.draw(G, pos, edges=edges, edge_color=colors, width=weights)
+            nx.draw(G, pos, edges=edges, edge_color=colors, width=weights, alpha=0.15, node_size=node_sizes)
             plt.savefig(out_file+"_spectral.pdf")
 
             # plt.figure(figsize=(18,18))
@@ -83,7 +87,7 @@ def draw(in_file, out_file):
 
             plt.figure(figsize=(30,30))
             pos = nx.random_layout(G)
-            nx.draw(G, pos, edges=edges, edge_color=colors, width=weights)
+            nx.draw(G, pos, edges=edges, edge_color=colors, width=weights, alpha=0.15, node_size=node_sizes)
             plt.savefig(out_file+"_random.pdf")
 
 def main():
