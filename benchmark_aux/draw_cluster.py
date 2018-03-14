@@ -1,6 +1,9 @@
 import argparse
 
 import networkx as nx
+
+import matplotlib
+matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 
 def parse_args():
@@ -50,7 +53,7 @@ def draw(in_file, out_file):
 
                 G.add_edge(node_id, neighbor_id, color=colors[dist],weight=(left+right)/5)
 
-            plt.figure(figsize=(18,18))
+            plt.figure(figsize=(30,30))
             nx.draw(G)#, pos, edges=edges, edge_color=colors, width=weights)
             plt.savefig(out_file+"_basic.pdf")
 
@@ -58,9 +61,9 @@ def draw(in_file, out_file):
             colors = [G[u][v]['color'] for u,v in edges]
             weights = [G[u][v]['weight'] for u,v in edges]
 
-            plt.figure(figsize=(18,18))
+            plt.figure(figsize=(30,30))
             pos = nx.spring_layout(G)
-            nx.draw(G, pos, edges=edges, edge_color=colors, width=weights)
+            nx.draw(G, pos, edges=edges, edge_color=colors, width=weights, alpha=0.1, node_size=25)
             plt.savefig(out_file+"_spring.pdf")
 
             plt.figure(figsize=(18,18))
@@ -68,17 +71,17 @@ def draw(in_file, out_file):
             nx.draw(G, pos, edges=edges, edge_color=colors, width=weights)
             plt.savefig(out_file+"_spectral.pdf")
 
-            plt.figure(figsize=(18,18))
-            pos = nx.circular_layout(G)
-            nx.draw(G, pos, edges=edges, edge_color=colors, width=weights)
-            plt.savefig(out_file+"_circular.pdf")
+            # plt.figure(figsize=(18,18))
+            # pos = nx.circular_layout(G)
+            # nx.draw(G, pos, edges=edges, edge_color=colors, width=weights)
+            # plt.savefig(out_file+"_circular.pdf")
+            #
+            # plt.figure(figsize=(18,18))
+            # pos = nx.shell_layout(G)
+            # nx.draw(G, pos, edges=edges, edge_color=colors, width=weights)
+            # plt.savefig(out_file+"_shell.pdf")
 
-            plt.figure(figsize=(18,18))
-            pos = nx.shell_layout(G)
-            nx.draw(G, pos, edges=edges, edge_color=colors, width=weights)
-            plt.savefig(out_file+"_shell.pdf")
-
-            plt.figure(figsize=(18,18))
+            plt.figure(figsize=(30,30))
             pos = nx.random_layout(G)
             nx.draw(G, pos, edges=edges, edge_color=colors, width=weights)
             plt.savefig(out_file+"_random.pdf")
