@@ -259,35 +259,63 @@ void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
                 }
                 if (debug) {
                     node_id_t current_node = opened.top();
-                    double matching_minimizers = 0.0;
+                    double left_matching_minimizers  = 0.0;
+                    double right_matching_minimizers = 0.0;
                     double hamming_distance = 0.0;
 
+                    stringstream stream_neighbors;
+
                     for (node_id_t neighbor: adjacency_lists[current_node]) {
+                        double current_left_matching_minimizers = 0.0;
+                        double current_right_matching_minimizers = 0.0;
+                        double current_hamming_distance = 0.0;
+
+                        stream_neighbors << neighbor << "_";
+
                         for (int i = 0; i < minimizer_count; i++) {
-                            matching_minimizers += nodes[current_node].minimizers_1[i] == nodes[neighbor].minimizers_1[i];
-                            matching_minimizers += nodes[current_node].minimizers_2[i] == nodes[neighbor].minimizers_2[i];
+                            current_left_matching_minimizers  += nodes[current_node].minimizers_1[i] == nodes[neighbor].minimizers_1[i];
+                            current_right_matching_minimizers += nodes[current_node].minimizers_2[i] == nodes[neighbor].minimizers_2[i];
                         }
+                        stream_neighbors << current_left_matching_minimizers << "_" << current_right_matching_minimizers << "_";
+
                         for (int i = 0; i < barcode_length*2; i++) {
-                            hamming_distance += nodes[current_node].barcode.at(i) != nodes[neighbor].barcode.at(i);
+                            current_hamming_distance += nodes[current_node].barcode.at(i) != nodes[neighbor].barcode.at(i);
                         }
+                        stream_neighbors << current_hamming_distance << ", ";
+
+                        hamming_distance += current_hamming_distance;
+                        left_matching_minimizers  += current_left_matching_minimizers;
+                        right_matching_minimizers += current_right_matching_minimizers;
+
                     }
-                    double average_connectivity;
+
+                    double average_left_connectivity;
+                    double average_right_connectivity;
                     double average_hamming;
+
                     if (adjacency_lists[current_node].size() == 0) {
-                        average_connectivity = 0.0;
+                        average_left_connectivity  = 0.0;
+                        average_right_connectivity = 0.0;
                         average_hamming = 0.0;
                     } else {
-                        average_connectivity = matching_minimizers/adjacency_lists[current_node].size();
+                        average_left_connectivity  =  left_matching_minimizers/adjacency_lists[current_node].size();
+                        average_right_connectivity = right_matching_minimizers/adjacency_lists[current_node].size();
                         average_hamming = hamming_distance/adjacency_lists[current_node].size();
                     }
                     stringstream stream;
                     stream.precision(4);
                     stream << fixed;
+
                     stream << cluster_count << "\t";
                     stream << std::setfill (' ') << std::setw (10) << current_node << "\t";
                     stream << std::setfill (' ') << std::setw (3) << adjacency_lists[current_node].size() << "\t";
                     stream << std::setfill (' ') << std::setw (2) << node_to_read_vector[current_node].size() << "\t";
-                    stream << average_connectivity << "\t" << average_hamming;
+
+                    stream << average_left_connectivity  << "\t";
+                    stream << average_right_connectivity << "\t";
+                    stream << average_hamming << "\t";
+                    stream << stream_neighbors.str();
+
                     cluster_debug << stream.str() << "\n";
 
                     for (read_id_t read : node_to_read_vector[current_node]) {
