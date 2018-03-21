@@ -8,7 +8,7 @@ awk '{if (NR %2 == 0) {print substr($0,2)} else {print}}' "$base".R1.extracted.f
 awk '{if (NR %2 == 0) {print substr($0,2)} else {print}}' "$base".R2.extracted.fastq > "$base".R2.extracted.trim.fastq
 
 bwa mem -t $2 $3 "$base".R1.extracted.trim.fastq "$base".R2.extracted.trim.fastq | \
-    samtools view -F 3852 -h | \
+    samtools view -F 3852 -h - | \
     awk '
 BEGIN{OFS = "\t"; n = 0}
 {
