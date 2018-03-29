@@ -157,6 +157,11 @@ def main():
             weights.add(weight)
         adjacency[tcidx] = neighbors
 
+    if (args.output_accuracy_results):
+        output = open(args.output_accuracy_results, 'w+')
+    else:
+        output = sys.stdout
+
     for current_weight in sorted((weights)):
         visited = [False]*node_count
         shared_cc = 0
@@ -216,9 +221,10 @@ def main():
                 cc_composition[key] = 1
                 cc_examples[key] = '\n'.join((reads[rid] for rid in cc_rid_list_unique))
 
+
         for key in sorted(cc_composition):
-            print('#',int(current_weight), int(key[0]), int(key[1]), int(key[2]), int(cc_composition[key]), sep='\t')
-            print(cc_examples[key])
+            print('#',int(current_weight), int(key[0]), int(key[1]), int(key[2]), int(cc_composition[key]), sep='\t', file=output)
+            print(cc_examples[key], file=output)
 
 if __name__ == "__main__":
     main()
