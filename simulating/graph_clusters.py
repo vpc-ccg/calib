@@ -1,5 +1,6 @@
 import sys
 import argparse
+import plotly
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -15,10 +16,15 @@ def parse_args():
                         required=True,
                         help="Input .cluster file to calculate Rand Index on")
     parser.add_argument("-o",
-                        "--output-accuracy-results",
+                        "--output",
                         type=str,
                         required=False,
-                        help="Output file where accuracy results and contents of any clusters with clustering discordances will be printed. Default: stdout")
+                        help="Output file where bipartite details are stored; Default: stdout")
+    parser.add_argument("-s",
+                        "--sankey-last-weight-index",
+                        type=int,
+                        required=False,
+                        help="Python index of Sankey diagram's last layer's weight in the sorted list of (to be) observed weights; Default: min(|weights|-1, 4)")
     args = parser.parse_args()
     return args
 
@@ -93,21 +99,7 @@ def main():
         key = tuple([tcid, pcid_counter])
         contigency_matrix[key] = contigency_matrix.get(key, 0) + 1
 
-    # if (args.output_accuracy_results):
-    #     results = open(args.output_accuracy_results+'.ari', 'w+')
-    # else:
-    #     results = sys.stdout
 
-    # Y = []
-    # X = []
-    # lonely_read_cluster_counter = -1
-    # for rid in rid_to_tcid:
-    #     Y.append(rid_to_tcid[rid])
-    #     if rid in rid_to_pcid:
-    #         X.append(rid_to_pcid[rid])
-    #     else:
-    #         X.append(lonely_read_cluster_counter)
-    #         lonely_read_cluster_counter -= 1
     pcid_to_pcidx = dict()
     tcid_to_tcidx = dict()
     pcidx_to_pcid = dict()
@@ -124,14 +116,10 @@ def main():
             pcid_singltons.add(pcid)
 
     for pcid in pcid_to_tcid_set:
-        # if pcid in pcid_singltons:
-        #     pass
         pcidx_to_pcid[node_count] = pcid
         pcid_to_pcidx[pcid] = node_count
         node_count += 1
     for tcid in tcid_to_pcid_set:
-        # if tcid in tcid_singltons:
-        #     pass
         tcidx_to_tcid[node_count] = tcid
         tcid_to_tcidx[tcid] = node_count
         node_count += 1
@@ -152,17 +140,60 @@ def main():
     for tcidx in range(pc_size, node_count):
         neighbors = {pcid_to_pcidx[pcid] : 0 for pcid in tcid_to_pcid_set[tcidx_to_tcid[tcidx]]}
         for pcidx in neighbors:
-            # weight =
             neighbors[pcidx] = len(tcid_to_rid_set[tcidx_to_tcid[tcidx]].intersection(pcid_to_rid_set[pcidx_to_pcid[pcidx]]))
             weights.add(weight)
         adjacency[tcidx] = neighbors
 
-    if (args.output_accuracy_results):
-        output = open(args.output_accuracy_results, 'w+')
+    if (args.output):
+        output = open(args.output+'.log', 'w+')
+        sankey_output = args.output
     else:
         output = sys.stdout
+        sankey_output = ''
 
-    for current_weight in sorted((weights)):
+    weights = sorted(weights)
+    history = [(0,0)]*node_count
+    prev_weight = -1
+
+    if args.sankey_last_weight_index and args.sankey_last_weight_index >= -len(weights) and args.sankey_last_weight_index < len(weights):
+        sankey_last_weight = weights[args.sankey_last_weight_index]
+    else:
+        if 4 < len(weights):
+            sankey_last_weight = weights[4]
+        else:
+            sankey_last_weight = weights[-1]
+
+
+    sankey_labels = list()
+    sankey_colors = list()
+    for weight in weights:
+        if weight > sankey_last_weight:
+            break
+        sankey_labels.append('{}: {}-{}'.format(weight, 1,1))
+        sankey_colors.append('#000000')
+        sankey_labels.append('{}: {}-{}'.format(weight, 1,2))
+        sankey_colors.append('#252525')
+        sankey_labels.append('{}: {}-{}'.format(weight, 2,1))
+        sankey_colors.append('#525252')
+        sankey_labels.append('{}: {}-{}'.format(weight, 2,2))
+        sankey_colors.append('#737373')
+        sankey_labels.append('{}: {}-{}'.format(weight, 1,3))
+        sankey_colors.append('#969696')
+        sankey_labels.append('{}: {}-{}'.format(weight, 3,1))
+        sankey_colors.append('#bdbdbd')
+        sankey_labels.append('{}: {}-{}'.format(weight, 1,0))
+        sankey_colors.append('#d9d9d9')
+        sankey_labels.append('{}: {}-{}'.format(weight, 0,1))
+        sankey_colors.append('#f0f0f0')
+        sankey_labels.append('{}: Other'.format(weight))
+        sankey_colors.append('#ffffff')
+    sankey_label_to_id = dict()
+    for idx, label in enumerate(sankey_labels):
+        sankey_label_to_id[label] = idx
+    sankey_read_link_dict = dict()
+    sankey_clus_link_dict = dict()
+
+    for current_weight in weights:
         visited = [False]*node_count
         shared_cc = 0
         pc_cc = 0
@@ -170,61 +201,138 @@ def main():
         cc_composition = dict()
         cc_examples = dict()
         for idx in range(node_count):
-            # print (idx, visited[idx])
             if visited[idx]:
                 continue
-            cc_size = 0
+            cc_list = list()
+            visited[idx] = True
+            cc_list.append(idx)
+            opened = [idx]
+            while len(opened) > 0:
+                current_node = opened.pop()
+                for neighbor in adjacency[current_node]:
+                    weight = adjacency[current_node][neighbor]
+                    if weight >= current_weight and visited[neighbor] != True:
+                        visited[neighbor] = True
+                        cc_list.append(neighbor)
+                        opened.append(neighbor)
             cc_rid_list = list()
             cc_pc_count = 0
             cc_tc_count = 0
-            visited[idx] = True
-            opened = [idx]
-            # print(opened)
-            while len(opened) > 0:
-                # print (idx, opened)
-                current_node = opened.pop()
+            for current_node in cc_list:
                 if current_node < pc_size:
-                    cc_rid_list.extend(list(pcid_to_rid_set[pcidx_to_pcid[current_node]]))
+                    cc_rid_list.extend(pcid_to_rid_set[pcidx_to_pcid[current_node]])
                     cc_pc_count += 1
                 else:
-                    cc_rid_list.extend(list(tcid_to_rid_set[tcidx_to_tcid[current_node]]))
+                    cc_rid_list.extend(tcid_to_rid_set[tcidx_to_tcid[current_node]])
                     cc_tc_count += 1
-                # print(opened)
-                cc_size += 1
-
-                # print (adjacency[current_node], type(adjacency[current_node]))
-                for neighbor in adjacency[current_node]:
-                    weight = adjacency[current_node][neighbor]
-                    # print ('\t-->', neighbor, weight)
-                    if weight >= current_weight and visited[neighbor] != True:
-                        visited[neighbor] = True
-                        opened.append(neighbor)
-            if cc_size ==  1:
-                if idx < pc_size:
-                    pc_cc += 1
-                else:
-                    tc_cc += 1
-            else:
-                shared_cc += 1
-            rid_count = 0
-            cc_rid_list.sort()
-            cc_rid_list_unique = list()
-            # print(cc_rid_list)
-            for index, rid in enumerate(cc_rid_list):
-                if index == len(cc_rid_list) - 1 or rid != cc_rid_list[index+1]:
-                    cc_rid_list_unique.append(rid)
-            # print(rid_count)
-            key = (cc_pc_count, cc_tc_count, len(cc_rid_list_unique))
+            key = (cc_pc_count, cc_tc_count, len(cc_rid_list))
             if key in cc_composition:
                 cc_composition[key] += 1
             else:
                 cc_composition[key] = 1
-                cc_examples[key] = '\n'.join((reads[rid] for rid in cc_rid_list_unique))
+                cc_examples[key] = '\n'.join((reads[rid] for rid in cc_rid_list))
+            for current_node in cc_list:
+                if current_weight > sankey_last_weight:
+                    break
+                last_cc_pc_count = history[current_node][0]
+                last_cc_tc_count = history[current_node][1]
+                history[current_node] = (cc_pc_count, cc_tc_count)
+                if prev_weight == -1:
+                    continue
+                source = '{}: {}-{}'.format(prev_weight, last_cc_pc_count, last_cc_tc_count)
+                if source not in sankey_label_to_id:
+                    source = '{}: Other'.format(prev_weight)
+                source_id = sankey_label_to_id[source]
+
+                target = '{}: {}-{}'.format(current_weight, cc_pc_count, cc_tc_count)
+                if target not in sankey_label_to_id:
+                    target = '{}: Other'.format(current_weight)
+                target_id = sankey_label_to_id[target]
+
+                key = (source_id, target_id)
+
+                if current_node < pc_size:
+                    node_rid_count = len(pcid_to_rid_set[pcidx_to_pcid[current_node]])
+                else:
+                    node_rid_count = len(tcid_to_rid_set[tcidx_to_tcid[current_node]])
+
+                if key in sankey_clus_link_dict:
+                    sankey_clus_link_dict[key] += 1
+                else:
+                    sankey_clus_link_dict[key] = 1
+
+                if key in sankey_read_link_dict:
+                    sankey_read_link_dict[key] += node_rid_count
+                else:
+                    sankey_read_link_dict[key] = node_rid_count
 
 
         for key in sorted(cc_composition):
-            print('#',int(current_weight), int(key[0]), int(key[1]), int(key[2]), int(cc_composition[key]), sep='\t', file=output)
+            cc_pc_count = int(key[0])
+            cc_tc_count = int(key[1])
+            cc_rid_list_len = int(key[2])
+            cc_count = int(cc_composition[key])
+
+            print('#',int(current_weight), cc_pc_count, cc_tc_count, cc_rid_list_len, cc_count, sep='\t', file=output)
             print(cc_examples[key], file=output)
+        prev_weight = current_weight
+
+    data = dict(
+        type='sankey',
+        node = dict(
+          pad = 15,
+          thickness = 20,
+          line = dict(
+            color = "black",
+            width = 0.5
+          ),
+          label = sankey_labels,
+          color = sankey_colors
+        ))
+
+    layout =  dict(
+        font = dict(
+          size = 10
+        )
+    )
+
+    sources = list()
+    targets = list()
+    values = list()
+    for key in sankey_read_link_dict:
+        sources.append(key[0])
+        targets.append(key[1])
+        values.append(sankey_read_link_dict[key])
+    data['link'] = dict(source = sources,  target = targets, value = values)
+    layout['title'] = "Sankey diagram of reads"
+    fig = dict(data=[data], layout=layout)
+    data['arrangement']="snap"
+    plotly.offline.plot(fig, filename=sankey_output+'.sankey_reads_snap.html', auto_open=False)
+    data['arrangement']="perpendicular"
+    plotly.offline.plot(fig, filename=sankey_output+'.sankey_reads_perpendicular.html', auto_open=False)
+    data['arrangement']="freeform"
+    plotly.offline.plot(fig, filename=sankey_output+'.sankey_reads_freeform.html', auto_open=False)
+    data['arrangement']="fixed"
+    plotly.offline.plot(fig, filename=sankey_output+'.sankey_reads_fixed.html', auto_open=False)
+
+    sources = list()
+    targets = list()
+    values = list()
+    for key in sankey_clus_link_dict:
+        sources.append(key[0])
+        targets.append(key[1])
+        values.append(sankey_clus_link_dict[key])
+    data['link'] = dict(source = sources,  target = targets, value = values)
+    layout['title'] = "Sankey diagram of clusters"
+    fig = dict(data=[data], layout=layout)
+    data['arrangement']="snap"
+    plotly.offline.plot(fig, filename=sankey_output+'.sankey_clusters_snap.html', auto_open=False)
+    data['arrangement']="perpendicular"
+    plotly.offline.plot(fig, filename=sankey_output+'.sankey_clusters_perpendicular.html', auto_open=False)
+    data['arrangement']="freeform"
+    plotly.offline.plot(fig, filename=sankey_output+'.sankey_clusters_freeform.html', auto_open=False)
+    data['arrangement']="fixed"
+    plotly.offline.plot(fig, filename=sankey_output+'.sankey_clusters_fixed.html', auto_open=False)
 
 if __name__ == "__main__":
     main()
