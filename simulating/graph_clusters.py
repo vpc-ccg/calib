@@ -2,6 +2,10 @@ import sys
 import argparse
 import plotly
 
+
+PARITITION_STRING = '{}: {}-{}'
+OTHER_PARTITION_STRING = '{}: Other'
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Calculates Rand Index for a clusters file")
@@ -166,27 +170,38 @@ def main():
 
     sankey_labels = list()
     sankey_colors = list()
-    for weight in weights:
+    sankey_labels.append(PARITITION_STRING.format(weights[0],  1 ,  1 ))
+    sankey_colors.append('black')
+    sankey_labels.append(PARITITION_STRING.format(weights[0],  1 , 'X'))
+    sankey_colors.append('#bdd7e7')
+    sankey_labels.append(PARITITION_STRING.format(weights[0],  1 ,  2 ))
+    sankey_colors.append('#6baed6')
+    sankey_labels.append(PARITITION_STRING.format(weights[0],  1 ,  0 ))
+    sankey_colors.append('#2171b5')
+    sankey_labels.append(PARITITION_STRING.format(weights[0], 'X',  1 ))
+    sankey_colors.append('#bae4b3')
+    sankey_labels.append(PARITITION_STRING.format(weights[0],  2 ,  1 ))
+    sankey_colors.append('#74c476')
+    sankey_labels.append(PARITITION_STRING.format(weights[0],  0 ,  1 ))
+    sankey_colors.append('#238b45')
+    sankey_labels.append(OTHER_PARTITION_STRING.format(weights[0]))
+    sankey_colors.append('white')
+
+    for weight in weights[1:]:
         if weight > sankey_last_weight:
             break
-        sankey_labels.append('{}: {}-{}'.format(weight, 1,1))
-        sankey_colors.append('#000000')
-        sankey_labels.append('{}: {}-{}'.format(weight, 1,2))
-        sankey_colors.append('#252525')
-        sankey_labels.append('{}: {}-{}'.format(weight, 2,1))
-        sankey_colors.append('#525252')
-        sankey_labels.append('{}: {}-{}'.format(weight, 2,2))
-        sankey_colors.append('#737373')
-        sankey_labels.append('{}: {}-{}'.format(weight, 1,3))
-        sankey_colors.append('#969696')
-        sankey_labels.append('{}: {}-{}'.format(weight, 3,1))
-        sankey_colors.append('#bdbdbd')
-        sankey_labels.append('{}: {}-{}'.format(weight, 1,0))
-        sankey_colors.append('#d9d9d9')
-        sankey_labels.append('{}: {}-{}'.format(weight, 0,1))
-        sankey_colors.append('#f0f0f0')
-        sankey_labels.append('{}: Other'.format(weight))
-        sankey_colors.append('#ffffff')
+        sankey_labels.append(PARITITION_STRING.format(weight,  1 ,  1 ))
+        sankey_colors.append('black')
+        sankey_labels.append(PARITITION_STRING.format(weight,  1 , 'X'))
+        sankey_colors.append('#bdd7e7')
+        sankey_labels.append(PARITITION_STRING.format(weight,  1 ,  0 ))
+        sankey_colors.append('#2171b5')
+        sankey_labels.append(PARITITION_STRING.format(weight, 'X',  1 ))
+        sankey_colors.append('#bae4b3')
+        sankey_labels.append(PARITITION_STRING.format(weight,  0 ,  1 ))
+        sankey_colors.append('#238b45')
+        sankey_labels.append(OTHER_PARTITION_STRING.format(weight))
+        sankey_colors.append('white')
     sankey_label_to_id = dict()
     for idx, label in enumerate(sankey_labels):
         sankey_label_to_id[label] = idx
@@ -239,14 +254,24 @@ def main():
                 history[current_node] = (cc_pc_count, cc_tc_count)
                 if prev_weight == -1:
                     continue
-                source = '{}: {}-{}'.format(prev_weight, last_cc_pc_count, last_cc_tc_count)
+                source = PARITITION_STRING.format(prev_weight, last_cc_pc_count, last_cc_tc_count)
                 if source not in sankey_label_to_id:
-                    source = '{}: Other'.format(prev_weight)
+                    if   last_cc_pc_count == 1 and last_cc_tc_count > 1:
+                        source = PARITITION_STRING.format(prev_weight, 1, 'X')
+                    elif last_cc_pc_count > 1 and last_cc_tc_count == 1:
+                        source = PARITITION_STRING.format(prev_weight, 'X', 1)
+                    else:
+                        source = OTHER_PARTITION_STRING.format(prev_weight)
                 source_id = sankey_label_to_id[source]
 
-                target = '{}: {}-{}'.format(current_weight, cc_pc_count, cc_tc_count)
+                target = PARITITION_STRING.format(current_weight, cc_pc_count, cc_tc_count)
                 if target not in sankey_label_to_id:
-                    target = '{}: Other'.format(current_weight)
+                    if   cc_pc_count == 1 and cc_tc_count > 1:
+                        target = PARITITION_STRING.format(current_weight, 1, 'X')
+                    elif cc_pc_count > 1 and cc_tc_count == 1:
+                        target = PARITITION_STRING.format(current_weight, 'X', 1)
+                    else:
+                        target = OTHER_PARTITION_STRING.format(current_weight)
                 target_id = sankey_label_to_id[target]
 
                 key = (source_id, target_id)
@@ -306,14 +331,7 @@ def main():
     data['link'] = dict(source = sources,  target = targets, value = values)
     layout['title'] = "Sankey diagram of reads"
     fig = dict(data=[data], layout=layout)
-    data['arrangement']="snap"
-    plotly.offline.plot(fig, filename=sankey_output+'.sankey_reads_snap.html', auto_open=False)
-    data['arrangement']="perpendicular"
-    plotly.offline.plot(fig, filename=sankey_output+'.sankey_reads_perpendicular.html', auto_open=False)
-    data['arrangement']="freeform"
-    plotly.offline.plot(fig, filename=sankey_output+'.sankey_reads_freeform.html', auto_open=False)
-    data['arrangement']="fixed"
-    plotly.offline.plot(fig, filename=sankey_output+'.sankey_reads_fixed.html', auto_open=False)
+    plotly.offline.plot(fig, filename=sankey_output+'.sankey_reads.html', auto_open=False)
 
     sources = list()
     targets = list()
@@ -325,14 +343,7 @@ def main():
     data['link'] = dict(source = sources,  target = targets, value = values)
     layout['title'] = "Sankey diagram of clusters"
     fig = dict(data=[data], layout=layout)
-    data['arrangement']="snap"
-    plotly.offline.plot(fig, filename=sankey_output+'.sankey_clusters_snap.html', auto_open=False)
-    data['arrangement']="perpendicular"
-    plotly.offline.plot(fig, filename=sankey_output+'.sankey_clusters_perpendicular.html', auto_open=False)
-    data['arrangement']="freeform"
-    plotly.offline.plot(fig, filename=sankey_output+'.sankey_clusters_freeform.html', auto_open=False)
-    data['arrangement']="fixed"
-    plotly.offline.plot(fig, filename=sankey_output+'.sankey_clusters_fixed.html', auto_open=False)
+    plotly.offline.plot(fig, filename=sankey_output+'.sankey_clusters.html', auto_open=False)
 
 if __name__ == "__main__":
     main()
