@@ -1,10 +1,26 @@
 import sys
 import argparse
-import plotly
+import subprocess
 
+import plotly
+from pymsa.score import Entropy
 
 PARITITION_STRING = '{}: {}-{}'
 OTHER_PARTITION_STRING = '{}: Other'
+
+
+def get_msa(sequences):
+    try:
+        p = subprocess.Popen(['./get_msa'], stdout=subprocess.PIPE, stdin=PIPE, stderr=STDOUT)
+    except:
+        subprocess.run(['g++', 'get_msa.cc','-std=c++14','-I./seqan/include/','-lrt','-lpthread','-O3','-o','get_msa'])
+        p = subprocess.Popen(['./get_msa'], stdout=subprocess.PIPE, stdin=PIPE, stderr=STDOUT)
+    process_input = bytes('\n'.join(sequences), 'ascii')
+    process_output = p.communicate(input=process_input)[0]
+    return process_output.decode().rstrip().split('\n')
+
+def get_entropy(scoring_obj, sequences):
+    return scoring_obj.compute(get_msa(sequences))
 
 def parse_args():
     parser = argparse.ArgumentParser(
