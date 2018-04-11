@@ -7,7 +7,7 @@ from pymsa.score import SumOfPairs
 from pymsa.substitutionmatrix import SubstitutionMatrix
 
 TMP_PATH = '/home/borabi/tmp/msa/'
-PBS_HEADER = '#$ -N msa_{}\n'+\
+PBS_HEADER = '#$ -N msa_{}_{}\n'+\
                 '#$ -S /bin/bash\n'+\
                 '#$ -l h_rt=03:00:00\n'+\
                 '#$ -l h_stack=128M\n'+\
@@ -116,7 +116,7 @@ def main():
 
             print('Processing block {}'.format(block_count))
             pbs_path = block_path_prefix+'.sge.pbs'
-            pbs_content = [PBS_HEADER.format(block_count,block_path_prefix,block_path_prefix),
+            pbs_content = [PBS_HEADER.format(args.output_directory, block_count, block_path_prefix, block_path_prefix),
                 PBS_MSA_CMD.format(output_forward_file_path, output_forward_file_path+'.msa'),
                 PBS_MSA_CMD.format(output_reverse_file_path, output_reverse_file_path+'.msa')]
             pbs_content = '\n'.join(pbs_content)
