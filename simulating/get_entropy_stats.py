@@ -81,6 +81,7 @@ def main():
             # print(forward_clusters)
             continue
         else:
+            line = line.replace(' ','\t')
             line = line.rstrip().split('\t')
             # print(line[0], forward_mates[int(line[0])], reverse_mates[int(line[0])])
             forward_clusters[-1].append(forward_mates[int(line[1])])
