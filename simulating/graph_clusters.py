@@ -123,10 +123,10 @@ def main():
         other_line = sam_file.readline().rstrip().split('\t')
         for column, width in RJST_CLM_TO_WIDTH.items():
             line[column]       = line[column].rjust(width)
-            other_line[column] = line[column].rjust(width)
+            other_line[column] = other_line[column].rjust(width)
         for column, width in LJST_CLM_TO_WIDTH.items():
             line[column]       = line[column].ljust(width)
-            other_line[column] = line[column].ljust(width)
+            other_line[column] = other_line[column].ljust(width)
         line[TGS_CLM]       = ','.join(line[TGS_CLM:]      ).ljust(TGS_WIDTH)
         other_line[TGS_CLM] = ','.join(other_line[TGS_CLM:]).ljust(TGS_WIDTH)
         line = line[:TGS_CLM+1]
@@ -138,9 +138,8 @@ def main():
             reads.append(other_line + line)
         if len(reads) % 1e6 == 0:
             print('Read {} is read'.format(str(len(reads)).rjust(RID_WIDTH)))
-            # print('\t'.join(reads[-1]))
         line = sam_file.readline()
-        print('Read {} is read'.format(str(len(reads)).rjust(RID_WIDTH)))
+    print('Read {} is read'.format(str(len(reads)).rjust(RID_WIDTH)))
 
     print('Reading true cluster file')
     tcid_counter = -1
