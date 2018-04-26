@@ -17,8 +17,6 @@ char masked_barcode_buffer[150];
 #define ASCII_SIZE 256
 bool valid_base [ASCII_SIZE];
 
-
-
 void cluster(){
     node_id_to_node_id_vector_of_vectors adjacency_lists(node_count);
     time_t start;
@@ -111,6 +109,15 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
                           bucket.second.begin(), bucket.second.end(),
                           back_inserter(result)
                           );
+                if (debug) {
+                    if (find(debug_nodes.begin(), debug_nodes.end(),node)!=debug_nodes.end()) {
+                        node_dog << node << "\t" << bucket.first << "\t";
+                        for (auto neighbor : result) {
+                            node_dog << neighbor << ",";
+                        }
+                        node_dog << "\n";
+                    }
+                }
                 adjacency_lists[node] = move(result);
             }
         }
@@ -173,7 +180,6 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
         dog << "M\t";
         dog << !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold) << "\t";
         dog << matched_minimimizers_1 << "\t" << matched_minimimizers_2 << "\t" << hamming_distance <<"\n";
-
         dog << "M1\t";
         for (int i =0; i < minimizer_count; i++) {
             dog << nodes[node_id].minimizers_1[i] << "\t";
@@ -194,6 +200,27 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
         dog << nodes[neighbor_id].barcode << "\t";
         dog << reads[node_to_read_vector[neighbor_id].front()].sequence_1 << "\t" << reads[node_to_read_vector[neighbor_id].front()].sequence_2 <<"\n";
 
+        if (find(debug_nodes.begin(), debug_nodes.end(), node_id)!=debug_nodes.end() ||
+            find(debug_nodes.begin(), debug_nodes.end(), neighbor_id)!=debug_nodes.end() ) {
+                for (int i =0; i < minimizer_count; i++) {
+                    node_dog << nodes[node_id].minimizers_1[i] << "\t";
+                }
+                for (int i =0; i < minimizer_count; i++) {
+                    node_dog << nodes[node_id].minimizers_2[i] << "\t";
+                }
+                node_dog << nodes[node_id].barcode << "\t";
+                node_dog << reads[node_to_read_vector[node_id].front()].sequence_1 << "\t" << reads[node_to_read_vector[node_id].front()].sequence_2 <<"\n";
+
+                dog << "M2\t";
+                for (int i =0; i < minimizer_count; i++) {
+                    node_dog << nodes[neighbor_id].minimizers_1[i] << "\t";
+                }
+                for (int i =0; i < minimizer_count; i++) {
+                    node_dog << nodes[neighbor_id].minimizers_2[i] << "\t";
+                }
+                node_dog << nodes[neighbor_id].barcode << "\t";
+                node_dog << reads[node_to_read_vector[neighbor_id].front()].sequence_1 << "\t" << reads[node_to_read_vector[neighbor_id].front()].sequence_2 <<"\n";
+        }
     }
     return !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold);
 }
