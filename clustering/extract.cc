@@ -4,6 +4,11 @@
 
 #include "extract.h"
 #include "global.h"
+#include <algorithm>
+
+// Debug includes
+#include <sstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -11,6 +16,11 @@ using namespace std;
 #define ASCII_SIZE 128
 #define BYTE_SIZE 8
 #define ENCODE_SIZE 2
+#define INVALID_A 0x00
+#define INVALID_C 0x15
+#define INVALID_G 0x2A
+#define INVALID_T 0x3F
+#define INVALID_LENGTH 3
 
 node_id_t node_count = 0;
 read_id_t read_count = 0;
@@ -24,7 +34,74 @@ node_id_to_read_id_vector node_to_read_vector;
 
 minimizer_t encode [ASCII_SIZE];
 minimizer_t invalid_kmer = (minimizer_t) -1;
+vector<bool> invalid_minimizers;
 
+// bool invalid_minimizer(minimizer_t kmer) {
+//     return ((((kmer & 0x3F ) == 0x00) || ((kmer & 0x3F ) == 0x15) || ((kmer & 0x3F ) == 0x2A) || ((kmer & 0x3F ) == 0x3F)) ||
+//     (((kmer & 0xFC ) == 0x00) || ((kmer & 0xFC ) == 0x54) || ((kmer & 0xFC ) == 0xA8) || ((kmer & 0xFC ) == 0xFC)));
+// }
+
+string minimizer_t_to_dna(minimizer_t minimizer, size_t size) {
+    string s = "";
+    // printf("0x%x\t", minimizer);
+    for (int i = 0; i < (int) size; i++) {
+        // cout << "\t" << (minimizer & 0x3);
+
+        switch (minimizer & 0x3) {
+        case 0x0:
+            s = "A" + s;
+            break;
+        case 0x1:
+            s = "C" + s;
+            break;
+        case 0x2:
+            s = "G" + s;
+            break;
+        case 0x3:
+            s = "T" + s;
+            break;
+        }
+        // cout << "-" + s << "\t";
+        minimizer = minimizer >> ENCODE_SIZE;
+    }
+    // cout << "\n";
+    return s;
+}
+
+void make_invalid_minimizer_vector() {
+    minimizer_t max_minimizer = 1;
+    for (int i = 0; i < kmer_size*ENCODE_SIZE; i++) {
+        max_minimizer *= 2;
+    }
+    invalid_minimizers = vector<bool>((size_t) max_minimizer, false);
+    minimizer_t triplet_mask = (minimizer_t) -1;
+    triplet_mask = triplet_mask >> (sizeof(minimizer_t)*BYTE_SIZE - INVALID_LENGTH*ENCODE_SIZE);
+    max_minimizer--;
+    while (max_minimizer != (minimizer_t)-1) {
+        minimizer_t temp_minimizer = max_minimizer;
+
+        for (int i = 0; i < kmer_size - INVALID_LENGTH + 1; i++) {
+            // printf("0x%x\t0x%x\t0x%x\n", max_minimizer, temp_minimizer, temp_minimizer & triplet_mask);
+            // cout << minimizer_t_to_dna(max_minimizer, kmer_size - i) << "\t" <<  minimizer_t_to_dna(temp_minimizer, kmer_size - i) << "\t" <<  minimizer_t_to_dna(temp_minimizer & triplet_mask, INVALID_LENGTH) << "\n";
+            switch (temp_minimizer & triplet_mask) {
+            case INVALID_A:
+                invalid_minimizers[max_minimizer] = true;
+                break;
+            case INVALID_C:
+                invalid_minimizers[max_minimizer] = true;
+                break;
+            case INVALID_G:
+                invalid_minimizers[max_minimizer] = true;
+                break;
+            case INVALID_T:
+                invalid_minimizers[max_minimizer] = true;
+                break;
+            }
+            temp_minimizer = temp_minimizer >> ENCODE_SIZE;
+        }
+        max_minimizer--;
+    }
+}
 
 void extract_barcodes_and_minimizers() {
     node_to_read_id_unordered_map node_to_read_map;
@@ -40,7 +117,19 @@ void extract_barcodes_and_minimizers() {
     encode['c'] = 0x1;
     encode['g'] = 0x2;
     encode['t'] = 0x3;
+    if (no_triplets) {
+        make_invalid_minimizer_vector();
+    } else {
+        minimizer_t max_minimizer = 1;
+        for (int i = 0; i < kmer_size*ENCODE_SIZE; i++) {
+            max_minimizer *= 2;
+        }
+        invalid_minimizers = vector<bool>((size_t) max_minimizer, false);
+    }
 
+    // for (minimizer_t i =0; i < invalid_minimizers.size(); i++) {
+    //     printf("%s\t%s\n", minimizer_t_to_dna(i, kmer_size).c_str(), invalid_minimizers[i]? "true" : "false");
+    // }
     ifstream fastq1;
     ifstream fastq2;
     fastq1.open (input_1);
@@ -56,7 +145,7 @@ void extract_barcodes_and_minimizers() {
     while (getline(fastq1, reads.back().name_1)) {
         getline(fastq1, reads.back().sequence_1);
         getline(fastq1, trash);
-        if (keep_qual){
+        if (keep_qual) {
             getline(fastq1, reads.back().quality_1);
         } else {
             getline(fastq1, trash);
@@ -65,7 +154,7 @@ void extract_barcodes_and_minimizers() {
         getline(fastq2, reads.back().name_2);
         getline(fastq2, reads.back().sequence_2);
         getline(fastq2, trash);
-        if (keep_qual){
+        if (keep_qual) {
             getline(fastq2, reads.back().quality_2);
         } else {
             getline(fastq2, trash);
@@ -97,6 +186,15 @@ void extract_barcodes_and_minimizers() {
             for (int i = 0; i < minimizer_count; i++) {
                 current_node.minimizers_1[i] = minimizer(reads.back().sequence_1, start, s1_seg_length);
                 start += s1_seg_length;
+                if (debug) {
+                    if (current_node.minimizers_1[i] != invalid_kmer) {
+                        reads.back().sequence_1 += "-" + minimizer_t_to_dna(current_node.minimizers_1[i], kmer_size);
+                    } else {
+                        stringstream ss;
+                        ss << "0x" << std::uppercase << std::setfill('0') << std::setw(64/4) << std::hex << current_node.minimizers_1[i];
+                        reads.back().sequence_1 += "-" + ss.str();
+                    }
+                }
             }
         } else {
             for (int i = 0; i < minimizer_count; i++) {
@@ -110,6 +208,16 @@ void extract_barcodes_and_minimizers() {
             for (int i = 0; i < minimizer_count; i++) {
                 current_node.minimizers_2[i] = minimizer(reads.back().sequence_2, start, s2_seg_length);
                 start += s2_seg_length;
+                if (debug) {
+                    if (current_node.minimizers_2[i] != invalid_kmer) {
+                        reads.back().sequence_2 += "-" + minimizer_t_to_dna(current_node.minimizers_2[i], kmer_size);
+                    } else {
+                        stringstream ss;
+                        ss << "0x" << std::uppercase << std::setfill('0') << std::setw(64/4) << std::hex << current_node.minimizers_2[i];
+                        reads.back().sequence_2 += "-" + ss.str();
+                    }
+                }
+
             }
         } else {
             for (int i = 0; i < minimizer_count; i++) {
@@ -176,7 +284,7 @@ minimizer_t minimizer(string& seq, int start, int length){
 
     if (start + kmer_size > end) {
         // printf("Oops\n");
-        return invalid_kmer--;
+        return --invalid_kmer;
     }
 
     // Building the first k-mer
@@ -196,14 +304,15 @@ minimizer_t minimizer(string& seq, int start, int length){
             // Hit yet another non nucleotide
             if (start + kmer_size > end) {
                 // printf("Oops\n");
-                return invalid_kmer--;
+                return --invalid_kmer;
             }
 
         }
     }
     current_k_mer &= kmer_size_mask;
 
-    min_k_mer = min_k_mer < current_k_mer ? min_k_mer : current_k_mer;
+    min_k_mer = ((min_k_mer < current_k_mer) || invalid_minimizers[current_k_mer]) ? min_k_mer : current_k_mer;
+    // min_k_mer = min_k_mer < current_k_mer ? min_k_mer : current_k_mer;
 
     // Bit shifting to get new k-mers, and masking to keep k-mer size fixed
     // printf("MIN\t0x%08X\n", min_k_mer);
@@ -246,10 +355,12 @@ minimizer_t minimizer(string& seq, int start, int length){
             i=j;
         }
 
-        min_k_mer = min_k_mer < current_k_mer ? min_k_mer : current_k_mer;
+        min_k_mer = ((min_k_mer < current_k_mer) || invalid_minimizers[current_k_mer]) ? min_k_mer : current_k_mer;
+        // min_k_mer = min_k_mer < current_k_mer ? min_k_mer : current_k_mer;
         // printf("0x%08X\n", min_k_mer);
 
     }
 
-    return min_k_mer;
+    return min_k_mer != (minimizer_t) -1 ? min_k_mer : --invalid_kmer;
+    // return min_k_mer;
 }

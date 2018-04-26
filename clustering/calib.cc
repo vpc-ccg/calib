@@ -13,11 +13,13 @@
 using namespace std;
 
 ofstream dog;
+ofstream node_dog;
 
 int main(int argc, char *argv[]){
     parse_flags(argc, argv);
 
     dog = ofstream(output_prefix + "cluster.log");
+    node_dog = ofstream(output_prefix + "cluster.node.log");
     print_flags(dog);
 
     if (!silent) {
@@ -31,6 +33,6 @@ int main(int argc, char *argv[]){
     }
     cluster();
     if (!silent) {
-        cout << "All done! Have good day!\n";
+        cout << "All done! Have a good day!\n";
     }
 }

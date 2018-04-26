@@ -53,10 +53,10 @@ def main():
         if line[0] == '#':
             tcid_counter += 1
             continue
+        line = line.replace(' ','\t')
         line = line.rstrip().split('\t')
         tcid = tcid_counter
         rid = int(line[1])
-        reads[rid] = line[3]+'\t'+line[6]
 
         if tcid in tcid_to_rid_set:
             tcid_to_rid_set[tcid].add(rid)
@@ -69,9 +69,10 @@ def main():
         if line[0] == '#':
             pcid_counter += 1
             continue
-
+        line = line.replace(' ', '\t')
         line = line.rstrip().split('\t')
         rid = int(line[1])
+        reads[rid] = line[3]+'\t'+line[6]
         tcid = rid_to_tcid[rid]
 
         rid_to_pcid[rid] = pcid_counter
