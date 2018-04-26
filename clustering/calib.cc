@@ -33,6 +33,6 @@ int main(int argc, char *argv[]){
     }
     cluster();
     if (!silent) {
-        cout << "All done! Have good day!\n";
+        cout << "All done! Have a good day!\n";
     }
 }
