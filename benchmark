@@ -146,7 +146,7 @@ $(dunovo_time): simulate
 			$(dunovo_output)
 
 dunovo_conda:
-	 conda create --name calib_dunovo -c faircloth-lab -c bioconda samtools python=2.7 networkx bowtie2 -y
+	 conda create --name calib_dunovo -c faircloth-lab -c bioconda samtools python=2.7 networkx bowtie -y
 
 dunovo_conda_clean:
 	conda remove --name calib_dunovo --all -y
