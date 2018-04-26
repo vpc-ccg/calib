@@ -1,7 +1,7 @@
 #!/usr/bin/make -rRf
 my_mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 my_current_dir :=  $(patsubst %/,%,$(dir $(my_mkfile_path)))/
-include $(my_current_dir)/calib
+include $(my_current_dir)/Makefile
 ECHO := echo -e
 AWK := awk -f
 GNU_TIME?=/usr/bin/time
@@ -9,9 +9,19 @@ benchmark_aux_path = $(my_current_dir)benchmark_aux
 GET_TIME := $(benchmark_aux_path)/get_time.awk
 GET_MEM := $(benchmark_aux_path)/get_mem.awk
 GET_ACCURACY := $(benchmark_aux_path)/get_accuracy.awk
+CONVERT_CDHITEST := $(benchmark_aux_path)/convert_cdhitest_to_cluster.sh
 CONVERT_STARCODE := $(benchmark_aux_path)/convert_starcode_to_cluster.sh
 CONVERT_RAINBOW := $(benchmark_aux_path)/convert_rainbow_to_cluster.sh
 CONVERT_DUNOVO := $(benchmark_aux_path)/convert_dunovo_to_cluster.sh
+
+cdhitest?=cd-hit-est
+cdhitest_dist?=0.95
+cdhitest_params=dist_$(cdhitest_dist).
+cdhitest_output_prefix=$(input_reads_prefix)cdhitest.$(cdhitest_params)
+cdhitest_output=$(cdhitest_output_prefix)out
+cdhitest_cluster=$(cdhitest_output_prefix)cluster
+cdhitest_accuracy=$(cdhitest_output_prefix)accuracy
+cdhitest_time=$(cdhitest_output_prefix)time
 
 starcode?=starcode
 starcode_dist?=4
@@ -55,7 +65,7 @@ starcode_log_file?=$(input_reads_prefix)starcode_benchmarks.tsv
 dunovo_log_file?=$(input_reads_prefix)dunovo_benchmarks.tsv
 rainbow_log_file?=$(input_reads_prefix)rainbow_benchmarks.tsv
 
-run: calib_log starcode_log rainbow_log
+run: calib_log starcode_log rainbow_log cdhitest_log
 
 
 calib_log: $(calib_log_file) $(calib_accuracy)
@@ -86,6 +96,38 @@ $(calib_time): $(clustering_path)calib.o simulate
 		--error-tolerance $(barcode_error_tolerance) \
 		--minimizer-threshold $(minimizers_threshold) \
 		$(silent)
+
+# CD-HIT-EST
+cdhitest_log: $(cdhitest_log_file) $(cdhiteste_accuracy)
+	$(eval my_time := $(shell $(AWK) $(GET_TIME) $(cdhitest_time)))
+	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(cdhitest_time)))
+	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(cdhitest_accuracy)))
+	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
+	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(cdhitest_dist)" >> $(cdhitest_log_file);
+
+$(cdhitest_log_file):
+	$(ECHO) "my_timestamp\ttime\tmem\tARI\cdhitest_dist" > $(cdhitest_log_file)
+
+$(cdhitest_accuracy): $(cdhitest_time)
+	$(CONVERT_CDHITEST) $(cdhitest_output).1.fastq.clstr > $(cdhitest_cluster);
+	$(python3) $(simulating_path)rand_index.py \
+		--input-cluster-file $(cdhitest_cluster) \
+		--input-amplified-molecule $(input_amplified_molecules) \
+		--output-accuracy-results $(cdhitest_accuracy)
+
+$(cdhitest_time): simulate
+	$(GNU_TIME) -v -o $(cdhitest_time) \
+		$(cdhitest) \
+			-P 1 \
+			-i $(forward_reads) \
+			-j $(reverse_reads) \
+			-o $(cdhitest_output).1.fastq \
+			-op $(cdhitest_output).2.fastq \
+			-c $(cdhitest_dist) \
+			-d 0 \
+			-M 0 \
+			> $(starcode_output)
+
 
 # Starcode
 starcode_log: $(starcode_log_file) $(starcode_accuracy)

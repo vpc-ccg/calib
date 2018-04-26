@@ -1,7 +1,9 @@
 # Calib
 Calib clusters paired-end reads using their barcodes and sequences. Calib is suitable for amplicon sequencing where a molecule is tagged, then PCR amplified with high depth.
 
-## Prerequisites
+## Reproducing Benchmarks
+
+If you are insterested in reprodcuing our paper's benchmarks, please switch to the paper git branch, and follow instructions at [Paper Branch](https://github.com/vpc-ccg/calib/tree/paper/)
 
 ### Simulation Prerequisites
 The simulatation module of Calib is implemented in Python 3 and requires that the following Python packages to be installed and importable:
@@ -57,4 +59,3 @@ Where you can omit any of the dataset names. To run Du Novo's benchmarking, run:
 ```
 
 All results will be in `simulating/datasets/*tsv`. Details of clusterings are also present in the same directory, with decriptive filenames.
-

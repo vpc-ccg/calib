@@ -9,7 +9,6 @@
 #ifndef CLUSTER_H
 #define CLUSTER_H
 
-typedef size_t node_id_t;
 typedef size_t read_id_t;
 typedef uint64_t minimizer_t;
 

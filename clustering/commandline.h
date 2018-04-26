@@ -5,6 +5,7 @@
 #include <string>
 #include <stdlib.h>
 #include <iostream>
+#include <sstream>
 #include "global.h"
 
 
@@ -14,5 +15,6 @@
 
 void parse_flags(int argc, char *argv[]);
 void print_flags(std::ofstream &out);
+void print_help();
 
 #endif //CALIB_COMMANDLINE_H
