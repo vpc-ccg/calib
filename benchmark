@@ -107,7 +107,7 @@ cdhitest_log: $(cdhitest_log_file) $(cdhitest_accuracy)
 	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(cdhitest_dist)" >> $(cdhitest_log_file);
 
 $(cdhitest_log_file):
-	$(ECHO) "my_timestamp\ttime\tmem\tARI\cdhitest_dist" > $(cdhitest_log_file)
+	$(ECHO) "my_timestamp\ttime\tmem\tARI\tcdhitest_dist" > $(cdhitest_log_file)
 
 $(cdhitest_accuracy): $(cdhitest_time)
 	$(CONVERT_CDHITEST) $(cdhitest_output).1.fastq.clstr > $(cdhitest_cluster);
