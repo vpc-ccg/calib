@@ -213,7 +213,5 @@ accuracy: $(cluster_file)
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(output_accuracy_results)
 
-benchmark: $(clustering_path)calib.o $(forward_reads) $(reverse_reads)
-
 clean:
 	rm -f $(current_dir)calib
