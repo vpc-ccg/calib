@@ -4,8 +4,8 @@ my_current_dir :=  $(patsubst %/,%,$(dir $(my_mkfile_path)))/
 include $(my_current_dir)/Makefile
 ECHO := echo -e
 AWK := awk -f
-GNU_TIME?=gtime
 benchmark_aux_path = $(my_current_dir)aux
+GNU_TIME?=$(benchmark_aux_path)/other_tools/time-1.9/time
 GET_TIME := $(benchmark_aux_path)/get_time.awk
 GET_MEM := $(benchmark_aux_path)/get_mem.awk
 GET_ACCURACY := $(benchmark_aux_path)/get_accuracy.awk
@@ -85,7 +85,7 @@ $(calib_accuracy): $(calib_time)
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(calib_accuracy)
 
-$(calib_time): calib simulate
+$(calib_time): $(GNU_TIME) calib simulate
 	$(GNU_TIME) -v -o $(calib_time) \
 	./calib \
 		--input-forward $(forward_reads) \
@@ -116,7 +116,7 @@ $(cdhitest_accuracy): $(cdhitest_time)
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(cdhitest_accuracy)
 
-$(cdhitest_time): cdhitest simulate
+$(cdhitest_time): $(GNU_TIME) cdhitest simulate
 	$(GNU_TIME) -v -o $(cdhitest_time) \
 		$(cdhitest) \
 			-P 1 \
@@ -149,7 +149,7 @@ $(starcode_accuracy): $(starcode_time)
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(starcode_accuracy)
 
-$(starcode_time): starcode simulate
+$(starcode_time): $(GNU_TIME) starcode simulate
 	$(GNU_TIME) -v -o $(starcode_time) \
 		$(starcode) \
 			-1 $(forward_reads) \
@@ -180,7 +180,7 @@ $(dunovo_accuracy): $(dunovo_time)
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(dunovo_accuracy)
 
-$(dunovo_time): dunovo simulate
+$(dunovo_time): $(GNU_TIME) dunovo simulate
 	$(GNU_TIME) -v -o $(dunovo_time) \
 		$(DUNOVO_RUN) \
 			$(dunovo_temp_directory) \
@@ -219,7 +219,7 @@ $(rainbow_accuracy): $(rainbow_time)
 		--output-accuracy-results $(rainbow_accuracy)
 
 
-$(rainbow_time): rainbow simulate
+$(rainbow_time): $(GNU_TIME) rainbow simulate
 ifeq ($(rainbow_div),false)
 	$(GNU_TIME) -v -o $(rainbow_time) \
 		$(rainbow) cluster \
@@ -239,3 +239,14 @@ endif
 
 rainbow:
 	make -C $(benchmark_aux_path)/other_tools/rainbow
+
+$(GNU_TIME):
+	wget https://ftp.gnu.org/gnu/time/time-1.9.tar.gz \
+		-O $(benchmark_aux_path)/other_tools/time-1.9.tar.gz;
+	tar -xzf $(benchmark_aux_path)/other_tools/time-1.9.tar.gz \
+		-C $(benchmark_aux_path)/other_tools/;
+	rm -f $(benchmark_aux_path)/other_tools/time-1.9.tar.gz;
+	cd $(benchmark_aux_path)/other_tools/time-1.9; \
+		./configure; \
+		cd - ;
+	make -C $(benchmark_aux_path)/other_tools/time-1.9;
