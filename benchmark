@@ -4,8 +4,8 @@ my_current_dir :=  $(patsubst %/,%,$(dir $(my_mkfile_path)))/
 include $(my_current_dir)/Makefile
 ECHO := echo -e
 AWK := awk -f
-GNU_TIME?=/usr/bin/time
-benchmark_aux_path = $(my_current_dir)benchmark_aux
+GNU_TIME?=gtime
+benchmark_aux_path = $(my_current_dir)aux
 GET_TIME := $(benchmark_aux_path)/get_time.awk
 GET_MEM := $(benchmark_aux_path)/get_mem.awk
 GET_ACCURACY := $(benchmark_aux_path)/get_accuracy.awk
@@ -14,7 +14,7 @@ CONVERT_STARCODE := $(benchmark_aux_path)/convert_starcode_to_cluster.sh
 CONVERT_RAINBOW := $(benchmark_aux_path)/convert_rainbow_to_cluster.sh
 CONVERT_DUNOVO := $(benchmark_aux_path)/convert_dunovo_to_cluster.sh
 
-cdhitest?=cd-hit-est
+cdhitest?=$(benchmark_aux_path)/other_tools/cdhit/cd-hit-est
 cdhitest_dist?=0.95
 cdhitest_params=dist_$(cdhitest_dist).
 cdhitest_output_prefix=$(input_reads_prefix)cdhitest.$(cdhitest_params)
@@ -23,7 +23,7 @@ cdhitest_cluster=$(cdhitest_output_prefix)cluster
 cdhitest_accuracy=$(cdhitest_output_prefix)accuracy
 cdhitest_time=$(cdhitest_output_prefix)time
 
-starcode?=starcode
+starcode?=$(benchmark_aux_path)/other_tools/starcode/starcode
 starcode_dist?=4
 starcode_params=dist_$(starcode_dist).
 starcode_output_prefix=$(input_reads_prefix)starcode.$(starcode_params)
@@ -32,7 +32,7 @@ starcode_cluster=$(starcode_output_prefix)cluster
 starcode_accuracy=$(starcode_output_prefix)accuracy
 starcode_time=$(starcode_output_prefix)time
 
-rainbow?=rainbow
+rainbow?=$(benchmark_aux_path)/other_tools/rainbow/rainbow
 rainbow_div?=false
 rainbow_mismatch?=4
 rainbow_params=mismatch_$(rainbow_mismatch).div_$(rainbow_div).
@@ -43,7 +43,7 @@ rainbow_accuracy=$(rainbow_output_prefix)accuracy
 rainbow_time=$(rainbow_output_prefix)time
 
 # dunovo_prefix is the directory where dunovo is cloned
-dunovo_prefix?=
+dunovo_prefix?=$(benchmark_aux_path)/other_tools/dunovo
 DUNOVO_RUN=$(benchmark_aux_path)/run_dunovo.sh
 dunovo_temp_directory?=$(my_current_dir)temp
 dunovo_dist?=2
@@ -61,6 +61,7 @@ calib_accuracy=$(calib_output_prefix)accuracy
 calib_time=$(calib_output_prefix)time
 
 calib_log_file?=$(input_reads_prefix)calib_benchmarks.tsv
+cdhitest_log_file?=$(input_reads_prefix)cdhitest_benchmarks.tsv
 starcode_log_file?=$(input_reads_prefix)starcode_benchmarks.tsv
 dunovo_log_file?=$(input_reads_prefix)dunovo_benchmarks.tsv
 rainbow_log_file?=$(input_reads_prefix)rainbow_benchmarks.tsv
@@ -84,9 +85,9 @@ $(calib_accuracy): $(calib_time)
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(calib_accuracy)
 
-$(calib_time): $(clustering_path)calib.o simulate
+$(calib_time): calib simulate
 	$(GNU_TIME) -v -o $(calib_time) \
-	$(clustering_path)calib.o \
+	./calib \
 		--input-forward $(forward_reads) \
 		--input-reverse $(reverse_reads) \
 		--output-prefix $(output_prefix) \
@@ -98,7 +99,7 @@ $(calib_time): $(clustering_path)calib.o simulate
 		$(silent)
 
 # CD-HIT-EST
-cdhitest_log: $(cdhitest_log_file) $(cdhiteste_accuracy)
+cdhitest_log: $(cdhitest_log_file) $(cdhitest_accuracy)
 	$(eval my_time := $(shell $(AWK) $(GET_TIME) $(cdhitest_time)))
 	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(cdhitest_time)))
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(cdhitest_accuracy)))
@@ -115,7 +116,7 @@ $(cdhitest_accuracy): $(cdhitest_time)
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(cdhitest_accuracy)
 
-$(cdhitest_time): simulate
+$(cdhitest_time): cdhitest simulate
 	$(GNU_TIME) -v -o $(cdhitest_time) \
 		$(cdhitest) \
 			-P 1 \
@@ -125,9 +126,10 @@ $(cdhitest_time): simulate
 			-op $(cdhitest_output).2.fastq \
 			-c $(cdhitest_dist) \
 			-d 0 \
-			-M 0 \
-			> $(starcode_output)
+			-M 0
 
+cdhitest:
+	make -C $(benchmark_aux_path)/other_tools/cdhit
 
 # Starcode
 starcode_log: $(starcode_log_file) $(starcode_accuracy)
@@ -147,7 +149,7 @@ $(starcode_accuracy): $(starcode_time)
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(starcode_accuracy)
 
-$(starcode_time): simulate
+$(starcode_time): starcode simulate
 	$(GNU_TIME) -v -o $(starcode_time) \
 		$(starcode) \
 			-1 $(forward_reads) \
@@ -156,6 +158,9 @@ $(starcode_time): simulate
 			--print-clusters \
 			--seq-id \
 			> $(starcode_output)
+
+starcode:
+	make -C $(benchmark_aux_path)/other_tools/starcode
 
 # Du Novo
 dunovo_log: $(dunovo_log_file) $(dunovo_accuracy)
@@ -175,7 +180,7 @@ $(dunovo_accuracy): $(dunovo_time)
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(dunovo_accuracy)
 
-$(dunovo_time): simulate
+$(dunovo_time): dunovo simulate
 	$(GNU_TIME) -v -o $(dunovo_time) \
 		$(DUNOVO_RUN) \
 			$(dunovo_temp_directory) \
@@ -186,6 +191,8 @@ $(dunovo_time): simulate
 			$(barcode_length) \
 			$(dunovo_dist) \
 			$(dunovo_output)
+dunovo:
+	make -C $(benchmark_aux_path)/other_tools/dunovo
 
 dunovo_conda:
 	 conda create --name calib_dunovo -c faircloth-lab -c bioconda samtools python=2.7 networkx bowtie -y
@@ -212,7 +219,7 @@ $(rainbow_accuracy): $(rainbow_time)
 		--output-accuracy-results $(rainbow_accuracy)
 
 
-$(rainbow_time): simulate
+$(rainbow_time): rainbow simulate
 ifeq ($(rainbow_div),false)
 	$(GNU_TIME) -v -o $(rainbow_time) \
 		$(rainbow) cluster \
@@ -229,3 +236,6 @@ else
 			| $(rainbow) div \
 			> $(rainbow_output)
 endif
+
+rainbow:
+	make -C $(benchmark_aux_path)/other_tools/rainbow
