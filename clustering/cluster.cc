@@ -154,6 +154,15 @@ string mask_barcode(const string& barcode, const vector<bool>& mask){
 
 void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     for (node_id_t node = 0; node < node_count; node++) {
+        if (debug) {
+            if (find(debug_nodes.begin(), debug_nodes.end(),node)!=debug_nodes.end()) {
+                node_dog << "Before " << node << ":\t";
+                for (auto neighbor : adjacency_lists[node]) {
+                    node_dog << neighbor << ",";
+                }
+                node_dog << "\n";
+            }
+        }
         vector<node_id_t> good_neighbors;
         for (node_id_t neighbor : adjacency_lists[node]) {
             if (node != neighbor && !unmatched_minimimizers(node, neighbor)) {
@@ -161,6 +170,15 @@ void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_vectors &
             }
         }
         adjacency_lists[node] = move(good_neighbors);
+        if (debug) {
+            if (find(debug_nodes.begin(), debug_nodes.end(),node)!=debug_nodes.end()) {
+                node_dog << "After " << node << ":\t";
+                for (auto neighbor : adjacency_lists[node]) {
+                    node_dog << neighbor << ",";
+                }
+                node_dog << "\n";
+            }
+        }
     }
 }
 
@@ -202,6 +220,12 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
 
         if (find(debug_nodes.begin(), debug_nodes.end(), node_id)!=debug_nodes.end() ||
             find(debug_nodes.begin(), debug_nodes.end(), neighbor_id)!=debug_nodes.end() ) {
+                node_dog << "M\t";
+                node_dog << node_id << "\t";
+                node_dog << neighbor_id << "\t";
+                node_dog << !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold) << "\t";
+                node_dog << matched_minimimizers_1 << "\t" << matched_minimimizers_2 << "\t" << hamming_distance <<"\n";
+                node_dog << "M1\t";
                 for (int i =0; i < minimizer_count; i++) {
                     node_dog << nodes[node_id].minimizers_1[i] << "\t";
                 }
@@ -211,7 +235,7 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
                 node_dog << nodes[node_id].barcode << "\t";
                 node_dog << reads[node_to_read_vector[node_id].front()].sequence_1 << "\t" << reads[node_to_read_vector[node_id].front()].sequence_2 <<"\n";
 
-                dog << "M2\t";
+                node_dog << "M2\t";
                 for (int i =0; i < minimizer_count; i++) {
                     node_dog << nodes[neighbor_id].minimizers_1[i] << "\t";
                 }
@@ -224,15 +248,6 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
     }
     return !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold);
 }
-
-
-// void process_lsh(masked_barcode_to_node_id_unordered_map &lsh,
-//                  node_id_to_node_id_vector_of_vectors adjacency_lists,
-//                  size_t reminder,
-//                  size_t divisor){
-//
-//
-// }
 
 
 void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
@@ -267,17 +282,19 @@ void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
             opened.push(node);
             pushed[node] = true;
             while(!opened.empty()) {
-                for (node_id_t neighbor: adjacency_lists[opened.top()]) {
+                node_id_t current_node = opened.top();
+                opened.pop();
+                for (node_id_t neighbor: adjacency_lists[current_node]) {
                     if (!pushed[neighbor]) {
                         opened.push(neighbor);
                         pushed[neighbor] = true;
                     }
                 }
-                for (read_id_t read : node_to_read_vector[opened.top()]) {
+                for (read_id_t read : node_to_read_vector[current_node]) {
                     if (bc_format) {
                         clusters << cluster_count << "\t" << reads[read].sequence_1 << "\t" << reads[read].sequence_2 << "\n";
                     } else {
-                        clusters << opened.top() << "\t" << read << "\t";
+                        clusters << current_node << "\t" << read << "\t";
                         clusters << reads[read].name_1 << "\t" << reads[read].sequence_1 << "\t" << reads[read].quality_1 <<
                         "\t";
                         clusters << reads[read].name_2 << "\t" << reads[read].sequence_2 << "\t" << reads[read].quality_2 <<
@@ -285,7 +302,6 @@ void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
                     }
                 }
                 if (debug) {
-                    node_id_t current_node = opened.top();
                     double left_matching_minimizers  = 0.0;
                     double right_matching_minimizers = 0.0;
                     double hamming_distance = 0.0;
@@ -358,7 +374,6 @@ void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
                     }
 
                 }
-                opened.pop();
             }
             cluster_count++;
         }
