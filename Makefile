@@ -32,7 +32,7 @@ ifeq ($(bed),)
 	bed_flag=
 	bed_prefix=NA
 endif
-reference_name?=e_coli
+reference_name?=hg38
 simulation_prefix?=$(simulation_datasets_path)rs_$(random_seed).
 
 references_path?=$(simulating_path)genomes/
@@ -137,7 +137,14 @@ $(simulated_barcodes):
 		--random-seed $(random_seed) \
 		--output-barcodes $(simulated_barcodes)
 
-$(simulated_molecules):
+$(references_path)hg38.fa:
+	@echo 'Downloading hg38 reference genome from UCSC Golden Path'
+	wget http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz \
+		-O $(reference).gz;
+	zcat $(reference).gz > $(reference);
+	rm $(reference).gz
+
+$(simulated_molecules): $(reference)
 	$(python3) $(simulating_path)generate_molecules.py \
 		--reference $(reference) \
 		--number-of-molecules $(num_molecules) \
