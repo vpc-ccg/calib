@@ -21,6 +21,16 @@ def parse_args():
                         type=str,
                         required=False,
                         help="Output file where accuracy results and contents of any clusters with clustering discordances will be printed. Default: stdout")
+    parser.add_argument("-m",
+                        "--output-merged",
+                        action='store_true',
+                        required=False,
+                        help="Output X clusters with reads coming from differrent Y clusters")
+    parser.add_argument("-s",
+                        "--output-split",
+                        action='store_true',
+                        required=False,
+                        help="Output Y clusters with reads going to differrent X clusters")
     args = parser.parse_args()
     return args
 
@@ -111,44 +121,32 @@ def main():
             lonely_read_cluster_counter -= 1
     print(adjusted_rand_score(X, Y), file=results)
 
-    if (args.output_accuracy_results):
-        results = open(args.output_accuracy_results+'.merged', 'w+')
-    else:
-        results = sys.stdout
-
-    # print('Clusters merged in prediction:\n===', file=results)
-    for pcid in pcid_to_tcid_set:
-        if len(pcid_to_tcid_set[pcid]) > 1:
-            true_clusters = [(x, len(tcid_to_rid_set[x])) for x in pcid_to_tcid_set[pcid]]
-            # print(pcid,'\n', true_clusters)
-            print('#\t{} have reads merged into {}'.format(true_clusters, tuple([pcid, len(pcid_to_rid_set[pcid])]) ), file=results)
-            for tcid in pcid_to_tcid_set[pcid]:
-                for rid in tcid_to_rid_set[tcid].intersection(pcid_to_rid_set[pcid]):
-                    print('{}\t{}\t{}\t{}'.format(reads[rid], tcid, rid_to_pcid[rid], rid), file=results)
-                # print(file=results)
-
-    if (args.output_accuracy_results):
-        results = open(args.output_accuracy_results+'.split', 'w+')
-    else:
-        results = sys.stdout
-
-    # print('Clusters split in prediction:\n===', file=results)
-    for tcid in tcid_to_pcid_set:
-        if len(tcid_to_pcid_set[tcid]) > 1:
-            predicted_clusters = [(x, len(pcid_to_rid_set[x])) for x in tcid_to_pcid_set[tcid]]
-            print('#\t{} have reads split into {}'.format(tuple([tcid, len(tcid_to_rid_set[tcid])]), predicted_clusters), file=results)
-            for pcid in tcid_to_pcid_set[tcid]:
-                for rid in pcid_to_rid_set[pcid].intersection(tcid_to_rid_set[tcid]):
-                    print('{}\t{}\t{}\t{}'.format(reads[rid], tcid, rid_to_pcid[rid], rid), file=results)
-
-
-    # for tcid in tcid_to_pcid_set:
-    #     if len(tcid_to_pcid_set[tcid]) > 1:
-    #         print('|', tcid, '| =', len(tcid_to_rid_set[tcid]), file=results)
-    #         for pcid in tcid_to_pcid_set[tcid]:
-    #             print('\t|', tcid, '∩', pcid,'| =', len(pcid_to_rid_set[pcid].intersection(tcid_to_rid_set[tcid])), file=results)
-    #
-
+    if (args.output_merged):
+        if (args.output_accuracy_results):
+            results = open(args.output_accuracy_results+'.merged', 'w+')
+        else:
+            results = sys.stdout
+        for pcid in pcid_to_tcid_set:
+            if len(pcid_to_tcid_set[pcid]) > 1:
+                true_clusters = [(x, len(tcid_to_rid_set[x])) for x in pcid_to_tcid_set[pcid]]
+                # print(pcid,'\n', true_clusters)
+                print('#\t{} have reads merged into {}'.format(true_clusters, tuple([pcid, len(pcid_to_rid_set[pcid])]) ), file=results)
+                for tcid in pcid_to_tcid_set[pcid]:
+                    for rid in tcid_to_rid_set[tcid].intersection(pcid_to_rid_set[pcid]):
+                        print('{}\t{}\t{}\t{}'.format(reads[rid], tcid, rid_to_pcid[rid], rid), file=results)
+                    # print(file=results)
+    if (args.output_split):
+        if (args.output_accuracy_results):
+            results = open(args.output_accuracy_results+'.split', 'w+')
+        else:
+            results = sys.stdout
+        for tcid in tcid_to_pcid_set:
+            if len(tcid_to_pcid_set[tcid]) > 1:
+                predicted_clusters = [(x, len(pcid_to_rid_set[x])) for x in tcid_to_pcid_set[tcid]]
+                print('#\t{} have reads split into {}'.format(tuple([tcid, len(tcid_to_rid_set[tcid])]), predicted_clusters), file=results)
+                for pcid in tcid_to_pcid_set[tcid]:
+                    for rid in pcid_to_rid_set[pcid].intersection(tcid_to_rid_set[tcid]):
+                        print('{}\t{}\t{}\t{}'.format(reads[rid], tcid, rid_to_pcid[rid], rid), file=results)
 
 
 

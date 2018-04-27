@@ -59,7 +59,7 @@ simulated_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_
 ## PCR duplication
 pcr_cycles?=7
 pcr_duplication_rate?=0.6
-pcr_error_rate?=0.000005
+pcr_error_rate?=0.00005
 pcr_params?=pc_$(pcr_cycles).pdr_$(pcr_duplication_rate).per_$(pcr_error_rate).
 amplified_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)amplified_barcoded_molecules.fa
 
@@ -212,8 +212,6 @@ accuracy: $(cluster_file)
 		--input-cluster-file $(cluster_file) \
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(output_accuracy_results)
-
-benchmark: $(clustering_path)calib.o $(forward_reads) $(reverse_reads)
 
 clean:
 	rm -f $(current_dir)calib
