@@ -83,7 +83,7 @@ calib_log: $(calib_log_file) $(calib_accuracy)
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(calib_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(barcode_length)\t$(minimizers_num)\t$(kmer_size)\t$(barcode_error_tolerance)\t$(minimizers_threshold)" >> $(calib_log_file);
-	rm -f $(calib_accuracy) $(calib_time) $(cluster_file);
+	rm -f $(calib_accuracy) $(calib_time) $(cluster_file) $(cluster_file).log $(cluster_file).node.log;
 
 $(calib_log_file):
 	$(ECHO) "my_timestamp\ttime\tmem\tARI\tbarcode_length\tminimizers_num\tkmer_size\tbarcode_error_tolerance\tminimizers_threshold" > $(calib_log_file)
@@ -195,7 +195,7 @@ $(dunovo_accuracy): $(dunovo_time)
 
 $(dunovo_time): $(GNU_TIME) dunovo simulate
 	$(eval rand := $(shell $(RAW_AWK) 'BEGIN{srand();printf("%d", 65536*rand())}'))
-	conda create --name calib_dunovo$(rand) -c faircloth-lab -c bioconda samtools python=2.7 networkx bowtie -y
+	conda create --name calib_dunovo$(rand) -c faircloth-lab -c bioconda samtools python=2.7 networkx bowtie -y;
 	$(GNU_TIME) -v -o $(dunovo_time) \
 		$(DUNOVO_RUN) \
 			$(dunovo_temp_directory) \
@@ -219,6 +219,7 @@ rainbow_log: $(rainbow_log_file) $(rainbow_accuracy)
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(rainbow_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(rainbow_mismatch)\t$(rainbow_div)" >> $(rainbow_log_file);
+	rm -f $(rainbow_accuracy) $(rainbow_time) $(rainbow_cluster) $(rainbow_output);
 
 $(rainbow_log_file):
 	$(ECHO) "my_timestamp\ttime\tmem\tARI\trainbow_mismatch\trainbow_div" > $(rainbow_log_file)
