@@ -21,7 +21,7 @@ do
     ;;
   esac
   # Initializing the expirement by creating the log files and dataset
-  ./benchmark make_log_files simulate
+  ./benchmark make_log_files simulate reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes
 
   # calib_log
   ./benchmark calib_log reference_name=hg38 bed=Panel.hg38 barcode_error_tolerance=1 kmer_size=8 minimizers_num=5 minimizers_threshold=2 num_molecules=$num_molecules num_barcodes=$num_barcodes
@@ -43,10 +43,15 @@ do
     ./benchmark rainbow_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes rainbow_mismatch=$rainbow_mismatch
     ./benchmark rainbow_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes rainbow_mismatch=$rainbow_mismatch rainbow_div=true
   done
-  # du novo
+  # cd-hit-est
+  for cdhitest_dist in 0.95 0.90 0.85
+  do
+    ./benchmark cdhitest_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes cdhitest_dist=$cdhitest_dist
+  done
+  du novo
   for dunovo_dist in 1 2 3 4
   do
-    ./benchmark dunovo_log dunovo_prefix="$dunovo_path" reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes dunovo_dist=$dunovo_dist
+    ./benchmark dunovo_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes dunovo_dist=$dunovo_dist
   done
 
 done
