@@ -3,7 +3,8 @@ my_mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 my_current_dir :=  $(patsubst %/,%,$(dir $(my_mkfile_path)))/
 include $(my_current_dir)/Makefile
 ECHO := echo -e
-AWK := awk -f
+RAW_AWK := awk
+AWK := $(RAW_AWK) -f
 benchmark_aux_path = $(my_current_dir)aux
 GNU_TIME?=$(benchmark_aux_path)/other_tools/time-1.9/time
 GET_TIME := $(benchmark_aux_path)/get_time.awk
@@ -25,7 +26,8 @@ cdhitest_time=$(cdhitest_output_prefix)time
 
 starcode?=$(benchmark_aux_path)/other_tools/starcode/starcode
 starcode_dist?=4
-starcode_params=dist_$(starcode_dist).
+starcode_ratio?=5
+starcode_params=dist_$(starcode_dist).ratio_$(starcode_ratio).
 starcode_output_prefix=$(input_reads_prefix)starcode.$(starcode_params)
 starcode_output=$(starcode_output_prefix)out
 starcode_cluster=$(starcode_output_prefix)cluster
@@ -68,6 +70,12 @@ rainbow_log_file?=$(input_reads_prefix)rainbow_benchmarks.tsv
 
 run: calib_log starcode_log rainbow_log cdhitest_log
 
+make_log_files: make_calib_log_file make_cdhitest_log_file make_starcode_log_file make_dunovo_log_file make_rainbow_log_file
+make_calib_log_file: $(calib_log_file)
+make_cdhitest_log_file: $(cdhitest_log_file)
+make_starcode_log_file: $(starcode_log_file)
+make_dunovo_log_file: $(dunovo_log_file)
+make_rainbow_log_file: $(rainbow_log_file)
 
 calib_log: $(calib_log_file) $(calib_accuracy)
 	$(eval my_time := $(shell $(AWK) $(GET_TIME) $(calib_time)))
@@ -75,6 +83,7 @@ calib_log: $(calib_log_file) $(calib_accuracy)
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(calib_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(barcode_length)\t$(minimizers_num)\t$(kmer_size)\t$(barcode_error_tolerance)\t$(minimizers_threshold)" >> $(calib_log_file);
+	rm -f $(calib_accuracy) $(calib_time) $(cluster_file);
 
 $(calib_log_file):
 	$(ECHO) "my_timestamp\ttime\tmem\tARI\tbarcode_length\tminimizers_num\tkmer_size\tbarcode_error_tolerance\tminimizers_threshold" > $(calib_log_file)
@@ -105,6 +114,7 @@ cdhitest_log: $(cdhitest_log_file) $(cdhitest_accuracy)
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(cdhitest_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(cdhitest_dist)" >> $(cdhitest_log_file);
+	rm -f $(cdhitest_accuracy) $(cdhitest_time) $(cdhitest_cluster) $(cdhitest_output).1.fastq.clstr $(cdhitest_output).1.fastq $(cdhitest_output).2.fastq;
 
 $(cdhitest_log_file):
 	$(ECHO) "my_timestamp\ttime\tmem\tARI\tcdhitest_dist" > $(cdhitest_log_file)
@@ -137,10 +147,11 @@ starcode_log: $(starcode_log_file) $(starcode_accuracy)
 	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(starcode_time)))
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(starcode_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
-	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(starcode_dist)" >> $(starcode_log_file);
+	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(starcode_dist)\t$(starcode_ratio)" >> $(starcode_log_file);
+	rm -f $(starcode_accuracy) $(starcode_time) $(starcode_cluster) $(starcode_output);
 
 $(starcode_log_file):
-	$(ECHO) "my_timestamp\ttime\tmem\tARI\tstarcode_dist" > $(starcode_log_file)
+	$(ECHO) "my_timestamp\ttime\tmem\tARI\tstarcode_dist\tstarcode_ratio" > $(starcode_log_file)
 
 $(starcode_accuracy): $(starcode_time)
 	$(CONVERT_STARCODE) $(starcode_output) > $(starcode_cluster);
@@ -155,6 +166,7 @@ $(starcode_time): $(GNU_TIME) starcode simulate
 			-1 $(forward_reads) \
 			-2 $(reverse_reads) \
 			-d $(starcode_dist) \
+			-r $(starcode_ratio) \
 			--print-clusters \
 			--seq-id \
 			> $(starcode_output)
@@ -169,6 +181,7 @@ dunovo_log: $(dunovo_log_file) $(dunovo_accuracy)
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(dunovo_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(dunovo_dist)" >> $(dunovo_log_file);
+	rm -f $(dunovo_accuracy) $(dunovo_time) $(dunovo_cluster) $(dunovo_output);
 
 $(dunovo_log_file):
 	$(ECHO) "my_timestamp\ttime\tmem\tARI\tdunovo_dist" > $(dunovo_log_file)
@@ -181,6 +194,8 @@ $(dunovo_accuracy): $(dunovo_time)
 		--output-accuracy-results $(dunovo_accuracy)
 
 $(dunovo_time): $(GNU_TIME) dunovo simulate
+	$(eval rand := $(shell $(RAW_AWK) 'BEGIN{srand();printf("%d", 65536*rand())}'))
+	conda create --name calib_dunovo$(rand) -c faircloth-lab -c bioconda samtools python=2.7 networkx bowtie -y
 	$(GNU_TIME) -v -o $(dunovo_time) \
 		$(DUNOVO_RUN) \
 			$(dunovo_temp_directory) \
@@ -190,15 +205,12 @@ $(dunovo_time): $(GNU_TIME) dunovo simulate
 			$(dunovo_invariant) \
 			$(barcode_length) \
 			$(dunovo_dist) \
-			$(dunovo_output)
+			$(dunovo_output) \
+			calib_dunovo$(rand)
+	conda remove --name calib_dunovo"$(rand)"  --all -y
+
 dunovo:
 	make -C $(benchmark_aux_path)/other_tools/dunovo
-
-dunovo_conda:
-	 conda create --name calib_dunovo -c faircloth-lab -c bioconda samtools python=2.7 networkx bowtie -y
-
-dunovo_conda_clean:
-	conda remove --name calib_dunovo --all -y
 
 # Rainbow
 rainbow_log: $(rainbow_log_file) $(rainbow_accuracy)
