@@ -7,9 +7,10 @@
 # 6 = barcode_length
 # 7 = dunovo_dist
 # 8 = dunovo_output
+# 9 = calib_dunovo_env
 
 # Making families
-source activate calib_dunovo
+source activate $9
 rm -rf $1
 mkdir -p "$1"/refdir
 paste $2 $3 | \
