@@ -109,15 +109,6 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
                           bucket.second.begin(), bucket.second.end(),
                           back_inserter(result)
                           );
-                if (debug) {
-                    if (find(debug_nodes.begin(), debug_nodes.end(),node)!=debug_nodes.end()) {
-                        node_dog << node << "\t" << bucket.first << "\t";
-                        for (auto neighbor : result) {
-                            node_dog << neighbor << ",";
-                        }
-                        node_dog << "\n";
-                    }
-                }
                 adjacency_lists[node] = move(result);
             }
         }
@@ -154,15 +145,6 @@ string mask_barcode(const string& barcode, const vector<bool>& mask){
 
 void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     for (node_id_t node = 0; node < node_count; node++) {
-        if (debug) {
-            if (find(debug_nodes.begin(), debug_nodes.end(),node)!=debug_nodes.end()) {
-                node_dog << "Before " << node << ":\t";
-                for (auto neighbor : adjacency_lists[node]) {
-                    node_dog << neighbor << ",";
-                }
-                node_dog << "\n";
-            }
-        }
         vector<node_id_t> good_neighbors;
         for (node_id_t neighbor : adjacency_lists[node]) {
             if (node != neighbor && !unmatched_minimimizers(node, neighbor)) {
@@ -170,15 +152,6 @@ void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_vectors &
             }
         }
         adjacency_lists[node] = move(good_neighbors);
-        if (debug) {
-            if (find(debug_nodes.begin(), debug_nodes.end(),node)!=debug_nodes.end()) {
-                node_dog << "After " << node << ":\t";
-                for (auto neighbor : adjacency_lists[node]) {
-                    node_dog << neighbor << ",";
-                }
-                node_dog << "\n";
-            }
-        }
     }
 }
 
@@ -217,34 +190,6 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
         }
         dog << nodes[neighbor_id].barcode << "\t";
         dog << reads[node_to_read_vector[neighbor_id].front()].sequence_1 << "\t" << reads[node_to_read_vector[neighbor_id].front()].sequence_2 <<"\n";
-
-        if (find(debug_nodes.begin(), debug_nodes.end(), node_id)!=debug_nodes.end() ||
-            find(debug_nodes.begin(), debug_nodes.end(), neighbor_id)!=debug_nodes.end() ) {
-                node_dog << "M\t";
-                node_dog << node_id << "\t";
-                node_dog << neighbor_id << "\t";
-                node_dog << !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold) << "\t";
-                node_dog << matched_minimimizers_1 << "\t" << matched_minimimizers_2 << "\t" << hamming_distance <<"\n";
-                node_dog << "M1\t";
-                for (int i =0; i < minimizer_count; i++) {
-                    node_dog << nodes[node_id].minimizers_1[i] << "\t";
-                }
-                for (int i =0; i < minimizer_count; i++) {
-                    node_dog << nodes[node_id].minimizers_2[i] << "\t";
-                }
-                node_dog << nodes[node_id].barcode << "\t";
-                node_dog << reads[node_to_read_vector[node_id].front()].sequence_1 << "\t" << reads[node_to_read_vector[node_id].front()].sequence_2 <<"\n";
-
-                node_dog << "M2\t";
-                for (int i =0; i < minimizer_count; i++) {
-                    node_dog << nodes[neighbor_id].minimizers_1[i] << "\t";
-                }
-                for (int i =0; i < minimizer_count; i++) {
-                    node_dog << nodes[neighbor_id].minimizers_2[i] << "\t";
-                }
-                node_dog << nodes[neighbor_id].barcode << "\t";
-                node_dog << reads[node_to_read_vector[neighbor_id].front()].sequence_1 << "\t" << reads[node_to_read_vector[neighbor_id].front()].sequence_2 <<"\n";
-        }
     }
     return !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold);
 }

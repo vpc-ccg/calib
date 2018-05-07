@@ -22,7 +22,6 @@ int error_tolerance = -1;
 int minimizer_threshold = -1;
 int thread_count = 1;
 int kmer_size = -1;
-vector<node_id_t> debug_nodes;
 
 void parse_flags(int argc, char *argv[]){
     for (int i = 0; i < argc; i++) {
@@ -76,15 +75,6 @@ void parse_flags(int argc, char *argv[]){
         if (current_param == "-c" || current_param == "--threads") {
             thread_count = atoi(argv[i+1]);
         }
-        if (current_param == "--debug-nodes") {
-            stringstream ss(argv[i+1]);
-            string node;
-            while (getline(ss, node, ',')) {
-                debug_nodes.push_back(atoi(node.c_str()));
-            }
-
-        }
-
     }
 
     if (barcode_length < 0 || minimizer_count < 0 || error_tolerance < 0 || minimizer_threshold < 0 || kmer_size < 0) {
@@ -122,10 +112,6 @@ void print_flags(ofstream &out){
     out << "\tminimizer_threshold:\t" << minimizer_threshold << "\n";
     out << "\tthreads:\t" << thread_count << "\n";
     out << "\tdebug:\t" << debug << "\n";
-    out << "\tdebug_nodes:\t";
-    for (node_id_t n : debug_nodes) {
-        out << n << ",";
-    }
     out << "\n";
 
 }
