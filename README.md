@@ -5,6 +5,9 @@ Calib clusters paired-end reads using their barcodes and sequences. Calib is sui
 
 If you are insterested in reprodcuing our paper's benchmarks, please switch to the paper git branch, and follow instructions at [Paper Branch](https://github.com/vpc-ccg/calib/tree/paper/)
 
+### Clustering Prerequisites
+The only prerequisite for Calib clustering is having GCC with version >5.2. 
+
 ### Simulation Prerequisites
 The simulatation module of Calib is implemented in Python 3 and requires that the following Python packages to be installed and importable:
 
@@ -18,44 +21,42 @@ The simulatation module of Calib is implemented in Python 3 and requires that th
 In addition, ART Illumina version 2.5.8 need to be in your `PATH`.
 - [ART Illumina](https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm) (version 2.5.8)
 
-Finally, our tests are run on hg38 reference genome. Please download it and have it in `simulaing/genomes` directory. To do this, assuming you are in Calib's directory:
-
-```bash
-wget http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz 
-zcat hg38.fa.gz > simulating/genomes/hg38.fa
-```
-
-Please ensure the correct naming of the reference genome FASTA file is used.
-
 All these prerequisites can easily be satisfied using [Anaconda](https://docs.anaconda.com/anaconda/install/linux).
 
-### Calib, Rainbow, and starcode Prerequisites
-We are benchmarking Calib against [Rainbow](https://github.com/ChongLab/rainbow), [starcode](https://github.com/gui11aume/starcode), and [Du Novo](https://github.com/galaxyproject/dunovo). Rainbow and starcode need to be downloaded, compiled, and their executables to be in your `PATH`. Calib was tested using GCC 5.2, but earlier versions supporting C++11 should work.
-
-
-### Du Novo Prerequistes
-Do Novo requires using Python 2.7, and some old version of samtools. We handled this by a script that creates a special Anaconda environment for Du Novo to run in. All what you need is:
-- Install [Anaconda](https://docs.anaconda.com/anaconda/install/linux)
-- Download [Du Novo](https://github.com/galaxyproject/dunovo) to `~/bin/dunovo` or make sure to modify the line in `run_dunovo_test.sh` to reflect where dunovo is installed. Make sure to not add `/` at the end:
+## Running Calib clustering
+To run Calib, you first need to clone Calib using ``git``:
 ```bash
-dunovo_path=~/bin/dunovo
+git clone https://github.com/vpc-ccg/calib.git
 ```
-
-## Running Tests
-
-To run tests [GNU Time](https://ftp.gnu.org/gnu/time/) must be installed in `/usr/bin/time`. If it is installed somewhere else, please edit the line in `benchmark` file:
+Then you need to compile Calib:
 ```bash
-GNU_TIME?=/usr/bin/time
+cd calib
+make
 ```
-To reflect where GNU Time is installed. Reported tests were collected using GNU Time 1.8.
-
-There are 3 different datasets we preconfigured, and one tiny additional dataset. To run any of those just run:
+Calib executable should now be inside the cloned directory and will be named ``calib``.
+To run calib simply run:
 ```bash
-./run_tests.sh tiny small medium huge
+./calib 
 ```
-Where you can omit any of the dataset names. To run Du Novo's benchmarking, run:
-```bash
-./run_dunovo_test.sh tiny small medium huge
-```
+And the help will printed for you.
 
-All results will be in `simulating/datasets/*tsv`. Details of clusterings are also present in the same directory, with decriptive filenames.
+## Running Calib simulating
+The simulation module can be run using the Makefile:
+```bash
+make simulate [parameter=value]
+```
+The simulation parameters are:
+- ``random_seed``: integer
+- ``bed``: bed name (excluding .bed extention) for targeted simulation. The bed file must be in simulating/genomes directectory.
+- ``reference_name``: reference genome name (excluding .fa extention) for targeted simulation. The reference genome file must be in simulating/genomes directectory. Note that reference ``hg38`` is automatically downloaded.
+- ``num_barcodes``: integer
+- ``barcode_length``: integer for the length of half of the barcode (length of the tag)
+- ``molecule_size_mu``: integer for average size of the molecule
+- ``molecule_size_dev``: integer for standard deviation of the size of the molecule
+- ``num_molecules``: integer for the number of molecules to generate.
+- ``pcr_cycles``: integer for number of PCR cycles
+- ``pcr_duplication_rate``: float between zero and one, exclusively
+- ``pcr_error_rate``: float between zero and one, exclusively
+- ``sequencing_machine``: string for ART Illumina sequencing platform
+
+For a complete list of default values for these parameters, check the Makefile.
