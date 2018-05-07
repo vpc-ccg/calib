@@ -1,3 +1,0 @@
-[submodule "simulating/seqan"]
-	path = simulating/seqan
-	url = https://github.com/seqan/seqan.git
