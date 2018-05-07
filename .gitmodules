@@ -1,15 +1,1 @@
-[submodule "simulating/seqan"]
-	path = simulating/seqan
-	url = https://github.com/seqan/seqan.git
-[submodule "aux/other_tools/cdhit"]
-	path = aux/other_tools/cdhit
-	url = https://github.com/weizhongli/cdhit.git
-[submodule "aux/other_tools/dunovo"]
-	path = aux/other_tools/dunovo
-	url = https://github.com/galaxyproject/dunovo.git
-[submodule "aux/other_tools/rainbow"]
-	path = aux/other_tools/rainbow
-	url = https://github.com/ChongLab/rainbow.git
-[submodule "aux/other_tools/starcode"]
-	path = aux/other_tools/starcode
-	url = https://github.com/gui11aume/starcode.git
+
