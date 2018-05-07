@@ -47,8 +47,8 @@ make simulate [parameter=value]
 ```
 The simulation parameters are:
 - ``random_seed``: integer
-- ``bed``: bed name (excluding .bed extention) for targeted simulation. The bed file must be in simulating/genomes directectory.
 - ``reference_name``: reference genome name (excluding .fa extention) for targeted simulation. The reference genome file must be in simulating/genomes directectory. Note that reference ``hg38`` is automatically downloaded.
+- ``bed``: bed name (excluding reference_name.bed extention) for targeted simulation. The bed file must be in `simulating/genomes` directectory. An example bed file is included in the directory: `simulating/genomes/Panel.hg38.bed`
 - ``num_barcodes``: integer
 - ``barcode_length``: integer for the length of half of the barcode (length of the tag)
 - ``molecule_size_mu``: integer for average size of the molecule
