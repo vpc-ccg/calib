@@ -7,17 +7,16 @@
 # 4 = time
 # 5 = command
 function slurm {
-    echo "#!/bin/bash"                              >  $1
-    echo "#SBATCH --job-name=$2"                    >> $1
-    echo "#SBATCH --partition=express"              >> $1
-    echo "#SBATCH -n 1"                             >> $1
-    echo "#SBATCH --mem $3"                         >> $1
-    echo "#SBATCH -t $4"                            >> $1
-    echo "#SBATCH --output=$1.out"                  >> $1
-    echo "#SBATCH --error=$1.err"                   >> $1
-    echo "#SBATCH --mail-user=baraaorabi@gmail.com" >> $1
-    echo "#SBATCH --export=all"                     >> $1
-    echo "$5"                                       >> $1
+    echo "#!/bin/bash"                                  >  $1
+    echo "#SBATCH --job-name=$2"                        >> $1
+    echo "#SBATCH -n 1"                                 >> $1
+    echo "#SBATCH --mem $3"                             >> $1
+    echo "#SBATCH -t $4"                                >> $1
+    echo "#SBATCH --output=$1.out"                      >> $1
+    echo "#SBATCH --error=$1.err"                       >> $1
+    echo "#SBATCH --export=all"                         >> $1
+    echo "#SBATCH -p debug,express,normal,big-mem,long" >> $1
+    echo "$5"                                           >> $1
     sbatch $1
 }
 for dataset in $@
@@ -35,7 +34,11 @@ do
     num_barcodes=25000
     num_molecules=1000000
     ;;
-    "tiny")  echo "Test dataset Four"
+    "giant")  echo "Test dataset four"
+    num_barcodes=25000
+    num_molecules=2000000
+    ;;
+    "tiny")  echo "Test dataset five"
     num_barcodes=100
     num_molecules=10
     ;;
@@ -46,7 +49,7 @@ do
     slurm_path=slurm_pbs/"$dataset"
     mkdir -p "$slurm_path"
 
-    # calib_log
+   # calib_log
     for error_tolerance in 1 2
     do
         for kmer_size in 4 8
@@ -57,7 +60,7 @@ do
                 set -- $param_set;
                 job_name="calib.$error_tolerance.$kmer_size.$1.$2"
                 filename="$slurm_path/$job_name.pbs"
-                mem="51200"
+                mem="102400"
                 tim="05:59:59"
                 command="./benchmark calib_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes barcode_error_tolerance=$error_tolerance kmer_size=$kmer_size minimizers_num=$1 minimizers_threshold=$2"
                 slurm "$filename" "$job_name" "$mem" "$tim" "$command"
@@ -66,17 +69,16 @@ do
     done
 
     # starcode_log
-    for starcode_dist in 4 3 2 1
+    for starcode_dist in 1 2 3 4 5 6 7 8
     do
       for starcode_ratio in 1 2 3 4 5
       do
           job_name="starcode.$starcode_dist.$starcode_ratio"
           filename="$slurm_path/$job_name.pbs"
-          mem="307200"
-          tim="05:59:59"
+          mem="614400"
+          tim="11:59:59"
           command="./benchmark starcode_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes starcode_dist=$starcode_dist starcode_ratio=$starcode_ratio"
           slurm "$filename" "$job_name" "$mem" "$tim" "$command"
-
       done
     done
 
@@ -93,28 +95,17 @@ do
             slurm "$filename" "$job_name" "$mem" "$tim" "$command"
         done
     done
-
+  
     # cd-hit-est
-    for cdhitest_dist in 0.95 0.90 0.85
+    for cdhitest_dist in 0.85 0.95 0.96 0.97 0.98
     do
         job_name="cdhitest.$cdhitest_dist"
         filename="$slurm_path/$job_name.pbs"
         mem="204800"
-        tim="05:59:59"
+        tim="23:59:59"
         command="./benchmark cdhitest_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes cdhitest_dist=$cdhitest_dist"
         slurm "$filename" "$job_name" "$mem" "$tim" "$command"
-
     done
 
-    # # du_novo_log
-    # for dunovo_dist in 1 2 3 4
-    # do
-    #     job_name="dunovo.$dunovo_dist"
-    #     filename="$slurm_path/$job_name.pbs"
-    #     mem="204800"
-    #     tim="05:59:59"
-    #     command="./benchmark dunovo_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes dunovo_dist=$dunovo_dist"
-    #     slurm "$filename" "$job_name" "$mem" "$tim" "$command"
-    # done
 done
 exit
