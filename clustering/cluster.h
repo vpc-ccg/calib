@@ -10,7 +10,7 @@
 #define CLUSTER_H
 
 typedef size_t read_id_t;
-typedef uint64_t minimizer_t;
+typedef uint32_t minimizer_t;
 
 extern size_t node_count;
 extern size_t read_count;
