@@ -26,8 +26,6 @@ extern int thread_count;
 extern bool silent;
 extern bool keep_qual;
 extern std::ofstream dog;
-extern std::ofstream node_dog;
-
 
 
 #endif //CALIB_GLOBAL_H
