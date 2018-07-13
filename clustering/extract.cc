@@ -26,7 +26,7 @@ node_id_t node_count = 0;
 read_id_t read_count = 0;
 
 // node_to_read_id find reads with identical barcodes and minimizers
-typedef std::unordered_map<Node, std::vector<read_id_t>, NodeHash, NodeEqual> node_to_read_id_unordered_map;
+typedef std::unordered_map<Node, vector<read_id_t>, NodeHash, NodeEqual> node_to_read_id_unordered_map;
 
 read_vector reads;
 node_vector nodes;
@@ -229,7 +229,7 @@ void extract_barcodes_and_minimizers() {
         if (node_to_read_map.find(current_node) != node_to_read_map.end()) {
             node_to_read_map[current_node].push_back(reads.size()-1);
         } else {
-            node_to_read_map.emplace(current_node, vector<node_id_t>{reads.size()-1});
+            node_to_read_map.emplace(current_node, vector<read_id_t>{(read_id_t)reads.size()-1});
             // vector<node_id_t> current_vector;
             // current_vector.push_back(read_count++);
             // node_to_read[current_node] = current_vector;

@@ -10,7 +10,7 @@
 #ifndef CALIB_GLOBAL_H
 #define CALIB_GLOBAL_H
 
-typedef size_t node_id_t;
+typedef uint32_t node_id_t;
 
 
 extern std::string input_1;

@@ -9,11 +9,11 @@
 #ifndef CLUSTER_H
 #define CLUSTER_H
 
-typedef size_t read_id_t;
+typedef uint32_t read_id_t;
 typedef uint32_t minimizer_t;
 
-extern size_t node_count;
-extern size_t read_count;
+extern node_id_t node_count;
+extern read_id_t read_count;
 
 struct Read {
     std::string name_1;
