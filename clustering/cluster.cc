@@ -44,6 +44,7 @@ void cluster(){
     if (!silent) {
         cout << "Removing edges due to minimizers: " << difftime(time(NULL), start)<< "\n";
     }
+    node_to_minimizers.clear();
 
     if (!silent) {
         cout << "Extracting clusters\n";
@@ -54,6 +55,7 @@ void cluster(){
         cout << "Extracting clusters took: " << difftime(time(NULL), start) << "\n";
     }
     dog << "Extracting clusters took: " << difftime(time(NULL), start) << "\n";
+    adjacency_lists.clear();
 
     if (!silent) {
         cout << "Outputting clusters\n";
@@ -138,7 +140,8 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
         }
         dog << "Processing LSH took: " << difftime(time(NULL), start) << "\n";
     } while (std::next_permutation(mask.begin(), mask.end()));
-
+    // barcodes are no longer needed
+    barcodes.clear();
     for (barcode_id_t i = 0; i < barcode_count; i++) {
         for (node_id_t node : barcode_to_nodes_vector[i]) {
             vector<node_id_t> result;
@@ -149,6 +152,9 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
             adjacency_lists[node] = move(result);
         }
     }
+    // barcode id to node id's is no longer needed
+    barcode_to_nodes_vector.clear();
+
     if (!silent) {
         cout << "Building all LSH took: " << build_time << "\n";
     }
