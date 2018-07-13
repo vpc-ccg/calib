@@ -36,17 +36,6 @@ void cluster(){
     dog << "Adding edges due to barcodes similarity took: " << difftime(time(NULL), start) << "\n";
 
     if (!silent) {
-        cout << "Removing edges of unmatched minimizers\n";
-    }
-    start = time(NULL);
-    remove_edges_of_unmatched_minimizers(adjacency_lists);
-    dog << "Removing edges due to minimizers: " << difftime(time(NULL), start)<< "\n";
-    if (!silent) {
-        cout << "Removing edges due to minimizers: " << difftime(time(NULL), start)<< "\n";
-    }
-    node_to_minimizers.clear();
-
-    if (!silent) {
         cout << "Extracting clusters\n";
     }
     start = time(NULL);
@@ -124,9 +113,10 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
                         if (bid == bid_o){
                             continue;
                         }
+                        vector<node_id_t> good_neighbors = get_good_neighbors(node, barcode_to_nodes_vector[bid_o]);
                         vector<node_id_t> result;
                         set_union(adjacency_lists[node].begin(), adjacency_lists[node].end(),
-                                  barcode_to_nodes_vector[bid_o].begin(), barcode_to_nodes_vector[bid_o].end(),
+                                  good_neighbors.begin(), good_neighbors.end(),
                                   back_inserter(result)
                                   );
                         adjacency_lists[node] = move(result);
@@ -144,9 +134,10 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     barcodes.clear();
     for (barcode_id_t i = 0; i < barcode_count; i++) {
         for (node_id_t node : barcode_to_nodes_vector[i]) {
+            vector<node_id_t> good_neighbors = get_good_neighbors(node, barcode_to_nodes_vector[i]);
             vector<node_id_t> result;
             set_union(adjacency_lists[node].begin(), adjacency_lists[node].end(),
-                      barcode_to_nodes_vector[i].begin(), barcode_to_nodes_vector[i].end(),
+                      good_neighbors.begin(), good_neighbors.end(),
                       back_inserter(result)
                       );
             adjacency_lists[node] = move(result);
@@ -179,16 +170,14 @@ string mask_barcode(const string& barcode, const vector<bool>& mask){
     return string(masked_barcode_buffer);
 }
 
-void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_vectors &adjacency_lists){
-    for (node_id_t node = 0; node < node_count; node++) {
-        vector<node_id_t> good_neighbors;
-        for (node_id_t neighbor : adjacency_lists[node]) {
-            if (node != neighbor && !unmatched_minimimizers(node, neighbor)) {
-                good_neighbors.push_back(neighbor);
-            }
+vector<node_id_t> get_good_neighbors(node_id_t node, const vector<node_id_t> &neighbors){
+    vector<node_id_t> good_neighbors;
+    for (node_id_t neighbor : neighbors) {
+        if (node != neighbor && !unmatched_minimimizers(node, neighbor)) {
+            good_neighbors.push_back(neighbor);
         }
-        adjacency_lists[node] = move(good_neighbors);
     }
+    return good_neighbors;
 }
 
 bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){

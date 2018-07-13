@@ -72,7 +72,7 @@ typedef std::unordered_map<barcode_t, std::vector<barcode_id_t> > masked_barcode
 void cluster();
 void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists);
 std::string mask_barcode(const std::string& barcode, const std::vector<bool>& mask);
-void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_vectors &adjacency_lists);
+std::vector<node_id_t> get_good_neighbors(node_id_t node, const std::vector<node_id_t>& neighbors);
 bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id);
 void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists);
 void output_clusters();
