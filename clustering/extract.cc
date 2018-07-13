@@ -31,8 +31,7 @@ typedef std::unordered_map<Node, vector<read_id_t>, NodeHash, NodeEqual> node_to
 // barcode_to_node_id finds nodes with identical barcodes
 typedef std::unordered_map<barcode_t, vector<node_id_t> > barcode_to_node_id_unordered_map;
 
-read_vector reads;
-node_id_to_read_ids_vector node_to_reads_vector;
+read_id_to_node_id_vector read_to_node_vector;
 node_id_to_minimizers_vector node_to_minimizers;
 barcode_vector barcodes;
 barcode_id_to_node_ids_vector barcode_to_nodes_vector;
@@ -142,38 +141,27 @@ void extract_barcodes_and_minimizers() {
 
     dog << "Reading fastq files\n";
 
-    string trash;
+    string name_1, sequence_1, name_2, sequence_2, trash;
     Node current_node;
-    reads.push_back(Read());
-
+    read_count = 0;
     // Processing FASTQ files one read at a time
-    while (getline(fastq1, reads.back().name_1)) {
-        getline(fastq1, reads.back().sequence_1);
+    while (getline(fastq1, name_1)) {
+        getline(fastq1, sequence_1);
         getline(fastq1, trash);
-        if (keep_qual) {
-            getline(fastq1, reads.back().quality_1);
-        } else {
-            getline(fastq1, trash);
-            reads.back().quality_1 = "Q1";
-        }
-        getline(fastq2, reads.back().name_2);
-        getline(fastq2, reads.back().sequence_2);
+        getline(fastq1, trash);
+        getline(fastq2, name_2);
+        getline(fastq2, sequence_2);
         getline(fastq2, trash);
-        if (keep_qual) {
-            getline(fastq2, reads.back().quality_2);
-        } else {
-            getline(fastq2, trash);
-            reads.back().quality_2 = "Q2";
-        }
+        getline(fastq2, trash);
 
-        int s1_length = reads.back().sequence_1.size();
-        int s2_length = reads.back().sequence_2.size();
+        int s1_length = sequence_1.size();
+        int s2_length = sequence_2.size();
 
         // Extracting the barcode from the start of both mates
         if (s1_length >= barcode_length && s2_length >= barcode_length) {
             current_node.barcode =
-                reads.back().sequence_1.substr(0, barcode_length) +
-                reads.back().sequence_2.substr(0, barcode_length);
+                sequence_1.substr(0, barcode_length) +
+                sequence_2.substr(0, barcode_length);
         } else {
             current_node.barcode = string (barcode_length*2, 'N');
         }
@@ -189,17 +177,8 @@ void extract_barcodes_and_minimizers() {
         if (s1_seg_length >= kmer_size) {
             int start = barcode_length + ignored_sequence_prefix_length;
             for (int i = 0; i < minimizer_count; i++) {
-                current_node.minimizers[i] = minimizer(reads.back().sequence_1, start, s1_seg_length);
+                current_node.minimizers[i] = minimizer(sequence_1, start, s1_seg_length);
                 start += s1_seg_length;
-                if (debug) {
-                    if (current_node.minimizers[i] != invalid_kmer) {
-                        reads.back().sequence_1 += "-" + minimizer_t_to_dna(current_node.minimizers[i], kmer_size);
-                    } else {
-                        stringstream ss;
-                        ss << "0x" << std::uppercase << std::setfill('0') << std::setw(64/4) << std::hex << current_node.minimizers[i];
-                        reads.back().sequence_1 += "-" + ss.str();
-                    }
-                }
             }
         } else {
             for (int i = 0; i < minimizer_count; i++) {
@@ -211,18 +190,8 @@ void extract_barcodes_and_minimizers() {
         if (s2_seg_length >= kmer_size) {
             int start = barcode_length + ignored_sequence_prefix_length;
             for (int i = minimizer_count; i < minimizer_count*2; i++) {
-                current_node.minimizers[i] = minimizer(reads.back().sequence_2, start, s2_seg_length);
+                current_node.minimizers[i] = minimizer(sequence_2, start, s2_seg_length);
                 start += s2_seg_length;
-                if (debug) {
-                    if (current_node.minimizers[i] != invalid_kmer) {
-                        reads.back().sequence_2 += "-" + minimizer_t_to_dna(current_node.minimizers[i], kmer_size);
-                    } else {
-                        stringstream ss;
-                        ss << "0x" << std::uppercase << std::setfill('0') << std::setw(64/4) << std::hex << current_node.minimizers[i];
-                        reads.back().sequence_2 += "-" + ss.str();
-                    }
-                }
-
             }
         } else {
             for (int i = minimizer_count; i < minimizer_count*2; i++) {
@@ -230,39 +199,26 @@ void extract_barcodes_and_minimizers() {
             }
         }
 
-
         if (node_to_read_map.find(current_node) != node_to_read_map.end()) {
-            node_to_read_map[current_node].push_back(reads.size()-1);
+            node_to_read_map[current_node].push_back(read_count);
         } else {
-            node_to_read_map.emplace(current_node, vector<read_id_t>{(read_id_t)reads.size()-1});
-            // vector<node_id_t> current_vector;
-            // current_vector.push_back(read_count++);
-            // node_to_read[current_node] = current_vector;
+            node_to_read_map.emplace(current_node, vector<read_id_t>{read_count});
             current_node = Node();
         }
-        reads.push_back(Read());
-//        cout << current_node.id << "\t" << current_node.barcode << "\t" ;
-//        for (int i =0; i < minimizer_count; i++)
-//            cout << current_node.minimizers_1[i] << "\t";
-//        for (int i =0; i < minimizer_count; i++)
-//            cout << current_node.minimizers_2[i] << "\t";
-//        cout << "\n";
+        read_count++;
     }
+    read_to_node_vector.reserve(read_count);
+    node_to_minimizers.reserve(node_to_read_map.size());
 
-    reads.pop_back();
-
-    read_count = reads.size();
-    node_count = node_to_read_map.size();
-
-    node_to_reads_vector.reserve(node_count);
-    node_to_minimizers.reserve(node_count);
-
+    node_count = 0;
     barcode_to_node_id_unordered_map barcode_to_node_map;
-    // node_id_t node_id = 0;
     for (auto kv : node_to_read_map) {
-        node_to_reads_vector.push_back(move(kv.second));
         node_to_minimizers.push_back(move(kv.first.minimizers));
-        barcode_to_node_map[kv.first.barcode].push_back(node_to_reads_vector.size()-1);
+        barcode_to_node_map[kv.first.barcode].push_back(node_count);
+        for (read_id_t rid : kv.second) {
+            read_to_node_vector[rid] = node_count;
+        }
+        node_count++;
     }
     node_to_read_map.clear();
 

@@ -10,6 +10,7 @@ GNU_TIME?=$(benchmark_aux_path)/other_tools/time-1.9/time
 GET_TIME := $(benchmark_aux_path)/get_time.awk
 GET_MEM := $(benchmark_aux_path)/get_mem.awk
 GET_ACCURACY := $(benchmark_aux_path)/get_accuracy.awk
+CONVERT_CALIB := $(benchmark_aux_path)/convert_calib_to_cluster.sh
 CONVERT_CDHITEST := $(benchmark_aux_path)/convert_cdhitest_to_cluster.sh
 CONVERT_STARCODE := $(benchmark_aux_path)/convert_starcode_to_cluster.sh
 CONVERT_RAINBOW := $(benchmark_aux_path)/convert_rainbow_to_cluster.sh
@@ -89,14 +90,15 @@ calib_log: $(calib_log_file) $(calib_accuracy)
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(calib_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(calib_log_comment)\t$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(barcode_length)\t$(minimizers_num)\t$(kmer_size)\t$(barcode_error_tolerance)\t$(minimizers_threshold)" >> $(calib_log_file);
-	rm -f $(calib_accuracy) $(calib_time) $(cluster_file) $(cluster_file).log $(cluster_file).node.log;
+	rm -f $(calib_accuracy) $(calib_time) $(cluster_file) $(cluster_file).log $(cluster_file).node.log $(cluster_file).cluster;
 
 $(calib_log_file):
 	$(ECHO) "log_comment\tmy_timestamp\ttime\tmem\tARI\tbarcode_length\tminimizers_num\tkmer_size\tbarcode_error_tolerance\tminimizers_threshold" > $(calib_log_file)
 
 $(calib_accuracy): $(calib_time)
+	$(CONVERT_CALIB) $(cluster_file) > $(cluster_file).cluster;
 	$(python3) $(simulating_path)rand_index.py \
-		--input-cluster-file $(cluster_file) \
+		--input-cluster-file $(cluster_file).cluster \
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(calib_accuracy)
 

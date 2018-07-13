@@ -13,12 +13,16 @@
 
 using namespace std;
 
+// extern variables declarations
+cluster_id_t cluster_count = 0;
+node_id_to_cluster_id_vector node_to_cluster_vector;
+// locally global variables
 char masked_barcode_buffer[150];
 #define ASCII_SIZE 256
 bool valid_base [ASCII_SIZE];
-
 void cluster(){
     node_id_to_node_id_vector_of_vectors adjacency_lists(node_count);
+
     time_t start;
 
     if (!silent) {
@@ -27,9 +31,9 @@ void cluster(){
     start = time(NULL);
     barcode_similarity(adjacency_lists);
     if (!silent) {
-        cout << "Edges due to barcodes took: " << difftime(time(NULL), start) << "\n";
+        cout << "Adding edges due to barcodes similarity took: " << difftime(time(NULL), start) << "\n";
     }
-    dog << "Edges due to barcodes took: " << difftime(time(NULL), start) << "\n";
+    dog << "Adding edges due to barcodes similarity took: " << difftime(time(NULL), start) << "\n";
 
     if (!silent) {
         cout << "Removing edges of unmatched minimizers\n";
@@ -42,14 +46,24 @@ void cluster(){
     }
 
     if (!silent) {
-        cout << "Extracting and outputting clusters\n";
+        cout << "Extracting clusters\n";
     }
     start = time(NULL);
     extract_clusters(adjacency_lists);
     if (!silent) {
-        cout << "Extracting clusters and outputting took: " << difftime(time(NULL), start) << "\n";
+        cout << "Extracting clusters took: " << difftime(time(NULL), start) << "\n";
     }
-    dog << "Extracting clusters and outputting took: " << difftime(time(NULL), start) << "\n";
+    dog << "Extracting clusters took: " << difftime(time(NULL), start) << "\n";
+
+    if (!silent) {
+        cout << "Outputting clusters\n";
+    }
+    start = time(NULL);
+    output_clusters();
+    if (!silent) {
+        cout << "Outputting clusters took: " << difftime(time(NULL), start) << "\n";
+    }
+    dog << "Outputting clusters took: " << difftime(time(NULL), start) << "\n";
 
 }
 
@@ -145,7 +159,6 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     dog << "Processing all LSH took: " << process_time << "\n";
 }
 
-
 string mask_barcode(const string& barcode, const vector<bool>& mask){
     int pos = 0;
     for (int i = 0; i < barcode_length*2; i++) {
@@ -172,7 +185,6 @@ void remove_edges_of_unmatched_minimizers(node_id_to_node_id_vector_of_vectors &
     }
 }
 
-
 bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
     int matched_minimimizers_1 = 0;
     int matched_minimimizers_2 = 0;
@@ -183,52 +195,56 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
     return !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold);
 }
 
-
 void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     vector<bool> pushed(node_count, false);
     stack<node_id_t> opened;
-    size_t cluster_count = 0;
-    ofstream clusters;
-    if (bc_format) {
-        clusters = ofstream(output_prefix + "bc");
-    } else {
-        clusters = ofstream(output_prefix + "cluster");
-    }
+    node_to_cluster_vector.reserve(node_count);
+    cluster_count = 0;
 
-    ofstream cluster_R1;
-    ofstream cluster_R2;
     for (node_id_t node = 0; node < node_count; node++) {
         if (!pushed[node]) {
-            if (bc_format) {
-
-            } else {
-                clusters << "# "<< cluster_count <<"\n";
-            }
             opened.push(node);
             pushed[node] = true;
             while(!opened.empty()) {
                 node_id_t current_node = opened.top();
                 opened.pop();
+                node_to_cluster_vector[current_node] = cluster_count;
                 for (node_id_t neighbor: adjacency_lists[current_node]) {
                     if (!pushed[neighbor]) {
                         opened.push(neighbor);
                         pushed[neighbor] = true;
-                    }
-                }
-                for (read_id_t read : node_to_reads_vector[current_node]) {
-                    if (bc_format) {
-                        clusters << cluster_count << "\t" << reads[read].sequence_1 << "\t" << reads[read].sequence_2 << "\n";
-                    } else {
-                        clusters << current_node << "\t" << read << "\t";
-                        clusters << reads[read].name_1 << "\t" << reads[read].sequence_1 << "\t" << reads[read].quality_1 <<
-                        "\t";
-                        clusters << reads[read].name_2 << "\t" << reads[read].sequence_2 << "\t" << reads[read].quality_2 <<
-                        "\n";
+                        node_to_cluster_vector[neighbor] = cluster_count;
                     }
                 }
             }
             cluster_count++;
         }
     }
-    clusters.close();
+}
+
+void output_clusters(){
+    read_id_t current_read = 0;
+    ofstream clusters;
+    ifstream fastq1;
+    ifstream fastq2;
+    fastq1.open (input_1);
+    fastq2.open (input_2);
+    string name_1, quality_1, sequence_1, name_2, quality_2, sequence_2, trash;
+
+    clusters = ofstream(output_prefix + "cluster");
+    while (getline(fastq1, name_1)) {
+        getline(fastq1, sequence_1);
+        getline(fastq1, trash);
+        getline(fastq1, trash);
+        getline(fastq2, name_2);
+        getline(fastq2, sequence_2);
+        getline(fastq2, trash);
+        getline(fastq2, trash);
+
+        node_id_t current_read_node = read_to_node_vector[current_read];
+        clusters << node_to_cluster_vector[current_read_node] << "\t" << current_read_node << "\t";
+        clusters << name_1 << "\t" << sequence_1 << "\t" << quality_1 << "\t";
+        clusters << name_2 << "\t" << sequence_2 << "\t" << quality_2 << "\n";
+        current_read++;
+    }
 }
