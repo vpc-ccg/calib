@@ -25,12 +25,8 @@ extern int minimizer_threshold;
 extern int thread_count;
 extern bool silent;
 extern bool keep_qual;
-extern bool bc_format;
-extern bool debug;
-extern bool no_triplets;
 extern std::ofstream dog;
 extern std::ofstream node_dog;
-extern std::vector<node_id_t> debug_nodes;
 
 
 

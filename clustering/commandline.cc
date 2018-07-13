@@ -12,9 +12,6 @@ string input_2 = "";
 string output_prefix = "";
 bool silent = false;
 bool keep_qual = false;
-bool bc_format = false;
-bool debug = false;
-bool no_triplets = false;
 int barcode_length = -1;
 int ignored_sequence_prefix_length = 0;
 int minimizer_count = -1;
@@ -22,7 +19,6 @@ int error_tolerance = -1;
 int minimizer_threshold = -1;
 int thread_count = 1;
 int kmer_size = -1;
-vector<node_id_t> debug_nodes;
 
 void parse_flags(int argc, char *argv[]){
     for (int i = 0; i < argc; i++) {
@@ -43,17 +39,8 @@ void parse_flags(int argc, char *argv[]){
         if (current_param == "-s" || current_param == "--silent") {
             silent = true;
         }
-        if (current_param == "-D" || current_param == "--debug") {
-            debug = true;
-        }
         if (current_param == "-q" || current_param == "--keep-qual") {
             keep_qual = true;
-        }
-        if (current_param == "-B" || current_param == "--bc-format") {
-            bc_format = true;
-        }
-        if (current_param == "--no-triplets") {
-            no_triplets = true;
         }
         if (current_param == "-l" || current_param == "--barcode-length") {
             barcode_length = atoi(argv[i+1]);
@@ -75,14 +62,6 @@ void parse_flags(int argc, char *argv[]){
         }
         if (current_param == "-c" || current_param == "--threads") {
             thread_count = atoi(argv[i+1]);
-        }
-        if (current_param == "--debug-nodes") {
-            stringstream ss(argv[i+1]);
-            string node;
-            while (getline(ss, node, ',')) {
-                debug_nodes.push_back(atoi(node.c_str()));
-            }
-
         }
 
     }
@@ -121,11 +100,6 @@ void print_flags(ofstream &out){
     out << "\terror_tolerance:\t" << error_tolerance << "\n";
     out << "\tminimizer_threshold:\t" << minimizer_threshold << "\n";
     out << "\tthreads:\t" << thread_count << "\n";
-    out << "\tdebug:\t" << debug << "\n";
-    out << "\tdebug_nodes:\t";
-    for (node_id_t n : debug_nodes) {
-        out << n << ",";
-    }
     out << "\n";
 
 }
@@ -139,9 +113,7 @@ void print_help(){
     cout << "\t-r\t--input-reverse                 \t(type: string;   REQUIRED paramter)\n";
     cout << "\t-o\t--output-prefix                 \t(type: string;   REQUIRED paramter)\n";
     cout << "\t-s\t--silent                        \t(type: no value; default: unset)\n";
-    cout << "\t-D\t--debug                         \t(type: no value; default:  unset)\n";
     cout << "\t-q\t--keep-qual                     \t(type: no value; default:  unset)\n";
-    cout << "\t-B\t--bc-format                     \t(type: no value; default:  unset)\n";
     cout << "\t-l\t--barcode-length                \t(type: int;      REQUIRED paramter)\n";
     cout << "\t-p\t--ignored-sequence-prefix-length\t(type: int;      REQUIRED paramter)\n";
     cout << "\t-m\t--minimizer-count               \t(type: int;      REQUIRED paramter)\n";

@@ -27,9 +27,9 @@ read_id_t read_count = 0;
 barcode_id_t barcode_count = 0;
 
 // node_to_read_id finds reads with identical barcodes and minimizers
-typedef std::unordered_map<Node, vector<read_id_t>, NodeHash, NodeEqual> node_to_read_id_unordered_map;
+typedef unordered_map<Node, vector<read_id_t>, NodeHash, NodeEqual> node_to_read_id_unordered_map;
 // barcode_to_node_id finds nodes with identical barcodes
-typedef std::unordered_map<barcode_t, vector<node_id_t> > barcode_to_node_id_unordered_map;
+typedef unordered_map<barcode_t, vector<node_id_t> > barcode_to_node_id_unordered_map;
 
 read_id_to_node_id_vector read_to_node_vector;
 node_id_to_minimizers_vector node_to_minimizers;
@@ -38,12 +38,6 @@ barcode_id_to_node_ids_vector barcode_to_nodes_vector;
 
 minimizer_t encode [ASCII_SIZE];
 minimizer_t invalid_kmer = (minimizer_t) -1;
-vector<bool> invalid_minimizers;
-
-// bool invalid_minimizer(minimizer_t kmer) {
-//     return ((((kmer & 0x3F ) == 0x00) || ((kmer & 0x3F ) == 0x15) || ((kmer & 0x3F ) == 0x2A) || ((kmer & 0x3F ) == 0x3F)) ||
-//     (((kmer & 0xFC ) == 0x00) || ((kmer & 0xFC ) == 0x54) || ((kmer & 0xFC ) == 0xA8) || ((kmer & 0xFC ) == 0xFC)));
-// }
 
 string minimizer_t_to_dna(minimizer_t minimizer, size_t size) {
     string s = "";
@@ -72,41 +66,6 @@ string minimizer_t_to_dna(minimizer_t minimizer, size_t size) {
     return s;
 }
 
-void make_invalid_minimizer_vector() {
-    minimizer_t max_minimizer = 1;
-    for (int i = 0; i < kmer_size*ENCODE_SIZE; i++) {
-        max_minimizer *= 2;
-    }
-    invalid_minimizers = vector<bool>((size_t) max_minimizer, false);
-    minimizer_t triplet_mask = (minimizer_t) -1;
-    triplet_mask = triplet_mask >> (sizeof(minimizer_t)*BYTE_SIZE - INVALID_LENGTH*ENCODE_SIZE);
-    max_minimizer--;
-    while (max_minimizer != (minimizer_t)-1) {
-        minimizer_t temp_minimizer = max_minimizer;
-
-        for (int i = 0; i < kmer_size - INVALID_LENGTH + 1; i++) {
-            // printf("0x%x\t0x%x\t0x%x\n", max_minimizer, temp_minimizer, temp_minimizer & triplet_mask);
-            // cout << minimizer_t_to_dna(max_minimizer, kmer_size - i) << "\t" <<  minimizer_t_to_dna(temp_minimizer, kmer_size - i) << "\t" <<  minimizer_t_to_dna(temp_minimizer & triplet_mask, INVALID_LENGTH) << "\n";
-            switch (temp_minimizer & triplet_mask) {
-            case INVALID_A:
-                invalid_minimizers[max_minimizer] = true;
-                break;
-            case INVALID_C:
-                invalid_minimizers[max_minimizer] = true;
-                break;
-            case INVALID_G:
-                invalid_minimizers[max_minimizer] = true;
-                break;
-            case INVALID_T:
-                invalid_minimizers[max_minimizer] = true;
-                break;
-            }
-            temp_minimizer = temp_minimizer >> ENCODE_SIZE;
-        }
-        max_minimizer--;
-    }
-}
-
 void extract_barcodes_and_minimizers() {
     node_to_read_id_unordered_map node_to_read_map;
 
@@ -121,19 +80,7 @@ void extract_barcodes_and_minimizers() {
     encode['c'] = 0x1;
     encode['g'] = 0x2;
     encode['t'] = 0x3;
-    if (no_triplets) {
-        make_invalid_minimizer_vector();
-    } else {
-        minimizer_t max_minimizer = 1;
-        for (int i = 0; i < kmer_size*ENCODE_SIZE; i++) {
-            max_minimizer *= 2;
-        }
-        invalid_minimizers = vector<bool>((size_t) max_minimizer, false);
-    }
 
-    // for (minimizer_t i =0; i < invalid_minimizers.size(); i++) {
-    //     printf("%s\t%s\n", minimizer_t_to_dna(i, kmer_size).c_str(), invalid_minimizers[i]? "true" : "false");
-    // }
     ifstream fastq1;
     ifstream fastq2;
     fastq1.open (input_1);
@@ -287,14 +234,7 @@ minimizer_t minimizer(string& seq, int start, int length){
     }
     current_k_mer &= kmer_size_mask;
 
-    min_k_mer = ((min_k_mer < current_k_mer) || invalid_minimizers[current_k_mer]) ? min_k_mer : current_k_mer;
-    // min_k_mer = min_k_mer < current_k_mer ? min_k_mer : current_k_mer;
-
-    // Bit shifting to get new k-mers, and masking to keep k-mer size fixed
-    // printf("MIN\t0x%08X\n", min_k_mer);
-
-    // printf("After first minimizer\n");
-    // printf("i  SEQ\tCURRENT__\tENCODE___\tMASKED__\tMINIMUM\n");
+    min_k_mer = (min_k_mer < current_k_mer)  ? min_k_mer : current_k_mer;
 
     for (int i = start + kmer_size; i < end; i++) {
         // printf("%2d   %c\t", i, seq.at(i));
@@ -331,7 +271,7 @@ minimizer_t minimizer(string& seq, int start, int length){
             i=j;
         }
 
-        min_k_mer = ((min_k_mer < current_k_mer) || invalid_minimizers[current_k_mer]) ? min_k_mer : current_k_mer;
+        min_k_mer = (min_k_mer < current_k_mer) ? min_k_mer : current_k_mer;
         // min_k_mer = min_k_mer < current_k_mer ? min_k_mer : current_k_mer;
         // printf("0x%08X\n", min_k_mer);
 

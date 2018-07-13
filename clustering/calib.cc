@@ -27,7 +27,6 @@ int main(int argc, char *argv[]){
     }
     extract_barcodes_and_minimizers();
 
-
     if (!silent) {
         cout << "Clustering...\n";
     }

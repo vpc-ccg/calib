@@ -132,6 +132,10 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     } while (std::next_permutation(mask.begin(), mask.end()));
     // barcodes are no longer needed
     barcodes.clear();
+    if (!silent) {
+        cout << "Adding edges between nodes of identical barcodes\n";
+    }
+    dog << "Adding edges between nodes of identical barcodes\n";
     for (barcode_id_t i = 0; i < barcode_count; i++) {
         for (node_id_t node : barcode_to_nodes_vector[i]) {
             vector<node_id_t> good_neighbors = get_good_neighbors(node, barcode_to_nodes_vector[i]);
