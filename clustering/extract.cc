@@ -76,9 +76,6 @@ void extract_barcodes_and_minimizers() {
     fastq1.open (input_1);
     fastq2.open (input_2);
 
-    dog << "Reading fastq files\n";
-
-
     read_count = 0;
     if (!silent){
         cout << "Memory before reading FASTQ:\n\t" << get_memory_use() << "MB\n";
@@ -203,10 +200,6 @@ void extract_barcodes_and_minimizers() {
         cout << "Node count: " << node_count << "\n";
         cout << "Barcode count: " << barcode_count << "\n";
     }
-    dog << "Read count: " << read_count << "\n";
-    dog << "Node count: " << node_count << "\n";
-    dog << "Barcode count: " << barcode_count << "\n";
-
     // read_id_to_node_id_vector().swap(read_to_node_vector);
     // if (!silent){
     //     cout << "Memory after releasing read_to_node_vector:\n\t" << get_memory_use() << "MB\n";

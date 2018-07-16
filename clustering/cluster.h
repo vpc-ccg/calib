@@ -74,10 +74,14 @@ typedef std::unordered_map<barcode_t, std::vector<barcode_id_t> > masked_barcode
 void cluster();
 void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists);
 std::string mask_barcode(const std::string& barcode, const std::vector<bool>& mask);
-void process_lsh(masked_barcode_to_barcode_id_unordered_map &lsh,
-    node_id_to_node_id_vector_of_vectors &adjacency_lists,
-    uint8_t bucket_id_reminder);
-void process_identical_barcode_nodes(node_id_to_node_id_vector_of_vectors &adjacency_lists, uint8_t barcode_id_reminder);
+void process_lsh(masked_barcode_to_barcode_id_unordered_map* lsh_ptr,
+                    node_id_to_node_id_vector_of_vectors* adjacency_lists_ptr,
+                    uint8_t bucket_id_reminder);
+void process_identical_barcode_nodes(node_id_to_node_id_vector_of_vectors* adjacency_lists_ptr, uint8_t barcode_id_reminder);
+// void process_lsh0(masked_barcode_to_barcode_id_unordered_map &lsh,
+//                     node_id_to_node_id_vector_of_vectors &adjacency_lists,
+//                     uint8_t bucket_id_remainder);
+// void process_identical_barcode_nodes0(node_id_to_node_id_vector_of_vectors &adjacency_lists, uint8_t barcode_id_remainder);
 std::vector<node_id_t> get_good_neighbors(node_id_t node, const std::vector<node_id_t>& neighbors);
 bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id);
 void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists);

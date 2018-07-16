@@ -16,7 +16,7 @@ cc?=g++
 python3?= PYTHONHASHSEED=0 python3
 cc_files?= $(clustering_path)*.cc $(clustering_path)*.h
 cc_flags?=
-cc_args?= $(cc_flags) -O3 -std=c++11
+cc_args?= $(cc_flags)-std=c++11 -O3 -pthread
 art_illumina?=art_illumina
 
 

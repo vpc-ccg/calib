@@ -4,6 +4,7 @@
 
 #include "cluster.h"
 
+#include <thread>
 #include <stack>
 #include <algorithm>
 #include <time.h>
@@ -67,11 +68,11 @@ void cluster(){
 
 }
 
-void process_lsh(masked_barcode_to_barcode_id_unordered_map &lsh,
-                    node_id_to_node_id_vector_of_vectors &adjacency_lists,
-                    uint8_t bucket_id_reminder) {
-    for (size_t bucket_id = bucket_id_reminder; bucket_id < lsh.bucket_count(); bucket_id+=1) {
-        for (auto kv = lsh.begin(bucket_id); kv!= lsh.end(bucket_id); kv++) {
+void process_lsh(masked_barcode_to_barcode_id_unordered_map* lsh_ptr,
+                    node_id_to_node_id_vector_of_vectors* adjacency_lists_ptr,
+                    uint8_t bucket_id_remainder) {
+    for (size_t bucket_id = bucket_id_remainder; bucket_id < (*lsh_ptr).bucket_count(); bucket_id+=thread_count) {
+        for (auto kv = (*lsh_ptr).begin(bucket_id); kv!= (*lsh_ptr).end(bucket_id); kv++) {
             for (barcode_id_t bid: kv->second){
                 for (node_id_t node : barcode_to_nodes_vector[bid]) {
                     for (barcode_id_t bid_o: kv->second){
@@ -80,11 +81,11 @@ void process_lsh(masked_barcode_to_barcode_id_unordered_map &lsh,
                         }
                         vector<node_id_t> good_neighbors = get_good_neighbors(node, barcode_to_nodes_vector[bid_o]);
                         vector<node_id_t> result;
-                        set_union(adjacency_lists[node].begin(), adjacency_lists[node].end(),
+                        set_union((*adjacency_lists_ptr)[node].begin(), (*adjacency_lists_ptr)[node].end(),
                         good_neighbors.begin(), good_neighbors.end(),
                         back_inserter(result)
                     );
-                    adjacency_lists[node] = move(result);
+                    (*adjacency_lists_ptr)[node] = move(result);
                     }
                 }
             }
@@ -92,19 +93,19 @@ void process_lsh(masked_barcode_to_barcode_id_unordered_map &lsh,
     }
 }
 
-void process_identical_barcode_nodes(node_id_to_node_id_vector_of_vectors &adjacency_lists, uint8_t barcode_id_reminder) {
+void process_identical_barcode_nodes(node_id_to_node_id_vector_of_vectors* adjacency_lists_ptr, uint8_t barcode_id_remainder) {
     if (!silent) {
-        cout << "Adding edges between nodes of identical barcodes\n";
+        cout << "Adding edges between nodes of identical barcodes with thread " << barcode_id_remainder << "\n";
     }
-    for (barcode_id_t i = barcode_id_reminder; i < barcode_count; i+=1) {
+    for (barcode_id_t i = barcode_id_remainder; i < barcode_count; i+=thread_count) {
         for (node_id_t node : barcode_to_nodes_vector[i]) {
             vector<node_id_t> good_neighbors = get_good_neighbors(node, barcode_to_nodes_vector[i]);
             vector<node_id_t> result;
-            set_union(adjacency_lists[node].begin(), adjacency_lists[node].end(),
+            set_union((*adjacency_lists_ptr)[node].begin(), (*adjacency_lists_ptr)[node].end(),
                       good_neighbors.begin(), good_neighbors.end(),
                       back_inserter(result)
                       );
-            adjacency_lists[node] = move(result);
+            (*adjacency_lists_ptr)[node] = move(result);
         }
     }
 }
@@ -132,6 +133,10 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     }
     time_t start;
     time_t build_time = 0, process_time = 0;
+    thread *thread_array;
+    if (thread_count > 1) {
+        thread_array = new thread[thread_count];
+    }
     do {
         start = time(NULL);
         masked_barcode_to_barcode_id_unordered_map lsh;
@@ -154,7 +159,18 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
             cout << "Building LSH took: " << difftime(time(NULL), start) << "\n";
         }
         start = time(NULL);
-        process_lsh(lsh, adjacency_lists, 0);
+        if (thread_count > 1) {
+            for (size_t t_id = 0; t_id < thread_count; t_id++) {
+                cerr << "Creating thread " << t_id << "\n";
+                thread_array[t_id] = thread(process_lsh, &lsh, &adjacency_lists, t_id);
+            }
+            for (size_t t_id = 0; t_id < thread_count; t_id++) {
+                cerr << "Joining thread " << t_id << "\n";
+                thread_array[t_id].join();
+            }
+        } else {
+            process_lsh(&lsh, &adjacency_lists, 0);
+        }
         process_time += difftime(time(NULL), start);
         if (!silent) {
             cout << "Processing LSH took: " << difftime(time(NULL), start) << "\n";
@@ -162,7 +178,17 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     } while (std::next_permutation(mask.begin(), mask.end()));
     // barcodes are no longer needed
     barcodes.clear();
-    process_identical_barcode_nodes(adjacency_lists, 0);
+    if (thread_count > 1) {
+        for (size_t t_id = 0; t_id < thread_count; t_id++) {
+            thread_array[t_id] = thread(process_identical_barcode_nodes, &adjacency_lists, t_id);
+        }
+        for (size_t t_id = 0; t_id < thread_count; t_id++) {
+            thread_array[t_id].join();
+        }
+        delete [] thread_array;
+    } else {
+        process_identical_barcode_nodes(&adjacency_lists, 0);
+    }
     // barcode id to node id's is no longer needed
     barcode_to_nodes_vector.clear();
     if (!silent) {
