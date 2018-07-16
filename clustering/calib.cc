@@ -24,6 +24,9 @@ int main(int argc, char *argv[]){
         cout << "Extracting minimizers and barcodes...\n";
     }
     extract_barcodes_and_minimizers();
+    if (!silent){
+        cout << "Memory after exiting extract_barcodes_and_minimizers():\n\t" << get_memory_use() << "MB\n";
+    }
 
     if (!silent) {
         cout << "Clustering...\n";

@@ -124,7 +124,22 @@ void print_help(){
     cout << "\t-h\t--help\n";
 }
 
+// Memory use in MB
+int get_memory_use(){
+    FILE* file = fopen("/proc/self/status", "r");
+    int result = -1;
+    char line[128];
 
-// void print_flags(ofstream &out){
-//
-// }
+    while (fgets(line, 128, file) != NULL){
+        if (strncmp(line, "VmRSS:", 6) == 0){
+            int i = strlen(line);
+            const char* p = line;
+            while (*p <'0' || *p > '9') p++;
+            line[i-3] = '\0';
+            result = atoi(p);
+            break;
+        }
+    }
+    fclose(file);
+    return result/1024;
+}

@@ -6,6 +6,9 @@
 #include <fstream>
 #include <stdio.h>
 #include <vector>
+#include <stdlib.h>
+#include <string.h>
+
 
 #ifndef CALIB_GLOBAL_H
 #define CALIB_GLOBAL_H
@@ -27,5 +30,6 @@ extern bool silent;
 extern bool keep_qual;
 extern std::ofstream dog;
 
+int get_memory_use();
 
 #endif //CALIB_GLOBAL_H

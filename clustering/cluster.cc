@@ -22,6 +22,9 @@ char masked_barcode_buffer[150];
 bool valid_base [ASCII_SIZE];
 void cluster(){
     node_id_to_node_id_vector_of_vectors adjacency_lists(node_count);
+    if (!silent){
+        cout << "Memory after reserving adjacency_lists:\n\t" << get_memory_use() << "MB\n";
+    }
 
     time_t start;
 
@@ -33,7 +36,9 @@ void cluster(){
     if (!silent) {
         cout << "Adding edges due to barcodes similarity took: " << difftime(time(NULL), start) << "\n";
     }
-    dog << "Adding edges due to barcodes similarity took: " << difftime(time(NULL), start) << "\n";
+    if (!silent){
+        cout << "Memory after adding edges:\n\t" << get_memory_use() << "MB\n";
+    }
 
     if (!silent) {
         cout << "Extracting clusters\n";
@@ -43,8 +48,13 @@ void cluster(){
     if (!silent) {
         cout << "Extracting clusters took: " << difftime(time(NULL), start) << "\n";
     }
-    dog << "Extracting clusters took: " << difftime(time(NULL), start) << "\n";
-    adjacency_lists.clear();
+    if (!silent){
+        cout << "Memory extracting clusters:\n\t" << get_memory_use() << "MB\n";
+    }
+    node_id_to_node_id_vector_of_vectors().swap(adjacency_lists);
+    if (!silent){
+        cout << "Memory after releasing adjacency_lists:\n\t" << get_memory_use() << "MB\n";
+    }
 
     if (!silent) {
         cout << "Outputting clusters\n";
@@ -54,8 +64,49 @@ void cluster(){
     if (!silent) {
         cout << "Outputting clusters took: " << difftime(time(NULL), start) << "\n";
     }
-    dog << "Outputting clusters took: " << difftime(time(NULL), start) << "\n";
 
+}
+
+void process_lsh(masked_barcode_to_barcode_id_unordered_map &lsh,
+                    node_id_to_node_id_vector_of_vectors &adjacency_lists,
+                    uint8_t bucket_id_reminder) {
+    for (size_t bucket_id = bucket_id_reminder; bucket_id < lsh.bucket_count(); bucket_id+=1) {
+        for (auto kv = lsh.begin(bucket_id); kv!= lsh.end(bucket_id); kv++) {
+            for (barcode_id_t bid: kv->second){
+                for (node_id_t node : barcode_to_nodes_vector[bid]) {
+                    for (barcode_id_t bid_o: kv->second){
+                        if (bid == bid_o){
+                            continue;
+                        }
+                        vector<node_id_t> good_neighbors = get_good_neighbors(node, barcode_to_nodes_vector[bid_o]);
+                        vector<node_id_t> result;
+                        set_union(adjacency_lists[node].begin(), adjacency_lists[node].end(),
+                        good_neighbors.begin(), good_neighbors.end(),
+                        back_inserter(result)
+                    );
+                    adjacency_lists[node] = move(result);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void process_identical_barcode_nodes(node_id_to_node_id_vector_of_vectors &adjacency_lists, uint8_t barcode_id_reminder) {
+    if (!silent) {
+        cout << "Adding edges between nodes of identical barcodes\n";
+    }
+    for (barcode_id_t i = barcode_id_reminder; i < barcode_count; i+=1) {
+        for (node_id_t node : barcode_to_nodes_vector[i]) {
+            vector<node_id_t> good_neighbors = get_good_neighbors(node, barcode_to_nodes_vector[i]);
+            vector<node_id_t> result;
+            set_union(adjacency_lists[node].begin(), adjacency_lists[node].end(),
+                      good_neighbors.begin(), good_neighbors.end(),
+                      back_inserter(result)
+                      );
+            adjacency_lists[node] = move(result);
+        }
+    }
 }
 
 void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
@@ -81,7 +132,6 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     }
     time_t start;
     time_t build_time = 0, process_time = 0;
-    // int template_id
     do {
         start = time(NULL);
         masked_barcode_to_barcode_id_unordered_map lsh;
@@ -92,7 +142,6 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
             }
             cout << current_mask_bin << "\n";
         }
-        dog << mask_barcode(string(template_barcode), mask) << "\n";
         string masked_barcode;
         for (barcode_id_t i = 0; i < barcode_count; i++) {
             masked_barcode = mask_barcode(barcodes[i], mask);
@@ -104,60 +153,22 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
         if (!silent) {
             cout << "Building LSH took: " << difftime(time(NULL), start) << "\n";
         }
-        dog << "Building LSH took: " << difftime(time(NULL), start) << "\n";
         start = time(NULL);
-        for (auto bucket : lsh) {
-            for (barcode_id_t bid: bucket.second){
-                for (node_id_t node : barcode_to_nodes_vector[bid]) {
-                    for (barcode_id_t bid_o: bucket.second){
-                        if (bid == bid_o){
-                            continue;
-                        }
-                        vector<node_id_t> good_neighbors = get_good_neighbors(node, barcode_to_nodes_vector[bid_o]);
-                        vector<node_id_t> result;
-                        set_union(adjacency_lists[node].begin(), adjacency_lists[node].end(),
-                                  good_neighbors.begin(), good_neighbors.end(),
-                                  back_inserter(result)
-                                  );
-                        adjacency_lists[node] = move(result);
-                    }
-                }
-            }
-        }
+        process_lsh(lsh, adjacency_lists, 0);
         process_time += difftime(time(NULL), start);
         if (!silent) {
             cout << "Processing LSH took: " << difftime(time(NULL), start) << "\n";
         }
-        dog << "Processing LSH took: " << difftime(time(NULL), start) << "\n";
     } while (std::next_permutation(mask.begin(), mask.end()));
     // barcodes are no longer needed
     barcodes.clear();
-    if (!silent) {
-        cout << "Adding edges between nodes of identical barcodes\n";
-    }
-    dog << "Adding edges between nodes of identical barcodes\n";
-    for (barcode_id_t i = 0; i < barcode_count; i++) {
-        for (node_id_t node : barcode_to_nodes_vector[i]) {
-            vector<node_id_t> good_neighbors = get_good_neighbors(node, barcode_to_nodes_vector[i]);
-            vector<node_id_t> result;
-            set_union(adjacency_lists[node].begin(), adjacency_lists[node].end(),
-                      good_neighbors.begin(), good_neighbors.end(),
-                      back_inserter(result)
-                      );
-            adjacency_lists[node] = move(result);
-        }
-    }
+    process_identical_barcode_nodes(adjacency_lists, 0);
     // barcode id to node id's is no longer needed
     barcode_to_nodes_vector.clear();
-
     if (!silent) {
         cout << "Building all LSH took: " << build_time << "\n";
-    }
-    dog << "Building all LSH took: " << build_time << "\n";
-    if (!silent) {
         cout << "Processing all LSH took: " << process_time << "\n";
     }
-    dog << "Processing all LSH took: " << process_time << "\n";
 }
 
 string mask_barcode(const string& barcode, const vector<bool>& mask){
