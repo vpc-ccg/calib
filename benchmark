@@ -7,7 +7,8 @@ RAW_AWK := awk
 AWK := $(RAW_AWK) -f
 benchmark_aux_path = $(my_current_dir)aux
 GNU_TIME?=$(benchmark_aux_path)/other_tools/time-1.9/time
-GET_TIME := $(benchmark_aux_path)/get_time.awk
+GET_USER_TIME := $(benchmark_aux_path)/get_user_time.awk
+GET_WALL_TIME := $(benchmark_aux_path)/get_wall_time.awk
 GET_MEM := $(benchmark_aux_path)/get_mem.awk
 GET_ACCURACY := $(benchmark_aux_path)/get_accuracy.awk
 CONVERT_CALIB := $(benchmark_aux_path)/convert_calib_to_cluster.sh
@@ -85,15 +86,16 @@ make_dunovo_log_file: $(dunovo_log_file)
 make_rainbow_log_file: $(rainbow_log_file)
 
 calib_log: $(calib_log_file) $(calib_accuracy)
-	$(eval my_time := $(shell $(AWK) $(GET_TIME) $(calib_time)))
+	$(eval my_user_time:= $(shell $(AWK) $(GET_USER_TIME) $(calib_time)))
+	$(eval my_wall_time:= $(shell $(AWK) $(GET_WALL_TIME) $(calib_time)))
 	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(calib_time)))
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(calib_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
-	$(ECHO) "$(calib_log_comment)\t$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(barcode_length)\t$(minimizers_num)\t$(kmer_size)\t$(barcode_error_tolerance)\t$(minimizers_threshold)" >> $(calib_log_file);
-	rm -f $(calib_accuracy) $(calib_time) $(cluster_file) $(cluster_file).log $(cluster_file).node.log $(cluster_file).cluster;
+	$(ECHO) "$(calib_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t$(barcode_length)\t$(minimizers_num)\t$(kmer_size)\t$(barcode_error_tolerance)\t$(minimizers_threshold)" >> $(calib_log_file);
+	#rm -f $(calib_accuracy) $(calib_time) $(cluster_file) $(cluster_file).log $(cluster_file).node.log $(cluster_file).cluster;
 
 $(calib_log_file):
-	$(ECHO) "log_comment\tmy_timestamp\ttime\tmem\tARI\tbarcode_length\tminimizers_num\tkmer_size\tbarcode_error_tolerance\tminimizers_threshold" > $(calib_log_file)
+	$(ECHO) "log_comment\tmy_timestamp\tuser_time\twall_time\tmem\tARI\tbarcode_length\tminimizers_num\tkmer_size\tbarcode_error_tolerance\tminimizers_threshold" > $(calib_log_file)
 
 $(calib_accuracy): $(calib_time)
 	$(CONVERT_CALIB) $(cluster_file) > $(cluster_file).cluster;
@@ -117,15 +119,16 @@ $(calib_time): $(GNU_TIME) calib simulate
 
 # CD-HIT-EST
 cdhitest_log: $(cdhitest_log_file) $(cdhitest_accuracy)
-	$(eval my_time := $(shell $(AWK) $(GET_TIME) $(cdhitest_time)))
+	$(eval my_user_time:= $(shell $(AWK) $(GET_USER_TIME) $(cdhitest_time)))
+	$(eval my_wall_time:= $(shell $(AWK) $(GET_WALL_TIME) $(calib_time)))
 	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(cdhitest_time)))
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(cdhitest_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
-	$(ECHO) "$(cdhitest_log_comment)\t$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(cdhitest_dist)" >> $(cdhitest_log_file);
-	rm -f $(cdhitest_accuracy) $(cdhitest_time) $(cdhitest_cluster) $(cdhitest_output).1.fastq.clstr $(cdhitest_output).1.fastq $(cdhitest_output).2.fastq;
+	$(ECHO) "$(cdhitest_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t$(cdhitest_dist)" >> $(cdhitest_log_file);
+	#rm -f $(cdhitest_accuracy) $(cdhitest_time) $(cdhitest_cluster) $(cdhitest_output).1.fastq.clstr $(cdhitest_output).1.fastq $(cdhitest_output).2.fastq;
 
 $(cdhitest_log_file):
-	$(ECHO) "log_comment\tmy_timestamp\ttime\tmem\tARI\tcdhitest_dist" > $(cdhitest_log_file)
+	$(ECHO) "log_comment\tmy_timestamp\tuser_time\twall_time\tmem\tARI\tcdhitest_dist" > $(cdhitest_log_file)
 
 $(cdhitest_accuracy): $(cdhitest_time)
 	$(CONVERT_CDHITEST) $(cdhitest_output).1.fastq.clstr > $(cdhitest_cluster);
@@ -151,15 +154,16 @@ cdhitest:
 
 # Starcode
 starcode_log: $(starcode_log_file) $(starcode_accuracy)
-	$(eval my_time := $(shell $(AWK) $(GET_TIME) $(starcode_time)))
+	$(eval my_user_time:= $(shell $(AWK) $(GET_USER_TIME) $(starcode_time)))
+	$(eval my_wall_time:= $(shell $(AWK) $(GET_WALL_TIME) $(calib_time)))
 	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(starcode_time)))
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(starcode_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
-	$(ECHO) "$(starcode_log_comment)\t$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(starcode_dist)\t$(starcode_ratio)" >> $(starcode_log_file);
-	rm -f $(starcode_accuracy) $(starcode_time) $(starcode_cluster) $(starcode_output);
+	$(ECHO) "$(starcode_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t$(starcode_dist)\t$(starcode_ratio)" >> $(starcode_log_file);
+	#rm -f $(starcode_accuracy) $(starcode_time) $(starcode_cluster) $(starcode_output);
 
 $(starcode_log_file):
-	$(ECHO) "log_comment\tmy_timestamp\ttime\tmem\tARI\tstarcode_dist\tstarcode_ratio" > $(starcode_log_file)
+	$(ECHO) "log_comment\tmy_timestamp\tuser_time\twall_time\tmem\tARI\tstarcode_dist\tstarcode_ratio" > $(starcode_log_file)
 
 $(starcode_accuracy): $(starcode_time)
 	$(CONVERT_STARCODE) $(starcode_output) > $(starcode_cluster);
@@ -184,15 +188,16 @@ starcode:
 
 # Du Novo
 dunovo_log: $(dunovo_log_file) $(dunovo_accuracy)
-	$(eval my_time := $(shell $(AWK) $(GET_TIME) $(dunovo_time)))
+	$(eval my_user_time:= $(shell $(AWK) $(GET_USER_TIME) $(dunovo_time)))
+	$(eval my_wall_time:= $(shell $(AWK) $(GET_WALL_TIME) $(calib_time)))
 	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(dunovo_time)))
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(dunovo_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
-	$(ECHO) "$(dunovo_log_comment)\t$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(dunovo_dist)" >> $(dunovo_log_file);
-	rm -f $(dunovo_accuracy) $(dunovo_time) $(dunovo_cluster) $(dunovo_output);
+	$(ECHO) "$(dunovo_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t$(dunovo_dist)" >> $(dunovo_log_file);
+	#rm -f $(dunovo_accuracy) $(dunovo_time) $(dunovo_cluster) $(dunovo_output);
 
 $(dunovo_log_file):
-	$(ECHO) "log_comment\tmy_timestamp\ttime\tmem\tARI\tdunovo_dist" > $(dunovo_log_file)
+	$(ECHO) "log_comment\tmy_timestamp\tuser_time\twall_time\tmem\tARI\tdunovo_dist" > $(dunovo_log_file)
 
 $(dunovo_accuracy): $(dunovo_time)
 	$(CONVERT_DUNOVO) $(dunovo_output) > $(dunovo_cluster);
@@ -222,15 +227,16 @@ dunovo:
 
 # Rainbow
 rainbow_log: $(rainbow_log_file) $(rainbow_accuracy)
-	$(eval my_time := $(shell $(AWK) $(GET_TIME) $(rainbow_time)))
+	$(eval my_user_time:= $(shell $(AWK) $(GET_USER_TIME) $(rainbow_time)))
+	$(eval my_wall_time:= $(shell $(AWK) $(GET_WALL_TIME) $(calib_time)))
 	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(rainbow_time)))
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(rainbow_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
-	$(ECHO) "$(rainbow_log_comment)\t$(my_timestamp)\t$(my_time)\t$(my_mem)\t$(my_accuracy)\t$(rainbow_mismatch)\t$(rainbow_div)" >> $(rainbow_log_file);
-	rm -f $(rainbow_accuracy) $(rainbow_time) $(rainbow_cluster) $(rainbow_output);
+	$(ECHO) "$(rainbow_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t$(rainbow_mismatch)\t$(rainbow_div)" >> $(rainbow_log_file);
+	#rm -f $(rainbow_accuracy) $(rainbow_time) $(rainbow_cluster) $(rainbow_output);
 
 $(rainbow_log_file):
-	$(ECHO) "log_comment\tmy_timestamp\ttime\tmem\tARI\trainbow_mismatch\trainbow_div" > $(rainbow_log_file)
+	$(ECHO) "log_comment\tmy_timestamp\tuser_time\twall_time\tmem\tARI\trainbow_mismatch\trainbow_div" > $(rainbow_log_file)
 
 $(rainbow_accuracy): $(rainbow_time)
 	$(CONVERT_RAINBOW) $(rainbow_output) > $(rainbow_cluster);
@@ -266,7 +272,7 @@ $(GNU_TIME):
 		-O $(benchmark_aux_path)/other_tools/time-1.9.tar.gz;
 	tar -xzf $(benchmark_aux_path)/other_tools/time-1.9.tar.gz \
 		-C $(benchmark_aux_path)/other_tools/;
-	rm -f $(benchmark_aux_path)/other_tools/time-1.9.tar.gz;
+	rm $(benchmark_aux_path)/other_tools/time-1.9.tar.gz -f;
 	cd $(benchmark_aux_path)/other_tools/time-1.9; \
 		./configure; \
 		cd - ;
