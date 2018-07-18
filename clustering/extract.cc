@@ -27,10 +27,13 @@ typedef unordered_map<NodePtr, vector<read_id_t>, NodePtrHash, NodePtrEqual> nod
 typedef unordered_map<barcode_t, vector<node_id_t> > barcode_to_node_id_unordered_map;
 
 read_id_to_node_id_vector read_to_node_vector;
-node_id_to_minimizers_vector node_to_minimizers;
-barcode_vector barcodes;
-barcode_id_to_node_ids_vector barcode_to_nodes_vector;
+// // These data structures are accessed by different threads; create them on heap
+barcode_vector* barcodes_ptr;
+barcode_id_to_node_ids_vector* barcode_to_nodes_vector_ptr;
+node_id_to_minimizers_vector* node_to_minimizers_ptr;
 
+// Varialble to encode DNA nucleotides into 2-bits and keeping track
+// of segments that don't have valid kmers (all kmers have >= 1 N)
 minimizer_t encode [ASCII_SIZE];
 minimizer_t invalid_kmer = (minimizer_t) -1;
 
@@ -57,6 +60,11 @@ string minimizer_t_to_dna(minimizer_t minimizer, size_t size) {
 }
 
 void extract_barcodes_and_minimizers() {
+    // Create those on the heap
+    barcodes_ptr = new barcode_vector();
+    barcode_to_nodes_vector_ptr = new barcode_id_to_node_ids_vector();
+    node_to_minimizers_ptr = new node_id_to_minimizers_vector();
+
     node_to_read_id_unordered_map node_to_read_map;
 
     for (int i = 0; i < ASCII_SIZE; i++) {
@@ -149,7 +157,7 @@ void extract_barcodes_and_minimizers() {
     }
 
     read_to_node_vector.reserve(read_count);
-    node_to_minimizers.reserve(node_to_read_map.size());
+    (*node_to_minimizers_ptr).reserve(node_to_read_map.size());
 
     if (!silent){
         cout << "Memory after reserving for read_to_node_vector & node_to_minimizers:\n\t" << get_memory_use() << "MB\n";
@@ -159,7 +167,7 @@ void extract_barcodes_and_minimizers() {
     barcode_to_node_id_unordered_map barcode_to_node_map;
     for (auto kv : node_to_read_map) {
         NodePtr current_node_ptr = kv.first;
-        node_to_minimizers.emplace_back(move(current_node_ptr->minimizers));
+        (*node_to_minimizers_ptr).emplace_back(move(current_node_ptr->minimizers));
         barcode_to_node_map[current_node_ptr->barcode].push_back(node_count);
         delete current_node_ptr;
         for (read_id_t rid : kv.second) {
@@ -176,16 +184,16 @@ void extract_barcodes_and_minimizers() {
     }
 
     barcode_count = barcode_to_node_map.size();
-    barcodes.reserve(barcode_count);
-    barcode_to_nodes_vector.reserve(barcode_count);
+    (*barcodes_ptr).reserve(barcode_count);
+    (*barcode_to_nodes_vector_ptr).reserve(barcode_count);
     if (!silent){
         cout << "Memory after reserving barcode_to_nodes_vector:\n\t" << get_memory_use() << "MB\n";
     }
 
     for (auto kv : barcode_to_node_map) {
-        barcodes.emplace_back(move(kv.first));
+        (*barcodes_ptr).emplace_back(move(kv.first));
         sort(kv.second.begin(), kv.second.end());
-        barcode_to_nodes_vector.emplace_back(move(kv.second));
+        (*barcode_to_nodes_vector_ptr).emplace_back(move(kv.second));
     }
     if (!silent){
         cout << "Memory after filling barcodes & barcode_to_nodes_vector:\n\t" << get_memory_use() << "MB\n";
@@ -200,23 +208,6 @@ void extract_barcodes_and_minimizers() {
         cout << "Node count: " << node_count << "\n";
         cout << "Barcode count: " << barcode_count << "\n";
     }
-    // read_id_to_node_id_vector().swap(read_to_node_vector);
-    // if (!silent){
-    //     cout << "Memory after releasing read_to_node_vector:\n\t" << get_memory_use() << "MB\n";
-    // }
-    // node_id_to_minimizers_vector().swap(node_to_minimizers);
-    // if (!silent){
-    //     cout << "Memory after releasing node_to_minimizers:\n\t" << get_memory_use() << "MB\n";
-    // }
-    // barcode_vector().swap(barcodes);
-    // if (!silent){
-    //     cout << "Memory after releasing barcodes:\n\t" << get_memory_use() << "MB\n";
-    // }
-    // barcode_id_to_node_ids_vector().swap(barcode_to_nodes_vector);
-    // if (!silent){
-    //     cout << "Memory after releasing barcode_to_nodes_vector:\n\t" << get_memory_use() << "MB\n";
-    // }
-    // return;
 }
 
 // Extract the lexicographically minimum k-mer in a given string with start and range

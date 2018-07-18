@@ -58,14 +58,20 @@ extern node_id_to_cluster_id_vector node_to_cluster_vector;
 // to find the node id of a read, use this
 typedef std::vector<node_id_t> read_id_to_node_id_vector;
 extern read_id_to_node_id_vector read_to_node_vector;
-// to find nodes of a unique barcode
+
+
+// // These data structures are read accessible by different threads; create them on heap
+// list of barcodes
 typedef std::vector<barcode_t> barcode_vector;
-extern barcode_vector barcodes;
+extern barcode_vector* barcodes_ptr;
+// to find nodes of a unique barcode
 typedef std::vector<std::vector<node_id_t> > barcode_id_to_node_ids_vector;
-extern barcode_id_to_node_ids_vector barcode_to_nodes_vector;
+extern barcode_id_to_node_ids_vector* barcode_to_nodes_vector_ptr;
 // to find minimizers of a node ID, use this
 typedef std::vector<std::vector<minimizer_t> > node_id_to_minimizers_vector;
-extern node_id_to_minimizers_vector node_to_minimizers;
+extern node_id_to_minimizers_vector* node_to_minimizers_ptr;
+
+// // These types are to be used by different clustering methods
 // Use this for the adjacency lists representation of the graph
 typedef std::vector<std::vector<node_id_t> > node_id_to_node_id_vector_of_vectors;
 // Use this as an LSH dictionary to find similar barcodes
@@ -76,7 +82,7 @@ void barcode_similarity();
 std::string mask_barcode(const std::string& barcode, const std::vector<bool>& mask, char* masked_barcode_buffer);
 void merge_graphs(node_id_to_node_id_vector_of_vectors* local_graph_ptr);
 void *lsh_mask_pthread(void* args);
-void lsh_mask(std::vector<std::vector<bool> > all_masks, size_t mask_remainder);
+void lsh_mask(size_t mask_remainder);
 void process_lsh(masked_barcode_to_barcode_id_unordered_map* lsh_ptr);
 void process_identical_barcode_nodes(uint8_t barcode_id_reminder);
 std::vector<node_id_t> get_good_neighbors(node_id_t node, const std::vector<node_id_t>& neighbors);
