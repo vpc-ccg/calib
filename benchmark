@@ -37,6 +37,7 @@ starcode_accuracy=$(starcode_output_prefix)accuracy
 starcode_time=$(starcode_output_prefix)time
 
 rainbow?=$(benchmark_aux_path)/other_tools/rainbow/rainbow
+RAINBOW_RUN=$(benchmark_aux_path)/run_rainbow.sh
 rainbow_div?=false
 rainbow_mismatch?=4
 rainbow_params=mismatch_$(rainbow_mismatch).div_$(rainbow_div).
@@ -120,7 +121,7 @@ $(calib_time): $(GNU_TIME) calib simulate
 # CD-HIT-EST
 cdhitest_log: $(cdhitest_log_file) $(cdhitest_accuracy)
 	$(eval my_user_time:= $(shell $(AWK) $(GET_USER_TIME) $(cdhitest_time)))
-	$(eval my_wall_time:= $(shell $(AWK) $(GET_WALL_TIME) $(calib_time)))
+	$(eval my_wall_time:= $(shell $(AWK) $(GET_WALL_TIME) $(cdhitest_time)))
 	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(cdhitest_time)))
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(cdhitest_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
@@ -155,7 +156,7 @@ cdhitest:
 # Starcode
 starcode_log: $(starcode_log_file) $(starcode_accuracy)
 	$(eval my_user_time:= $(shell $(AWK) $(GET_USER_TIME) $(starcode_time)))
-	$(eval my_wall_time:= $(shell $(AWK) $(GET_WALL_TIME) $(calib_time)))
+	$(eval my_wall_time:= $(shell $(AWK) $(GET_WALL_TIME) $(starcode_time)))
 	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(starcode_time)))
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(starcode_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
@@ -189,7 +190,7 @@ starcode:
 # Du Novo
 dunovo_log: $(dunovo_log_file) $(dunovo_accuracy)
 	$(eval my_user_time:= $(shell $(AWK) $(GET_USER_TIME) $(dunovo_time)))
-	$(eval my_wall_time:= $(shell $(AWK) $(GET_WALL_TIME) $(calib_time)))
+	$(eval my_wall_time:= $(shell $(AWK) $(GET_WALL_TIME) $(dunovo_time)))
 	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(dunovo_time)))
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(dunovo_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
@@ -228,7 +229,7 @@ dunovo:
 # Rainbow
 rainbow_log: $(rainbow_log_file) $(rainbow_accuracy)
 	$(eval my_user_time:= $(shell $(AWK) $(GET_USER_TIME) $(rainbow_time)))
-	$(eval my_wall_time:= $(shell $(AWK) $(GET_WALL_TIME) $(calib_time)))
+	$(eval my_wall_time:= $(shell $(AWK) $(GET_WALL_TIME) $(rainbow_time)))
 	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(rainbow_time)))
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(rainbow_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
@@ -247,22 +248,14 @@ $(rainbow_accuracy): $(rainbow_time)
 
 
 $(rainbow_time): $(GNU_TIME) rainbow simulate
-ifeq ($(rainbow_div),false)
 	$(GNU_TIME) -v -o $(rainbow_time) \
-		$(rainbow) cluster \
-			-1 $(forward_reads) \
-			-2 $(reverse_reads) \
-			-m $(rainbow_mismatch) \
-			> $(rainbow_output)
-else
-	$(GNU_TIME) -v -o $(rainbow_time) \
-		$(rainbow) cluster \
-			-1 $(forward_reads) \
-			-2 $(reverse_reads) \
-			-m $(rainbow_mismatch) \
-			| $(rainbow) div \
-			> $(rainbow_output)
-endif
+		$(RAINBOW_RUN) \
+			$(rainbow) \
+			$(forward_reads) \
+			$(reverse_reads) \
+			$(rainbow_mismatch) \
+			$(rainbow_div) \
+			$(rainbow_output)
 
 rainbow:
 	make -C $(benchmark_aux_path)/other_tools/rainbow
