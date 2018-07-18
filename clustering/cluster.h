@@ -72,19 +72,16 @@ typedef std::vector<std::vector<node_id_t> > node_id_to_node_id_vector_of_vector
 typedef std::unordered_map<barcode_t, std::vector<barcode_id_t> > masked_barcode_to_barcode_id_unordered_map;
 
 void cluster();
-void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists);
-std::string mask_barcode(const std::string& barcode, const std::vector<bool>& mask);
-void process_lsh(masked_barcode_to_barcode_id_unordered_map* lsh_ptr,
-                    node_id_to_node_id_vector_of_vectors* adjacency_lists_ptr,
-                    uint8_t bucket_id_reminder);
-void process_identical_barcode_nodes(node_id_to_node_id_vector_of_vectors* adjacency_lists_ptr, uint8_t barcode_id_reminder);
-// void process_lsh0(masked_barcode_to_barcode_id_unordered_map &lsh,
-//                     node_id_to_node_id_vector_of_vectors &adjacency_lists,
-//                     uint8_t bucket_id_remainder);
-// void process_identical_barcode_nodes0(node_id_to_node_id_vector_of_vectors &adjacency_lists, uint8_t barcode_id_remainder);
+void barcode_similarity();
+std::string mask_barcode(const std::string& barcode, const std::vector<bool>& mask, char* masked_barcode_buffer);
+void merge_graphs(node_id_to_node_id_vector_of_vectors* local_graph_ptr);
+void *lsh_mask_pthread(void* args);
+void lsh_mask(std::vector<std::vector<bool> > all_masks, size_t mask_remainder);
+void process_lsh(masked_barcode_to_barcode_id_unordered_map* lsh_ptr);
+void process_identical_barcode_nodes(uint8_t barcode_id_reminder);
 std::vector<node_id_t> get_good_neighbors(node_id_t node, const std::vector<node_id_t>& neighbors);
 bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id);
-void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists);
+void extract_clusters();
 void output_clusters();
 
 #endif //CLUSTER_H

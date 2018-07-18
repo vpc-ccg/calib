@@ -4,7 +4,8 @@
 
 #include "cluster.h"
 
-#include <thread>
+#include <pthread.h>
+#include <mutex>
 #include <stack>
 #include <algorithm>
 #include <time.h>
@@ -14,26 +15,23 @@
 
 using namespace std;
 
+
 // extern variables declarations
 cluster_id_t cluster_count = 0;
 node_id_to_cluster_id_vector node_to_cluster_vector;
+
 // locally global variables
-char masked_barcode_buffer[150];
 #define ASCII_SIZE 256
 bool valid_base [ASCII_SIZE];
+node_id_to_node_id_vector_of_vectors graph;
+mutex graph_lock;
 void cluster(){
-    node_id_to_node_id_vector_of_vectors adjacency_lists(node_count);
-    if (!silent){
-        cout << "Memory after reserving adjacency_lists:\n\t" << get_memory_use() << "MB\n";
-    }
-
     time_t start;
-
     if (!silent) {
         cout << "Adding edges due to barcode barcode similarity\n";
     }
     start = time(NULL);
-    barcode_similarity(adjacency_lists);
+    barcode_similarity();
     if (!silent) {
         cout << "Adding edges due to barcodes similarity took: " << difftime(time(NULL), start) << "\n";
     }
@@ -45,17 +43,17 @@ void cluster(){
         cout << "Extracting clusters\n";
     }
     start = time(NULL);
-    extract_clusters(adjacency_lists);
+    extract_clusters();
     if (!silent) {
         cout << "Extracting clusters took: " << difftime(time(NULL), start) << "\n";
     }
     if (!silent){
         cout << "Memory extracting clusters:\n\t" << get_memory_use() << "MB\n";
     }
-    node_id_to_node_id_vector_of_vectors().swap(adjacency_lists);
-    if (!silent){
-        cout << "Memory after releasing adjacency_lists:\n\t" << get_memory_use() << "MB\n";
-    }
+    // node_id_to_node_id_vector_of_vectors().swap(graph);
+    // if (!silent){
+    //     cout << "Memory after releasing graph:\n\t" << get_memory_use() << "MB\n";
+    // }
 
     if (!silent) {
         cout << "Outputting clusters\n";
@@ -68,49 +66,153 @@ void cluster(){
 
 }
 
+struct thread_data {
+   vector<vector<bool> > all_masks;
+   size_t mask_remainder;
+};
+
+void *lsh_mask_pthread(void* args) {
+    struct thread_data *my_thread_data;
+    my_thread_data = (struct thread_data *) args;
+    lsh_mask(my_thread_data->all_masks, my_thread_data->mask_remainder);
+}
+
 void process_lsh(masked_barcode_to_barcode_id_unordered_map* lsh_ptr,
-                    node_id_to_node_id_vector_of_vectors* adjacency_lists_ptr,
-                    uint8_t bucket_id_remainder) {
-    for (size_t bucket_id = bucket_id_remainder; bucket_id < (*lsh_ptr).bucket_count(); bucket_id+=thread_count) {
-        for (auto kv = (*lsh_ptr).begin(bucket_id); kv!= (*lsh_ptr).end(bucket_id); kv++) {
-            for (barcode_id_t bid: kv->second){
-                for (node_id_t node : barcode_to_nodes_vector[bid]) {
-                    for (barcode_id_t bid_o: kv->second){
-                        if (bid == bid_o){
-                            continue;
-                        }
-                        vector<node_id_t> good_neighbors = get_good_neighbors(node, barcode_to_nodes_vector[bid_o]);
-                        vector<node_id_t> result;
-                        set_union((*adjacency_lists_ptr)[node].begin(), (*adjacency_lists_ptr)[node].end(),
-                        good_neighbors.begin(), good_neighbors.end(),
-                        back_inserter(result)
-                    );
-                    (*adjacency_lists_ptr)[node] = move(result);
+                    node_id_to_node_id_vector_of_vectors* local_graph_ptr) {
+    for (auto kv = (*lsh_ptr).begin(); kv!= (*lsh_ptr).end(); kv++) {
+        for (barcode_id_t bid: kv->second){
+            for (node_id_t node : barcode_to_nodes_vector[bid]) {
+                for (barcode_id_t bid_o: kv->second){
+                    if (bid == bid_o){
+                        continue;
                     }
+                    vector<node_id_t> good_neighbors = get_good_neighbors(node, barcode_to_nodes_vector[bid_o]);
+                    vector<node_id_t> result;
+                    set_union((*local_graph_ptr)[node].begin(), (*local_graph_ptr)[node].end(),
+                    good_neighbors.begin(), good_neighbors.end(),
+                    back_inserter(result)
+                );
+                (*local_graph_ptr)[node] = move(result);
                 }
             }
         }
     }
 }
 
-void process_identical_barcode_nodes(node_id_to_node_id_vector_of_vectors* adjacency_lists_ptr, uint8_t barcode_id_remainder) {
+void process_identical_barcode_nodes(uint8_t barcode_id_remainder) {
     if (!silent) {
-        cout << "Adding edges between nodes of identical barcodes with thread " << barcode_id_remainder << "\n";
+        stringstream stream;
+        stream << "Adding edges between nodes of identical barcodes with thread " << (int)barcode_id_remainder << "\n";
+        cout << stream.str();
     }
     for (barcode_id_t i = barcode_id_remainder; i < barcode_count; i+=thread_count) {
         for (node_id_t node : barcode_to_nodes_vector[i]) {
             vector<node_id_t> good_neighbors = get_good_neighbors(node, barcode_to_nodes_vector[i]);
             vector<node_id_t> result;
-            set_union((*adjacency_lists_ptr)[node].begin(), (*adjacency_lists_ptr)[node].end(),
+            set_union(graph[node].begin(), graph[node].end(),
                       good_neighbors.begin(), good_neighbors.end(),
                       back_inserter(result)
                       );
-            (*adjacency_lists_ptr)[node] = move(result);
+            graph[node] = move(result);
         }
     }
 }
 
-void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
+void lsh_mask(vector<vector<bool> > all_masks, size_t mask_remainder) {
+    time_t start;
+    time_t build_time = 0, process_time = 0;
+    graph_lock.lock();
+    cout << "Memory before reserving local graph on thread: " << mask_remainder << " \n\t" << get_memory_use() << "MB\n";
+    node_id_to_node_id_vector_of_vectors local_graph(node_count);
+    cout << "Memory after reserving local graph on thread: " << mask_remainder << " \n\t" << get_memory_use() << "MB\n";
+    graph_lock.unlock();
+
+    char masked_barcode_buffer[150];
+    masked_barcode_buffer[barcode_length*2-error_tolerance] = '\0';
+    for (int i = 0; i < all_masks.size(); i++) {
+        if (i % thread_count != mask_remainder) {
+            continue;
+        }
+        start = time(NULL);
+        vector<bool> mask = all_masks[i];
+        masked_barcode_to_barcode_id_unordered_map lsh;
+        if (!silent) {
+            string current_mask_bin;
+            for (bool p: mask) {
+                current_mask_bin += p ? "1" : "0";
+            }
+            stringstream stream;
+            stream << current_mask_bin << " is assigned to thread "<< mask_remainder << "\n";
+            cout << stream.str();
+
+        }
+        string masked_barcode;
+        for (barcode_id_t i = 0; i < barcode_count; i++) {
+            masked_barcode = mask_barcode(barcodes[i], mask, masked_barcode_buffer);
+            if (masked_barcode != "0"){
+                lsh[masked_barcode].push_back(i);
+            }
+        }
+        build_time += difftime(time(NULL), start);
+        if (!silent) {
+            stringstream stream;
+            stream << "Thread "<< mask_remainder <<" built LSH in: " << difftime(time(NULL), start) << "\n";
+            cout << stream.str();
+        }
+        start = time(NULL);
+        process_lsh(&lsh, &local_graph);
+        process_time += difftime(time(NULL), start);
+        if (!silent) {
+            stringstream stream;
+            stream << "Thread "<< mask_remainder <<" processed LSH in: " << difftime(time(NULL), start) << "\n";
+            cout << stream.str();
+        }
+    }
+
+    if (!silent) {
+        stringstream stream;
+        stream << "On thread " << mask_remainder << " building all LSH took: " << build_time << "\n";
+        stream << "On thread " << mask_remainder << " processing all LSH took: " << process_time << "\n";
+        cout << stream.str();
+    }
+    start = time(NULL);
+    if (!silent) {
+        stringstream stream;
+        stream << "On thread " << mask_remainder << " merging local graph with global graph\n";
+        cout << stream.str();
+    }
+    merge_graphs(&local_graph);
+    node_id_to_node_id_vector_of_vectors().swap(local_graph);
+    if (!silent) {
+        stringstream stream;
+        stream << "On thread " << mask_remainder << " merging took " << difftime(time(NULL), start) <<"\n";
+        cout << stream.str();
+    }
+
+}
+
+void merge_graphs(node_id_to_node_id_vector_of_vectors* local_graph_ptr) {
+    graph_lock.lock();
+    // cout << "Locked! Local is " << local_graph_ptr << "\n";
+    if (graph.size() == 0) {
+        // cout << "Global isn't there. Just moving from local " << local_graph_ptr << "\n";
+        graph = move(*local_graph_ptr);
+        graph_lock.unlock();
+        return;
+    }
+    for (node_id_t node = 0; node < node_count; node++) {
+        vector<node_id_t> result;
+        set_union((*local_graph_ptr)[node].begin(), (*local_graph_ptr)[node].end(),
+                    graph[node].begin(), graph[node].end(),
+                    back_inserter(result)
+        );
+        graph[node] = move(result);
+    }
+    // cout << "Gonna unlock! Local is " << local_graph_ptr << "\n";
+    graph_lock.unlock();
+}
+
+void barcode_similarity(){
     for (int i = 0; i < ASCII_SIZE; i++) {
         valid_base[i] = false;
     }
@@ -123,81 +225,74 @@ void barcode_similarity(node_id_to_node_id_vector_of_vectors &adjacency_lists){
     valid_base['g'] = true;
     valid_base['t'] = true;
 
+    size_t mask_count = 1;
     vector<bool> mask(barcode_length*2, false);
     std::fill(mask.begin() + error_tolerance, mask.end(), true);
-    masked_barcode_buffer[barcode_length*2-error_tolerance] = '\0';
+    for (int i = barcode_length*2; i > barcode_length*2 - error_tolerance; i--) {
+        mask_count *= i;
+        mask_count /= barcode_length*2 - i + 1;
+    }
+    vector<vector<bool> > all_masks;
+    all_masks.reserve(mask_count);
+    do{
+        all_masks.push_back(mask);
 
-    string template_barcode;
-    for (char c = 'A'; c < 'A' + barcode_length*2; c++) {
-        template_barcode += c;
-    }
-    time_t start;
-    time_t build_time = 0, process_time = 0;
-    thread *thread_array;
-    if (thread_count > 1) {
-        thread_array = new thread[thread_count];
-    }
-    do {
-        start = time(NULL);
-        masked_barcode_to_barcode_id_unordered_map lsh;
-        if (!silent) {
-            string current_mask_bin;
-            for (bool p: mask) {
-                current_mask_bin += p ? "1" : "0";
-            }
-            cout << current_mask_bin << "\n";
-        }
-        string masked_barcode;
-        for (barcode_id_t i = 0; i < barcode_count; i++) {
-            masked_barcode = mask_barcode(barcodes[i], mask);
-            if (masked_barcode != "0"){
-                lsh[masked_barcode].push_back(i);
-            }
-        }
-        build_time += difftime(time(NULL), start);
-        if (!silent) {
-            cout << "Building LSH took: " << difftime(time(NULL), start) << "\n";
-        }
-        start = time(NULL);
-        if (thread_count > 1) {
-            for (size_t t_id = 0; t_id < thread_count; t_id++) {
-                cerr << "Creating thread " << t_id << "\n";
-                thread_array[t_id] = thread(process_lsh, &lsh, &adjacency_lists, t_id);
-            }
-            for (size_t t_id = 0; t_id < thread_count; t_id++) {
-                cerr << "Joining thread " << t_id << "\n";
-                thread_array[t_id].join();
-            }
-        } else {
-            process_lsh(&lsh, &adjacency_lists, 0);
-        }
-        process_time += difftime(time(NULL), start);
-        if (!silent) {
-            cout << "Processing LSH took: " << difftime(time(NULL), start) << "\n";
-        }
     } while (std::next_permutation(mask.begin(), mask.end()));
-    // barcodes are no longer needed
-    barcodes.clear();
-    if (thread_count > 1) {
+    cout << "Number of masks is " << all_masks.size() << "\n";
+
+    pthread_t* thread_array;
+    thread_data* thread_data_array;
+    pthread_attr_t attr;
+    void *status;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+    time_t start = time(NULL);
+    if (thread_count > 0) {
+        thread_array = new pthread_t[thread_count];
+        thread_data_array = new thread_data[thread_count];
         for (size_t t_id = 0; t_id < thread_count; t_id++) {
-            thread_array[t_id] = thread(process_identical_barcode_nodes, &adjacency_lists, t_id);
+            thread_data_array[t_id].all_masks = all_masks;
+            thread_data_array[t_id].mask_remainder = t_id;
+            pthread_create(&thread_array[t_id], &attr, lsh_mask_pthread, (void *)&thread_data_array[t_id]);
+            // thread_array[t_id] = thread(lsh_mask, all_masks, t_id);
+            stringstream stream;
+            stream << "Created thread " << t_id << "\n";
+            cout << stream.str();
         }
         for (size_t t_id = 0; t_id < thread_count; t_id++) {
-            thread_array[t_id].join();
+            pthread_join(thread_array[t_id], &status);
+            // thread_array[t_id].join();
+            stringstream stream;
+            stream << "Joined thread " << t_id << "\n";
+            cout << stream.str();
         }
         delete [] thread_array;
     } else {
-        process_identical_barcode_nodes(&adjacency_lists, 0);
+        lsh_mask(all_masks, 0);
     }
+    cout << "Building the graph on " << thread_count << " thead(s) took " <<  difftime(time(NULL), start) << "\n";
+    // barcodes are no longer needed
+    barcodes.clear();
+    // if (thread_count > 0) {
+    //     for (size_t t_id = 0; t_id < thread_count; t_id++) {
+    //         // thread_array[t_id] = thread(process_identical_barcode_nodes, t_id);
+    //     }
+    //     for (size_t t_id = 0; t_id < thread_count; t_id++) {
+    //         // thread_array[t_id].join();
+    //         stringstream stream;
+    //         stream << "Joined thread " << t_id << "\n";
+    //         cout << stream.str();
+    //     }
+    //     delete [] thread_array;
+    // } else {
+        process_identical_barcode_nodes(0);
+    // }
     // barcode id to node id's is no longer needed
     barcode_to_nodes_vector.clear();
-    if (!silent) {
-        cout << "Building all LSH took: " << build_time << "\n";
-        cout << "Processing all LSH took: " << process_time << "\n";
-    }
 }
 
-string mask_barcode(const string& barcode, const vector<bool>& mask){
+string mask_barcode(const string& barcode, const vector<bool>& mask, char* masked_barcode_buffer){
     int pos = 0;
     for (int i = 0; i < barcode_length*2; i++) {
         if (mask[i]) {
@@ -231,7 +326,7 @@ bool unmatched_minimimizers(node_id_t node_id, node_id_t neighbor_id){
     return !(matched_minimimizers_1 >= minimizer_threshold && matched_minimimizers_2 >= minimizer_threshold);
 }
 
-void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
+void extract_clusters(){
     vector<bool> pushed(node_count, false);
     stack<node_id_t> opened;
     node_to_cluster_vector.reserve(node_count);
@@ -245,7 +340,7 @@ void extract_clusters(node_id_to_node_id_vector_of_vectors &adjacency_lists){
                 node_id_t current_node = opened.top();
                 opened.pop();
                 node_to_cluster_vector[current_node] = cluster_count;
-                for (node_id_t neighbor: adjacency_lists[current_node]) {
+                for (node_id_t neighbor: graph[current_node]) {
                     if (!pushed[neighbor]) {
                         opened.push(neighbor);
                         pushed[neighbor] = true;
