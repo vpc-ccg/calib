@@ -11,7 +11,6 @@ GET_USER_TIME := $(benchmark_aux_path)/get_user_time.awk
 GET_WALL_TIME := $(benchmark_aux_path)/get_wall_time.awk
 GET_MEM := $(benchmark_aux_path)/get_mem.awk
 GET_ACCURACY := $(benchmark_aux_path)/get_accuracy.awk
-CONVERT_CALIB := $(benchmark_aux_path)/convert_calib_to_cluster.sh
 CONVERT_CDHITEST := $(benchmark_aux_path)/convert_cdhitest_to_cluster.sh
 CONVERT_STARCODE := $(benchmark_aux_path)/convert_starcode_to_cluster.sh
 CONVERT_RAINBOW := $(benchmark_aux_path)/convert_rainbow_to_cluster.sh
@@ -27,9 +26,13 @@ cdhitest_accuracy=$(cdhitest_output_prefix)accuracy
 cdhitest_time=$(cdhitest_output_prefix)time
 
 starcode?=$(benchmark_aux_path)/other_tools/starcode/starcode
-starcode_dist?=4
-starcode_ratio?=5
-starcode_params=dist_$(starcode_dist).ratio_$(starcode_ratio).
+starcode_umi?=$(benchmark_aux_path)/other_tools/starcode/starcode-umi
+starcode_umi_dist?=2
+starcode_umi_ratio?=5
+starcode_seq_dist?=4
+starcode_seq_ratio?=5
+starcode_seq_trim?=0
+starcode_params=umi_dist_$(starcode_umi_dist).umi_ratio_$(starcode_umi_ratio).seq_dist_$(starcode_seq_dist).seq_ratio_$(starcode_seq_ratio).seq_trim_$(starcode_seq_trim).
 starcode_output_prefix=$(input_reads_prefix)starcode.$(starcode_params)
 starcode_output=$(starcode_output_prefix)out
 starcode_cluster=$(starcode_output_prefix)cluster
@@ -99,10 +102,9 @@ $(calib_log_file):
 	$(ECHO) "log_comment\tmy_timestamp\tuser_time\twall_time\tmem\tARI\tbarcode_length\tminimizers_num\tkmer_size\tbarcode_error_tolerance\tminimizers_threshold" > $(calib_log_file)
 
 $(calib_accuracy): $(calib_time)
-	$(CONVERT_CALIB) $(cluster_file) > $(cluster_file).cluster;
 	$(python3) $(simulating_path)rand_index.py \
-		--input-cluster-file $(cluster_file).cluster \
-		--input-amplified-molecule $(input_amplified_molecules) \
+		--true-cluster-file $(true_cluster) \
+		--predicted-cluster-file $(cluster_file) \
 		--output-accuracy-results $(calib_accuracy)
 
 $(calib_time): $(GNU_TIME) calib simulate
@@ -134,8 +136,8 @@ $(cdhitest_log_file):
 $(cdhitest_accuracy): $(cdhitest_time)
 	$(CONVERT_CDHITEST) $(cdhitest_output).1.fastq.clstr > $(cdhitest_cluster);
 	$(python3) $(simulating_path)rand_index.py \
-		--input-cluster-file $(cdhitest_cluster) \
-		--input-amplified-molecule $(input_amplified_molecules) \
+		--true-cluster-file $(true_cluster) \
+		--predicted-cluster-file $(cdhitest_cluster) \
 		--output-accuracy-results $(cdhitest_accuracy)
 
 $(cdhitest_time): $(GNU_TIME) cdhitest simulate
@@ -160,28 +162,33 @@ starcode_log: $(starcode_log_file) $(starcode_accuracy)
 	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(starcode_time)))
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(starcode_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
-	$(ECHO) "$(starcode_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t$(starcode_dist)\t$(starcode_ratio)" >> $(starcode_log_file);
+	$(ECHO) "$(starcode_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t$(starcode_umi_dist)\t$(starcode_umi_ratio)\t$(starcode_seq_dist)\t$(starcode_seq_ratio)\t$(starcode_seq_trim)" >> $(starcode_log_file);
 	#rm -f $(starcode_accuracy) $(starcode_time) $(starcode_cluster) $(starcode_output);
 
+
 $(starcode_log_file):
-	$(ECHO) "log_comment\tmy_timestamp\tuser_time\twall_time\tmem\tARI\tstarcode_dist\tstarcode_ratio" > $(starcode_log_file)
+	$(ECHO) "log_comment\tmy_timestamp\tuser_time\twall_time\tmem\tARI\tstarcode_umi_dist\tstarcode_umi_ratio\tstarcode_seq_dist\tstarcode_seq_ratio\tstarcode_seq_trim" > $(starcode_log_file)
 
 $(starcode_accuracy): $(starcode_time)
 	$(CONVERT_STARCODE) $(starcode_output) > $(starcode_cluster);
 	$(python3) $(simulating_path)rand_index.py \
-		--input-cluster-file $(starcode_cluster) \
-		--input-amplified-molecule $(input_amplified_molecules) \
+		--true-cluster-file $(true_cluster) \
+		--predicted-cluster-file $(starcode_cluster) \
 		--output-accuracy-results $(starcode_accuracy)
 
 $(starcode_time): $(GNU_TIME) starcode simulate
 	$(GNU_TIME) -v -o $(starcode_time) \
-		$(starcode) \
-			-1 $(forward_reads) \
-			-2 $(reverse_reads) \
-			-d $(starcode_dist) \
-			-r $(starcode_ratio) \
-			--print-clusters \
+		$(starcode_umi) \
+			--umi-len $(barcode_length) \
+			--starcode-path $(starcode) \
+			--umi-d $(starcode_umi_dist) \
+			--seq-d $(starcode_seq_dist) \
+			--umi-cluster-ratio $(starcode_umi_ratio) \
+			--seq-cluster-ratio $(starcode_seq_ratio) \
+			--seq-trim $(starcode_seq_trim) \
 			--seq-id \
+			$(forward_reads) \
+			$(reverse_reads) \
 			> $(starcode_output)
 
 starcode:
@@ -203,8 +210,8 @@ $(dunovo_log_file):
 $(dunovo_accuracy): $(dunovo_time)
 	$(CONVERT_DUNOVO) $(dunovo_output) > $(dunovo_cluster);
 	$(python3) $(simulating_path)rand_index.py \
-		--input-cluster-file $(dunovo_cluster) \
-		--input-amplified-molecule $(input_amplified_molecules) \
+		--true-cluster-file $(true_cluster) \
+		--predicted-cluster-file $(dunovo_cluster) \
 		--output-accuracy-results $(dunovo_accuracy)
 
 $(dunovo_time): $(GNU_TIME) dunovo simulate
@@ -242,8 +249,8 @@ $(rainbow_log_file):
 $(rainbow_accuracy): $(rainbow_time)
 	$(CONVERT_RAINBOW) $(rainbow_output) > $(rainbow_cluster);
 	$(python3) $(simulating_path)rand_index.py \
-		--input-cluster-file $(rainbow_cluster) \
-		--input-amplified-molecule $(input_amplified_molecules) \
+		--true-cluster-file $(true_cluster) \
+		--predicted-cluster-file $(rainbow_cluster) \
 		--output-accuracy-results $(rainbow_accuracy)
 
 

@@ -24,7 +24,7 @@ do
     num_molecules=10
     ;;
     esac
-     Initializing the expirement by creating the log files and dataset
+     # Initializing the expirement by creating the log files and dataset
     ./benchmark make_log_files simulate reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes
 
     # calib_log
@@ -42,7 +42,7 @@ do
             ./benchmark calib_log reference_name=hg38 bed=Panel.hg38 barcode_error_tolerance=2 kmer_size=$kmer_size minimizers_num=5 minimizers_threshold=4 num_molecules=$num_molecules num_barcodes=$num_barcodes
         done
     done
-   
+
     # starcode_log
     for starcode_dist in 4 3 2 1
     do
@@ -51,14 +51,14 @@ do
           ./benchmark starcode_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes starcode_dist=$starcode_dist starcode_ratio=$starcode_ratio
       done
     done
-   
+
     # rainbow_log
     for rainbow_mismatch in 1 2 3 4 5 6 7 8 9
     do
       ./benchmark rainbow_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes rainbow_mismatch=$rainbow_mismatch
       ./benchmark rainbow_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes rainbow_mismatch=$rainbow_mismatch rainbow_div=true
     done
-    
+
     # cd-hit-est
     for cdhitest_dist in 0.95 0.90 0.85
     do

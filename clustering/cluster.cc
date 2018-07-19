@@ -233,8 +233,9 @@ void barcode_similarity(){
         all_masks.push_back(mask);
 
     } while (std::next_permutation(mask.begin(), mask.end()));
-
-    cout << "Number of masks is " << all_masks.size() << "\n";
+    if (!silent) {
+        cout << "Number of masks is " << all_masks.size() << "\n";
+    }
 
     // pthread_t* thread_array;
     // thread_data* thread_data_array;
@@ -268,10 +269,10 @@ void barcode_similarity(){
     } else {
         lsh_mask(0);
     }
-    cout << "Building the graph on " << thread_count << " thead(s) took " <<  difftime(time(NULL), start) << "\n";
+    cout << "Building the graph on " << thread_count << " thread(s) took " <<  difftime(time(NULL), start) << "\n";
     // barcodes are no longer needed
     delete barcodes_ptr;
-    if (thread_count > 0) {
+    if (thread_count > 1) {
         for (size_t t_id = 0; t_id < thread_count; t_id++) {
             thread_array[t_id] = thread(process_identical_barcode_nodes, t_id);
         }
@@ -371,7 +372,7 @@ void output_clusters(){
         getline(fastq2, trash);
 
         node_id_t current_read_node = read_to_node_vector[current_read];
-        clusters << node_to_cluster_vector[current_read_node] << "\t" << current_read_node << "\t";
+        clusters << node_to_cluster_vector[current_read_node] << "\t" << current_read_node << "\t" << current_read << "\t";
         clusters << name_1 << "\t" << sequence_1 << "\t" << quality_1 << "\t";
         clusters << name_2 << "\t" << sequence_2 << "\t" << quality_2 << "\n";
         current_read++;

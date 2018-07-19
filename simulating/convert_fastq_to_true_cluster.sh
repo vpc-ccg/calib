@@ -1,0 +1,1 @@
+awk 'BEGIN{OFS="\t"} NR%4 == 1 {printf $1"\t"; gsub(/_/,"\t"); print}' | awk 'BEGIN{OFS="\t"; FS="\t"; rid=0} {n1 = substr($1,2); gsub(/:.*/,"",$5);cid=int($5); print cid,"nid",rid++,n1,"s1","q1","n2","s2","q2"}'

@@ -1,1 +1,2 @@
-awk 'BEGIN{prev=""; n=1} {if ($1!=prev){prev =$1; print "# "n++} print "1\t2\t@"$3}' $1
+#/bin/#!/usr/bin/env bash
+awk 'BEGIN{FS="\t"; OFS="\t"; cc = 0} {if (!($1 in cid)) {cid[$1]=cc++} print cid[$1],"nid","rid",$3,$4,$5,$6,$7$8}' $1 

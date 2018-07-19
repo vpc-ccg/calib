@@ -1,2 +1,3 @@
-awk '{print $4}' $1 | \
-awk -F ","  'BEGIN{c=0} {print "# "c; c++; for (i=1; i <= NF; i++) printf "1\t2\t@" $i-1"\n"}'
+#/bin/#!/usr/bin/env bash
+awk 'BEGIN{FS="\t"} {print $3}' $1 |\
+ awk 'BEGIN{FS=","; OFS="\t"} {for(i =1; i<=NF;i++) {$i-=1; print NR,"nid",$i,"n1","s1","q1","n2","s2","q2"}}'

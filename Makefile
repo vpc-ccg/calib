@@ -24,6 +24,7 @@ art_illumina?=art_illumina
 random_seed?=42
 
 # Simulation common
+CONVERT_FASTQ=$(simulating_path)convert_fastq_to_true_cluster.sh
 simulation_datasets_path?=$(simulating_path)datasets/
 bed?=
 bed_flag=--bed $(references_path)$(bed).bed
@@ -66,6 +67,7 @@ amplified_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_
 ## Generating reads
 sequencing_machine?=HS20
 simulated_reads?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)sm_$(sequencing_machine).
+true_cluster?=$(simulated_reads)cluster
 simulated_reads_log?=$(simulated_reads)art_illumina.log
 
 # Clustering arguments
@@ -188,6 +190,8 @@ $(simulated_reads_log): $(amplified_barcoded_molecules)
 $(reverse_reads): $(simulated_reads_log)
 $(forward_reads): $(reverse_reads)
 simulate: $(forward_reads) $(reverse_reads) $(simulated_reads_log)
+	cat $(forward_reads) | bash $(CONVERT_FASTQ) > $(true_cluster)
+
 
 simulate_clean:
 	rm -f $(simulation_datasets_path)*
