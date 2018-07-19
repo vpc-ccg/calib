@@ -67,17 +67,17 @@ void parse_flags(int argc, char *argv[]){
     }
 
     if (barcode_length < 0 || minimizer_count < 0 || error_tolerance < 0 || minimizer_threshold < 0 || kmer_size < 0) {
-        cout << "Missing parameters!\n";
+        cout << "Missing clustering minimizers parameters!\n";
         print_help();
         exit(-1);
     }
     if (input_1 == "" || input_2 == "" || output_prefix == "") {
-        cout << "Missing parameters!\n";
+        cout << "Missing input or output parameters!\n";
         print_help();
         exit(-1);
     }
     if (thread_count < 1 || thread_count > 8) {
-        cout << "Thread count must be between 1 and 8!\n";
+        cout << "Number of threads must be between 1 and 8!\n";
         print_help();
         exit(-1);
     }
