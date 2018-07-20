@@ -190,8 +190,6 @@ $(simulated_reads_log): $(amplified_barcoded_molecules)
 $(reverse_reads): $(simulated_reads_log)
 $(forward_reads): $(reverse_reads)
 simulate: $(forward_reads) $(reverse_reads) $(simulated_reads_log)
-	cat $(forward_reads) | bash $(CONVERT_FASTQ) > $(true_cluster)
-
 
 simulate_clean:
 	rm -f $(simulation_datasets_path)*
@@ -211,11 +209,14 @@ cluster: calib $(forward_reads) $(reverse_reads)
 		--minimizer-threshold $(minimizers_threshold) \
 		$(silent)
 
-accuracy: $(cluster_file)
+accuracy: $(cluster_file) $(true_cluster)
 	$(python3) $(simulating_path)rand_index.py \
 		--input-cluster-file $(cluster_file) \
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(output_accuracy_results)
+
+$(true_cluster):
+	cat $(forward_reads) | bash $(CONVERT_FASTQ) > $(true_cluster)
 
 clean:
 	rm -f $(current_dir)calib
