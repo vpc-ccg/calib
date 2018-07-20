@@ -335,6 +335,34 @@ void extract_clusters(){
 }
 
 void output_clusters(){
+    if (no_sort) {
+        read_id_t current_read = 0;
+        ofstream clusters;
+        ifstream fastq1;
+        ifstream fastq2;
+        fastq1.open (input_1);
+        fastq2.open (input_2);
+        string name_1, quality_1, sequence_1, name_2, quality_2, sequence_2, trash;
+
+        clusters = ofstream(output_prefix + "cluster");
+        while (getline(fastq1, name_1)) {
+            getline(fastq1, sequence_1);
+            getline(fastq1, trash);
+            getline(fastq1, trash);
+            getline(fastq2, name_2);
+            getline(fastq2, sequence_2);
+            getline(fastq2, trash);
+            getline(fastq2, trash);
+
+            node_id_t current_read_node = read_to_node_vector[current_read];
+            clusters << node_to_cluster_vector[current_read_node] << "\t" << current_read_node << "\t" << current_read << "\t";
+            clusters << name_1 << "\t" << sequence_1 << "\t" << quality_1 << "\t";
+            clusters << name_2 << "\t" << sequence_2 << "\t" << quality_2 << "\n";
+            current_read++;
+        }
+        return;
+
+    }
     read_id_t current_read = 0;
     ofstream clusters;
     size_t min_records_per_tmp_file = max_memory_use/4;

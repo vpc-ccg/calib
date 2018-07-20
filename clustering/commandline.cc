@@ -11,7 +11,7 @@ string input_1 = "";
 string input_2 = "";
 string output_prefix = "";
 bool silent = false;
-bool keep_qual = false;
+bool no_sort = false;
 int barcode_length = -1;
 int ignored_sequence_prefix_length = 0;
 int minimizer_count = -1;
@@ -39,8 +39,8 @@ void parse_flags(int argc, char *argv[]){
         if (current_param == "-s" || current_param == "--silent") {
             silent = true;
         }
-        if (current_param == "-q" || current_param == "--keep-qual") {
-            keep_qual = true;
+        if (current_param == "--no-sort") {
+            no_sort = true;
         }
         if (current_param == "-l" || current_param == "--barcode-length") {
             barcode_length = atoi(argv[i+1]);
@@ -113,14 +113,14 @@ void print_help(){
     cout << "\t-r\t--input-reverse                 \t(type: string;   REQUIRED paramter)\n";
     cout << "\t-o\t--output-prefix                 \t(type: string;   REQUIRED paramter)\n";
     cout << "\t-s\t--silent                        \t(type: no value; default: unset)\n";
-    cout << "\t-q\t--keep-qual                     \t(type: no value; default:  unset)\n";
+    cout << "\t-q\t--no-sort                       \t(type: no value; default:  unset)\n";
     cout << "\t-l\t--barcode-length                \t(type: int;      REQUIRED paramter)\n";
     cout << "\t-p\t--ignored-sequence-prefix-length\t(type: int;      REQUIRED paramter)\n";
     cout << "\t-m\t--minimizer-count               \t(type: int;      REQUIRED paramter)\n";
     cout << "\t-k\t--kmer-size                     \t(type: int;      REQUIRED paramter)\n";
     cout << "\t-e\t--error-tolerance               \t(type: int;      REQUIRED paramter)\n";
     cout << "\t-t\t--minimizer-threshold           \t(type: int;      REQUIRED paramter)\n";
-    cout << "\t-c\t--threads                       \t(type: int;      default: 1; STILL NON-FUNCTIONAL)\n";
+    cout << "\t-c\t--threads                       \t(type: int;      default: 1)\n";
     cout << "\t-h\t--help\n";
 }
 

@@ -27,7 +27,7 @@ extern int error_tolerance;
 extern int minimizer_threshold;
 extern int thread_count;
 extern bool silent;
-extern bool keep_qual;
+extern bool no_sort;
 
 int get_memory_use();
 
