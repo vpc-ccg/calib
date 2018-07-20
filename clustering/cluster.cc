@@ -10,6 +10,8 @@
 #include <stack>
 #include <algorithm>
 #include <time.h>
+#include <math.h>
+#include <stdio.h>
 // Debug includes
 #include <sstream>
 #include <iomanip>
@@ -23,10 +25,13 @@ node_id_to_cluster_id_vector node_to_cluster_vector;
 
 // locally global variables
 #define ASCII_SIZE 256
+#define MAX_TMP_FILE_COUNT 25.0
 bool valid_base [ASCII_SIZE];
 node_id_to_node_id_vector_of_vectors* graph_ptr;
 mutex graph_lock;
 vector<vector<bool> > all_masks;
+long max_memory_use = 0;
+
 
 void cluster(){
     time_t start;
@@ -69,17 +74,6 @@ void cluster(){
     }
 
 }
-
-// struct thread_data {
-//    vector<vector<bool> > all_masks;
-//    size_t mask_remainder;
-// };
-//
-// void *lsh_mask_pthread(void* args) {
-//     struct thread_data *my_thread_data;
-//     my_thread_data = (struct thread_data *) args;
-//     lsh_mask(my_thread_data->all_masks, my_thread_data->mask_remainder);
-// }
 
 void process_lsh(masked_barcode_to_barcode_id_unordered_map* lsh_ptr,
                     node_id_to_node_id_vector_of_vectors* local_graph_ptr) {
@@ -192,6 +186,7 @@ void lsh_mask(size_t mask_remainder) {
 
 void merge_graphs(node_id_to_node_id_vector_of_vectors* local_graph_ptr) {
     graph_lock.lock();
+    max_memory_use = max((long) (get_memory_use()*1024), (long) max_memory_use);
     if ((*graph_ptr).size() == 0) {
         (*graph_ptr) = move(*local_graph_ptr);
         graph_lock.unlock();
@@ -237,30 +232,17 @@ void barcode_similarity(){
         cout << "Number of masks is " << all_masks.size() << "\n";
     }
 
-    // pthread_t* thread_array;
-    // thread_data* thread_data_array;
-    // pthread_attr_t attr;
-    // void *status;
-    // pthread_attr_init(&attr);
-    // pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
     thread* thread_array;
     time_t start = time(NULL);
     if (thread_count > 1) {
-        // thread_array = new pthread_t[thread_count];
-        // thread_data_array = new thread_data[thread_count];
         thread_array = new thread[thread_count];
         for (size_t t_id = 0; t_id < thread_count; t_id++) {
-            // thread_data_array[t_id].all_masks = all_masks;
-            // thread_data_array[t_id].mask_remainder = t_id;
-            // pthread_create(&thread_array[t_id], &attr, lsh_mask_pthread, (void *)&thread_data_array[t_id]);
             thread_array[t_id] = thread(lsh_mask, t_id);
             stringstream stream;
             stream << "Created thread " << t_id << "\n";
             cout << stream.str();
         }
         for (size_t t_id = 0; t_id < thread_count; t_id++) {
-            // pthread_join(thread_array[t_id], &status);
             thread_array[t_id].join();
             stringstream stream;
             stream << "Joined thread " << t_id << "\n";
@@ -355,13 +337,27 @@ void extract_clusters(){
 void output_clusters(){
     read_id_t current_read = 0;
     ofstream clusters;
+    size_t min_records_per_tmp_file = max_memory_use/4;
+    cout << "min_records_per_tmp_file " << min_records_per_tmp_file << "\n";
+    size_t temp_out_count;
+    cout << "There are " << cluster_count << " clusters\n";
+    temp_out_count = (unsigned long) ceil(float(read_count)/float(min_records_per_tmp_file));
+    cout << "There are " << temp_out_count << " temp files\n";
+    temp_out_count = min(MAX_TMP_FILE_COUNT, (double) temp_out_count);
+    cout << "There are " << temp_out_count << " temp files\n";
+    vector<ofstream> temp_out_files(temp_out_count);
+    vector<string> temp_out_names(temp_out_count);
     ifstream fastq1;
     ifstream fastq2;
+
     fastq1.open (input_1);
     fastq2.open (input_2);
-    string name_1, quality_1, sequence_1, name_2, quality_2, sequence_2, trash;
+    for (size_t i = 0; i < temp_out_count; i++) {
+        temp_out_names[i] = output_prefix + "temp_" + to_string(i);
+        temp_out_files[i] = ofstream(temp_out_names[i]);
+    }
 
-    clusters = ofstream(output_prefix + "cluster");
+    string name_1, quality_1, sequence_1, name_2, quality_2, sequence_2, trash;
     while (getline(fastq1, name_1)) {
         getline(fastq1, sequence_1);
         getline(fastq1, trash);
@@ -372,9 +368,33 @@ void output_clusters(){
         getline(fastq2, trash);
 
         node_id_t current_read_node = read_to_node_vector[current_read];
-        clusters << node_to_cluster_vector[current_read_node] << "\t" << current_read_node << "\t" << current_read << "\t";
-        clusters << name_1 << "\t" << sequence_1 << "\t" << quality_1 << "\t";
-        clusters << name_2 << "\t" << sequence_2 << "\t" << quality_2 << "\n";
+        size_t current_temp_out_id = node_to_cluster_vector[current_read_node] % temp_out_count;
+        temp_out_files[current_temp_out_id] << node_to_cluster_vector[current_read_node] << "\t" << current_read_node << "\t" << current_read << "\t";
+        temp_out_files[current_temp_out_id] << name_1 << "\t" << sequence_1 << "\t" << quality_1 << "\t";
+        temp_out_files[current_temp_out_id] << name_2 << "\t" << sequence_2 << "\t" << quality_2 << "\n";
         current_read++;
     }
+    read_id_to_node_id_vector().swap(read_to_node_vector);
+    node_id_to_cluster_id_vector().swap(node_to_cluster_vector);
+
+    clusters = ofstream(output_prefix + "cluster");
+    for (size_t i = 0; i < temp_out_count; i++) {
+        cout << "Processing file " << temp_out_names[i] << "\n";
+        temp_out_files[i].close();
+        ifstream temp_file;
+        temp_file.open(temp_out_names[i]);
+        vector<string> records(size_t(ceil((double)cluster_count/(double)temp_out_count)), "");
+        string record;
+        while(getline(temp_file, record)) {
+            size_t cluster_id = stoi(record.substr(0, record.find("\t"))) % temp_out_count;
+            records[cluster_id]+= record + "\n";
+        }
+        for (string record : records) {
+            clusters << record;
+        }
+        temp_file.close();
+        remove(temp_out_names[i].c_str());
+    }
+
+
 }
