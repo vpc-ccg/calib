@@ -28,21 +28,20 @@ CONVERT_FASTQ=$(simulating_path)convert_fastq_to_true_cluster.sh
 simulation_datasets_path?=$(simulating_path)datasets/
 bed?=
 bed_flag=--bed $(references_path)$(bed).bed
-bed_prefix=_bed$(bed)
 ifeq ($(bed),)
 	bed_flag=
-	bed_prefix=NA
 endif
 reference_name?=hg38
-simulation_prefix?=$(simulation_datasets_path)rs_$(random_seed).
+simulation_prefix?=$(simulation_datasets_path)randomSeed_$(random_seed)/
 
 references_path?=$(simulating_path)genomes/
 
 ## Generating barcodes
 num_barcodes?=100
 barcode_length?=8
-barcodes_params?=bl_$(barcode_length).nb_$(num_barcodes).
-simulated_barcodes?=$(simulation_prefix)$(barcodes_params)barcodes.txt
+barcodes_params?=barcodeLength_$(barcode_length).barcodeCount_$(num_barcodes)/
+barcodes_prefix?=$(simulation_prefix)$(barcodes_params)
+barcodes?=$(barcodes_prefix)barcodes.txt
 
 ## Generating molecules
 molecule_size_mu?=200
@@ -50,44 +49,48 @@ molecule_size_dev?=25
 num_molecules?=500
 read_length?=100
 reference?=$(references_path)$(reference_name).fa
-molecules_params?=ref_$(reference_name).bed_$(bed_prefix).mu_$(molecule_size_mu).dev_$(molecule_size_dev).nm$(num_molecules).
-simulated_molecules?=$(simulation_prefix)$(molecules_params)molecules.fa
+molecules_params?=reference_$(reference_name).bed_$(bed).moleculeSizeMean_$(molecule_size_mu).moleculeSizeDeviation_$(molecule_size_dev).moleculeCount$(num_molecules)/
+molecules_prefix?=$(simulation_prefix)$(molecules_params)
+molecules?=$(molecules_prefix)molecules.fa
 
 
 ## Barcoding molecules
-simulated_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_params)barcoded_molecules.fa
+barcoded_molecules_prefix?=$(simulation_prefix)$(barcodes_params)$(molecules_params)
+barcoded_molecules?=$(barcoded_molecules_prefix)barcoded_molecules.fa
 
 ## PCR duplication
 pcr_cycles?=7
 pcr_duplication_rate?=0.6
 pcr_error_rate?=0.00005
-pcr_params?=pc_$(pcr_cycles).pdr_$(pcr_duplication_rate).per_$(pcr_error_rate).
-amplified_barcoded_molecules?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)amplified_barcoded_molecules.fa
+pcr_params?=pcrCycles_$(pcr_cycles).pcrDuplicationRate_$(pcr_duplication_rate).pcrErrorRate_$(pcr_error_rate)/
+amplified_barcoded_molecules_prefix?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)
+amplified_barcoded_molecules?=$(amplified_barcoded_molecules_prefix)amplified_barcoded_molecules.fa
 
 ## Generating reads
 sequencing_machine?=HS20
-simulated_reads?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)sm_$(sequencing_machine).
-true_cluster?=$(simulated_reads)cluster
-simulated_reads_log?=$(simulated_reads)art_illumina.log
+reads_prefix?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)sequencingMachine_$(sequencing_machine)/
+true_cluster?=$(reads_prefix)true.cluster
+reads_log?=$(reads_prefix)art_illumina.log
 
 # Clustering arguments
-input_reads_prefix?=$(simulated_reads)
+input_reads_prefix?=$(reads_prefix)
 forward_reads?=$(input_reads_prefix)1.fq
 reverse_reads?=$(input_reads_prefix)2.fq
 ignored_sequence_prefix_length?=0
+thread_count?=1
 minimizers_num?=3
 kmer_size?=8
 barcode_error_tolerance?=2
 minimizers_threshold?=1
 silent?=--silent
 
-clustering_params?=bl_$(barcode_length).mn_$(minimizers_num).ks_$(kmer_size).bet_$(barcode_error_tolerance).mt_$(minimizers_threshold).
-output_prefix?=$(input_reads_prefix)calib.$(clustering_params)
+calib_params?=l_$(barcode_length).m_$(minimizers_num).k_$(kmer_size).e_$(barcode_error_tolerance).m_$(minimizers_threshold).t_$(thread_count)
+calib_output_prefix?=$(input_reads_prefix)calib.$(calib_params)
 
 # Rand Index Accuracy arguments
-cluster_file?=$(output_prefix)cluster
+cluster_file?=$(calib_output_prefix)cluster
 input_amplified_molecules?=$(amplified_barcoded_molecules)
-output_accuracy_results?=$(output_prefix)accuracy
+output_accuracy_results?=$(calib_output_prefix)accuracy
 
 
 .DELETE_ON_ERROR:
@@ -132,12 +135,13 @@ help:
 	@echo 'The results will be stored in simulating/datasets/* with file names for every part of this pipeline'
 
 
-$(simulated_barcodes):
+$(barcodes):
+	mkdir -p $(barcodes_prefix)
 	$(python3) $(simulating_path)generate_barcodes.py \
 		--num-of-barcodes $(num_barcodes) \
 		--len-of-one-end-barcode $(barcode_length) \
 		--random-seed $(random_seed) \
-		--output-barcodes $(simulated_barcodes)
+		--output-barcodes $(barcodes)
 
 $(references_path)hg38.fa:
 	@echo 'Downloading hg38 reference genome from UCSC Golden Path'
@@ -146,7 +150,8 @@ $(references_path)hg38.fa:
 	zcat $(reference).gz > $(reference);
 	rm $(reference).gz
 
-$(simulated_molecules): $(reference)
+$(molecules): $(reference)
+	mkdir -p $(molecules_prefix)
 	$(python3) $(simulating_path)generate_molecules.py \
 		--reference $(reference) \
 		--number-of-molecules $(num_molecules) \
@@ -154,26 +159,29 @@ $(simulated_molecules): $(reference)
 		--molecule-size-standard-dev $(molecule_size_dev) \
 		--min-molecule-size $(read_length) \
 		--random-seed $(random_seed) \
-		--output-molecules $(simulated_molecules) \
+		--output-molecules $(molecules) \
 		$(bed_flag)
 
-$(simulated_barcoded_molecules): $(simulated_barcodes) $(simulated_molecules)
+$(barcoded_molecules): $(barcodes) $(molecules)
+	mkdir -p $(barcoded_molecules_prefix)
 	$(python3) $(simulating_path)attach_barcodes_to_molecules.py \
-		--input-barcodes $(simulated_barcodes) \
-		--input-molecules $(simulated_molecules) \
+		--input-barcodes $(barcodes) \
+		--input-molecules $(molecules) \
 		--random-seed $(random_seed) \
-		--output-barcoded-molecules $(simulated_barcoded_molecules)
+		--output-barcoded-molecules $(barcoded_molecules)
 
-$(amplified_barcoded_molecules): $(simulated_barcoded_molecules)
+$(amplified_barcoded_molecules): $(barcoded_molecules)
+	mkdir -p $(amplified_barcoded_molecules_prefix)
 	$(python3) $(simulating_path)pcr_duplication.py \
-		--molecules $(simulated_barcoded_molecules) \
+		--molecules $(barcoded_molecules) \
 		--number-of-cycles $(pcr_cycles) \
 		--duplication-rate-per-cycle $(pcr_duplication_rate) \
 		--error-rate $(pcr_error_rate) \
 		--random-seed $(random_seed) \
 		--pcr-product $(amplified_barcoded_molecules)
 
-$(simulated_reads_log): $(amplified_barcoded_molecules)
+$(reads_log): $(amplified_barcoded_molecules)
+	mkdir -p $(reads_prefix)
 	$(art_illumina) \
 		--seqSys $(sequencing_machine) \
 		--amplicon \
@@ -183,16 +191,18 @@ $(simulated_reads_log): $(amplified_barcoded_molecules)
 		--len $(read_length) \
 		--fcov 1 \
 		--rndSeed $(random_seed) \
-		--out $(simulated_reads) \
-		> $(simulated_reads_log);
+		--out $(reads_prefix) \
+		> $(reads_log);
 
 
-$(reverse_reads): $(simulated_reads_log)
+$(reverse_reads): $(reads_log)
 $(forward_reads): $(reverse_reads)
-simulate: $(forward_reads) $(reverse_reads) $(simulated_reads_log)
+$(true_cluster): $(forward_reads)
+	cat $(forward_reads) | bash $(CONVERT_FASTQ) > $(true_cluster)
+simulate: $(true_cluster) $(forward_reads) $(reverse_reads) $(reads_log)
 
 simulate_clean:
-	rm -f $(simulation_datasets_path)*
+	rm -rf $(simulation_datasets_path)randomSeed_*
 
 
 
@@ -200,7 +210,7 @@ cluster: calib $(forward_reads) $(reverse_reads)
 	$(current_dir)calib \
 		--input-forward $(forward_reads) \
 		--input-reverse $(reverse_reads) \
-		--output-prefix $(output_prefix) \
+		--output-prefix $(calib_output_prefix) \
 		--barcode-length $(barcode_length) \
 		--ignored-sequence-prefix-length $(ignored_sequence_prefix_length) \
 		--minimizer-count $(minimizers_num) \
@@ -214,9 +224,6 @@ accuracy: $(cluster_file) $(true_cluster)
 		--input-cluster-file $(cluster_file) \
 		--input-amplified-molecule $(input_amplified_molecules) \
 		--output-accuracy-results $(output_accuracy_results)
-
-$(true_cluster):
-	cat $(forward_reads) | bash $(CONVERT_FASTQ) > $(true_cluster)
 
 clean:
 	rm -f $(current_dir)calib

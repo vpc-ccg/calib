@@ -112,7 +112,7 @@ $(calib_time): $(GNU_TIME) calib simulate
 	./calib \
 		--input-forward $(forward_reads) \
 		--input-reverse $(reverse_reads) \
-		--output-prefix $(output_prefix) \
+		--output-prefix $(calib_output_prefix) \
 		--barcode-length $(barcode_length) \
 		--minimizer-count $(minimizers_num) \
 		--kmer-size $(kmer_size) \
