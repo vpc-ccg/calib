@@ -251,7 +251,9 @@ void barcode_similarity(){
     } else {
         lsh_mask(0);
     }
-    cout << "Building the graph on " << thread_count << " thread(s) took " <<  difftime(time(NULL), start) << "\n";
+    if (!silent) {
+        cout << "Building the graph on " << thread_count << " thread(s) took " <<  difftime(time(NULL), start) << "\n";
+    }
     // barcodes are no longer needed
     delete barcodes_ptr;
     if (thread_count > 1) {

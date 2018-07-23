@@ -16,6 +16,11 @@ CONVERT_STARCODE := $(benchmark_aux_path)/convert_starcode_to_cluster.sh
 CONVERT_RAINBOW := $(benchmark_aux_path)/convert_rainbow_to_cluster.sh
 CONVERT_DUNOVO := $(benchmark_aux_path)/convert_dunovo_to_cluster.sh
 
+calib_params=tc_$(thread_count).m_$(minimizers_num).k_$(kmer_size).e_$(barcode_error_tolerance).t_$(minimizers_threshold).s_$(no_sort).
+calib_output_prefix=$(input_reads_prefix)calib.$(calib_params)
+calib_accuracy=$(calib_output_prefix)accuracy
+calib_time=$(calib_output_prefix)time
+
 cdhitest?=$(benchmark_aux_path)/other_tools/cdhit/cd-hit-est
 cdhitest_dist?=0.95
 cdhitest_params=dist_$(cdhitest_dist).
@@ -64,9 +69,6 @@ dunovo_cluster=$(dunovo_output_prefix)cluster
 dunovo_accuracy=$(dunovo_output_prefix)accuracy
 dunovo_time=$(dunovo_output_prefix)time
 
-calib_output_prefix=$(input_reads_prefix)calib.$(clustering_params)
-calib_accuracy=$(calib_output_prefix)accuracy
-calib_time=$(calib_output_prefix)time
 
 log_comment?=no_comment
 calib_log_comment?=$(log_comment)
@@ -118,7 +120,8 @@ $(calib_time): $(GNU_TIME) calib simulate
 		--kmer-size $(kmer_size) \
 		--error-tolerance $(barcode_error_tolerance) \
 		--minimizer-threshold $(minimizers_threshold) \
-		$(silent)
+		$(silent) \
+		$(no-sort)
 
 # CD-HIT-EST
 cdhitest_log: $(cdhitest_log_file) $(cdhitest_accuracy)

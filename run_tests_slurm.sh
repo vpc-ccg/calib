@@ -44,7 +44,9 @@ do
     ;;
     esac
     # Initializing the expirement by creating the log files and dataset
-    ./benchmark make_log_files simulate reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes
+    echo Initializing the expirement by creating the log files and dataset
+    ./benchmark simulate reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes
+    ./benchmark make_log_files reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes
 
     slurm_path=slurm_pbs/"$dataset"
     mkdir -p "$slurm_path"
@@ -95,7 +97,7 @@ do
             slurm "$filename" "$job_name" "$mem" "$tim" "$command"
         done
     done
-  
+
     # cd-hit-est
     for cdhitest_dist in 0.85 0.95 0.96 0.97 0.98
     do

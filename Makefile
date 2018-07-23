@@ -83,6 +83,7 @@ minimizers_num?=3
 kmer_size?=8
 barcode_error_tolerance?=2
 minimizers_threshold?=1
+no_sort?=--no-sort
 silent?=--silent
 
 calib_params?=l_$(barcode_length).m_$(minimizers_num).k_$(kmer_size).e_$(barcode_error_tolerance).m_$(minimizers_threshold).t_$(thread_count)
@@ -137,6 +138,7 @@ help:
 
 
 $(barcodes):
+	@echo "Simulating barcodes"
 	mkdir -p $(barcodes_prefix)
 	$(python3) $(simulating_path)generate_barcodes.py \
 		--num-of-barcodes $(num_barcodes) \
@@ -154,6 +156,7 @@ $(references_path)hg38.fa:
 	chmod -w $(references_path)hg38.fa;
 
 $(molecules): $(reference)
+	@echo "Simulating molecules"
 	mkdir -p $(molecules_prefix)
 	$(python3) $(simulating_path)generate_molecules.py \
 		--reference $(reference) \
@@ -167,6 +170,7 @@ $(molecules): $(reference)
 	chmod -w $(molecules);
 
 $(barcoded_molecules): $(barcodes) $(molecules)
+	@echo "Simulating barcoded molecules"
 	mkdir -p $(barcoded_molecules_prefix)
 	$(python3) $(simulating_path)attach_barcodes_to_molecules.py \
 		--input-barcodes $(barcodes) \
@@ -176,6 +180,7 @@ $(barcoded_molecules): $(barcodes) $(molecules)
 	chmod -w $(barcoded_molecules);
 
 $(amplified_barcoded_molecules): $(barcoded_molecules)
+	@echo "Simulating amplified barcoded molecules"
 	mkdir -p $(amplified_barcoded_molecules_prefix)
 	$(python3) $(simulating_path)pcr_duplication.py \
 		--molecules $(barcoded_molecules) \
@@ -187,6 +192,7 @@ $(amplified_barcoded_molecules): $(barcoded_molecules)
 	chmod -w $(amplified_barcoded_molecules);
 
 $(reads_log): $(amplified_barcoded_molecules)
+	@echo "Simulating reads with ART Illumina"
 	mkdir -p $(reads_prefix)
 	$(art_illumina) \
 		--seqSys $(sequencing_machine) \
@@ -224,7 +230,8 @@ cluster: calib $(forward_reads) $(reverse_reads)
 		--kmer-size $(kmer_size) \
 		--error-tolerance $(barcode_error_tolerance) \
 		--minimizer-threshold $(minimizers_threshold) \
-		$(silent)
+		$(silent) \
+		$(no-sort)
 
 accuracy: $(cluster_file) $(true_cluster)
 	$(python3) $(simulating_path)rand_index.py \
