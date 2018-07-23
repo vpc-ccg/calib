@@ -32,24 +32,25 @@ ifeq ($(bed),)
 	bed_flag=
 endif
 reference_name?=hg38
-simulation_prefix?=$(simulation_datasets_path)randomSeed_$(random_seed)/
+simulation_prefix?=$(simulation_datasets_path)randS_$(random_seed)/
 
 references_path?=$(simulating_path)genomes/
 
 ## Generating barcodes
 num_barcodes?=100
 barcode_length?=8
-barcodes_params?=barcodeLength_$(barcode_length).barcodeCount_$(num_barcodes)/
+barcodes_params?=barL_$(barcode_length).barNum_$(num_barcodes)/
 barcodes_prefix?=$(simulation_prefix)$(barcodes_params)
 barcodes?=$(barcodes_prefix)barcodes.txt
 
 ## Generating molecules
 molecule_size_mu?=200
 molecule_size_dev?=25
+min_molecule_size?=$(read_length)
 num_molecules?=500
 read_length?=100
 reference?=$(references_path)$(reference_name).fa
-molecules_params?=reference_$(reference_name).bed_$(bed).moleculeSizeMean_$(molecule_size_mu).moleculeSizeDeviation_$(molecule_size_dev).moleculeCount$(num_molecules)/
+molecules_params?=ref_$(reference_name).bed_$(bed).molMin_$(min_molecule_size).molMu_$(molecule_size_mu).molDev_$(molecule_size_dev).molNum$(num_molecules)/
 molecules_prefix?=$(simulation_prefix)$(molecules_params)
 molecules?=$(molecules_prefix)molecules.fa
 
@@ -62,13 +63,13 @@ barcoded_molecules?=$(barcoded_molecules_prefix)barcoded_molecules.fa
 pcr_cycles?=7
 pcr_duplication_rate?=0.6
 pcr_error_rate?=0.00005
-pcr_params?=pcrCycles_$(pcr_cycles).pcrDuplicationRate_$(pcr_duplication_rate).pcrErrorRate_$(pcr_error_rate)/
+pcr_params?=pcrC_$(pcr_cycles).pcrDR_$(pcr_duplication_rate).pcrER_$(pcr_error_rate)/
 amplified_barcoded_molecules_prefix?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)
 amplified_barcoded_molecules?=$(amplified_barcoded_molecules_prefix)amplified_barcoded_molecules.fa
 
 ## Generating reads
 sequencing_machine?=HS20
-reads_prefix?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)sequencingMachine_$(sequencing_machine)/
+reads_prefix?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)seqMach_$(sequencing_machine).readL_$(read_length)/
 true_cluster?=$(reads_prefix)true.cluster
 reads_log?=$(reads_prefix)art_illumina.log
 
@@ -141,14 +142,16 @@ $(barcodes):
 		--num-of-barcodes $(num_barcodes) \
 		--len-of-one-end-barcode $(barcode_length) \
 		--random-seed $(random_seed) \
-		--output-barcodes $(barcodes)
+		--output-barcodes $(barcodes);
+	chmod -w $(barcodes);
 
 $(references_path)hg38.fa:
 	@echo 'Downloading hg38 reference genome from UCSC Golden Path'
 	wget http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz \
 		-O $(reference).gz;
 	zcat $(reference).gz > $(reference);
-	rm $(reference).gz
+	rm $(reference).gz;
+	chmod -w $(references_path)hg38.fa;
 
 $(molecules): $(reference)
 	mkdir -p $(molecules_prefix)
@@ -157,10 +160,11 @@ $(molecules): $(reference)
 		--number-of-molecules $(num_molecules) \
 		--molecule-size-mean $(molecule_size_mu) \
 		--molecule-size-standard-dev $(molecule_size_dev) \
-		--min-molecule-size $(read_length) \
+		--min-molecule-size $(min_molecule_size) \
 		--random-seed $(random_seed) \
 		--output-molecules $(molecules) \
-		$(bed_flag)
+		$(bed_flag);
+	chmod -w $(molecules);
 
 $(barcoded_molecules): $(barcodes) $(molecules)
 	mkdir -p $(barcoded_molecules_prefix)
@@ -168,7 +172,8 @@ $(barcoded_molecules): $(barcodes) $(molecules)
 		--input-barcodes $(barcodes) \
 		--input-molecules $(molecules) \
 		--random-seed $(random_seed) \
-		--output-barcoded-molecules $(barcoded_molecules)
+		--output-barcoded-molecules $(barcoded_molecules);
+	chmod -w $(barcoded_molecules);
 
 $(amplified_barcoded_molecules): $(barcoded_molecules)
 	mkdir -p $(amplified_barcoded_molecules_prefix)
@@ -178,7 +183,8 @@ $(amplified_barcoded_molecules): $(barcoded_molecules)
 		--duplication-rate-per-cycle $(pcr_duplication_rate) \
 		--error-rate $(pcr_error_rate) \
 		--random-seed $(random_seed) \
-		--pcr-product $(amplified_barcoded_molecules)
+		--pcr-product $(amplified_barcoded_molecules);
+	chmod -w $(amplified_barcoded_molecules);
 
 $(reads_log): $(amplified_barcoded_molecules)
 	mkdir -p $(reads_prefix)
@@ -193,13 +199,14 @@ $(reads_log): $(amplified_barcoded_molecules)
 		--rndSeed $(random_seed) \
 		--out $(reads_prefix) \
 		> $(reads_log);
+	cat $(forward_reads) | bash $(CONVERT_FASTQ) > $(true_cluster);
+	chmod -w $(true_cluster) $(forward_reads) $(reverse_reads) $(reads_log);
 
 
 $(reverse_reads): $(reads_log)
 $(forward_reads): $(reverse_reads)
-$(true_cluster): $(forward_reads)
-	cat $(forward_reads) | bash $(CONVERT_FASTQ) > $(true_cluster)
-simulate: $(true_cluster) $(forward_reads) $(reverse_reads) $(reads_log)
+
+simulate: $(forward_reads) $(reverse_reads) $(reads_log)
 
 simulate_clean:
 	rm -rf $(simulation_datasets_path)randomSeed_*

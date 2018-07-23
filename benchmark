@@ -96,12 +96,12 @@ calib_log: $(calib_log_file) $(calib_accuracy)
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(calib_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(calib_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t$(barcode_length)\t$(minimizers_num)\t$(kmer_size)\t$(barcode_error_tolerance)\t$(minimizers_threshold)" >> $(calib_log_file);
-	#rm -f $(calib_accuracy) $(calib_time) $(cluster_file) $(cluster_file).log $(cluster_file).node.log $(cluster_file).cluster;
+	#rm $(calib_accuracy) $(calib_time) $(cluster_file) $(cluster_file).log $(cluster_file).node.log $(cluster_file).cluster;
 
 $(calib_log_file):
 	$(ECHO) "log_comment\tmy_timestamp\tuser_time\twall_time\tmem\tARI\tbarcode_length\tminimizers_num\tkmer_size\tbarcode_error_tolerance\tminimizers_threshold" > $(calib_log_file)
 
-$(calib_accuracy): $(calib_time) $(true_cluster)
+$(calib_accuracy): $(calib_time)
 	$(python3) $(simulating_path)rand_index.py \
 		--true-cluster-file $(true_cluster) \
 		--predicted-cluster-file $(cluster_file) \
@@ -128,12 +128,12 @@ cdhitest_log: $(cdhitest_log_file) $(cdhitest_accuracy)
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(cdhitest_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(cdhitest_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t$(cdhitest_dist)" >> $(cdhitest_log_file);
-	#rm -f $(cdhitest_accuracy) $(cdhitest_time) $(cdhitest_cluster) $(cdhitest_output).1.fastq.clstr $(cdhitest_output).1.fastq $(cdhitest_output).2.fastq;
+	#rm $(cdhitest_accuracy) $(cdhitest_time) $(cdhitest_cluster) $(cdhitest_output).1.fastq.clstr $(cdhitest_output).1.fastq $(cdhitest_output).2.fastq;
 
 $(cdhitest_log_file):
 	$(ECHO) "log_comment\tmy_timestamp\tuser_time\twall_time\tmem\tARI\tcdhitest_dist" > $(cdhitest_log_file)
 
-$(cdhitest_accuracy): $(cdhitest_time) $(true_cluster)
+$(cdhitest_accuracy): $(cdhitest_time)
 	$(CONVERT_CDHITEST) $(cdhitest_output).1.fastq.clstr > $(cdhitest_cluster);
 	$(python3) $(simulating_path)rand_index.py \
 		--true-cluster-file $(true_cluster) \
@@ -163,13 +163,13 @@ starcode_log: $(starcode_log_file) $(starcode_accuracy)
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(starcode_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(starcode_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t$(starcode_umi_dist)\t$(starcode_umi_ratio)\t$(starcode_seq_dist)\t$(starcode_seq_ratio)\t$(starcode_seq_trim)" >> $(starcode_log_file);
-	#rm -f $(starcode_accuracy) $(starcode_time) $(starcode_cluster) $(starcode_output);
+	#rm $(starcode_accuracy) $(starcode_time) $(starcode_cluster) $(starcode_output);
 
 
 $(starcode_log_file):
 	$(ECHO) "log_comment\tmy_timestamp\tuser_time\twall_time\tmem\tARI\tstarcode_umi_dist\tstarcode_umi_ratio\tstarcode_seq_dist\tstarcode_seq_ratio\tstarcode_seq_trim" > $(starcode_log_file)
 
-$(starcode_accuracy): $(starcode_time) $(true_cluster)
+$(starcode_accuracy): $(starcode_time)
 	$(CONVERT_STARCODE) $(starcode_output) > $(starcode_cluster);
 	$(python3) $(simulating_path)rand_index.py \
 		--true-cluster-file $(true_cluster) \
@@ -202,12 +202,12 @@ dunovo_log: $(dunovo_log_file) $(dunovo_accuracy)
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(dunovo_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(dunovo_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t$(dunovo_dist)" >> $(dunovo_log_file);
-	#rm -f $(dunovo_accuracy) $(dunovo_time) $(dunovo_cluster) $(dunovo_output);
+	#rm $(dunovo_accuracy) $(dunovo_time) $(dunovo_cluster) $(dunovo_output);
 
 $(dunovo_log_file):
 	$(ECHO) "log_comment\tmy_timestamp\tuser_time\twall_time\tmem\tARI\tdunovo_dist" > $(dunovo_log_file)
 
-$(dunovo_accuracy): $(dunovo_time) $(true_cluster)
+$(dunovo_accuracy): $(dunovo_time)
 	$(CONVERT_DUNOVO) $(dunovo_output) > $(dunovo_cluster);
 	$(python3) $(simulating_path)rand_index.py \
 		--true-cluster-file $(true_cluster) \
@@ -241,12 +241,12 @@ rainbow_log: $(rainbow_log_file) $(rainbow_accuracy)
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(rainbow_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
 	$(ECHO) "$(rainbow_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t$(rainbow_mismatch)\t$(rainbow_div)" >> $(rainbow_log_file);
-	#rm -f $(rainbow_accuracy) $(rainbow_time) $(rainbow_cluster) $(rainbow_output);
+	#rm $(rainbow_accuracy) $(rainbow_time) $(rainbow_cluster) $(rainbow_output);
 
 $(rainbow_log_file):
 	$(ECHO) "log_comment\tmy_timestamp\tuser_time\twall_time\tmem\tARI\trainbow_mismatch\trainbow_div" > $(rainbow_log_file)
 
-$(rainbow_accuracy): $(rainbow_time) $(true_cluster)
+$(rainbow_accuracy): $(rainbow_time)
 	$(CONVERT_RAINBOW) $(rainbow_output) > $(rainbow_cluster);
 	$(python3) $(simulating_path)rand_index.py \
 		--true-cluster-file $(true_cluster) \
