@@ -348,11 +348,24 @@ void output_clusters(){
         while (getline(fastq1, name_1)) {
             getline(fastq1, sequence_1);
             getline(fastq1, trash);
-            getline(fastq1, trash);
+            getline(fastq1, quality_1);
             getline(fastq2, name_2);
             getline(fastq2, sequence_2);
             getline(fastq2, trash);
-            getline(fastq2, trash);
+            getline(fastq2, quality_2);
+
+            if (name_1.size() != name_2.size() || sequence_1.size() != quality_1.size() || sequence_2.size() != quality_2.size()) {
+                cerr << "ERROR: Something is fishy with read:\n";
+                cerr << "name_1\t" << name_1 << "\n";
+                cerr << "sequence_1\t" << sequence_1 << "\n";
+                cerr << "trash\t" << trash << "\n";
+                cerr << "quality_1\t" << quality_1 << "\n";
+                cerr << "name_2\t" << name_2 << "\n";
+                cerr << "sequence_2\t" << sequence_2 << "\n";
+                cerr << "trash\t" << trash << "\n";
+                cerr << "quality_2\t" << quality_2 << "\n";
+                exit(-1);
+            }
 
             node_id_t current_read_node = read_to_node_vector[current_read];
             clusters << node_to_cluster_vector[current_read_node] << "\t" << current_read_node << "\t" << current_read << "\t";
@@ -361,67 +374,67 @@ void output_clusters(){
             current_read++;
         }
         return;
+    } else {
+        read_id_t current_read = 0;
+        ofstream clusters;
+        size_t min_records_per_tmp_file = max_memory_use/4;
+        cout << "min_records_per_tmp_file " << min_records_per_tmp_file << "\n";
+        size_t temp_out_count;
+        cout << "There are " << cluster_count << " clusters\n";
+        temp_out_count = (unsigned long) ceil(float(read_count)/float(min_records_per_tmp_file));
+        cout << "There are " << temp_out_count << " temp files\n";
+        temp_out_count = min(MAX_TMP_FILE_COUNT, (double) temp_out_count);
+        cout << "There are " << temp_out_count << " temp files\n";
+        vector<ofstream> temp_out_files(temp_out_count);
+        vector<string> temp_out_names(temp_out_count);
+        ifstream fastq1;
+        ifstream fastq2;
 
-    }
-    read_id_t current_read = 0;
-    ofstream clusters;
-    size_t min_records_per_tmp_file = max_memory_use/4;
-    cout << "min_records_per_tmp_file " << min_records_per_tmp_file << "\n";
-    size_t temp_out_count;
-    cout << "There are " << cluster_count << " clusters\n";
-    temp_out_count = (unsigned long) ceil(float(read_count)/float(min_records_per_tmp_file));
-    cout << "There are " << temp_out_count << " temp files\n";
-    temp_out_count = min(MAX_TMP_FILE_COUNT, (double) temp_out_count);
-    cout << "There are " << temp_out_count << " temp files\n";
-    vector<ofstream> temp_out_files(temp_out_count);
-    vector<string> temp_out_names(temp_out_count);
-    ifstream fastq1;
-    ifstream fastq2;
-
-    fastq1.open (input_1);
-    fastq2.open (input_2);
-    for (size_t i = 0; i < temp_out_count; i++) {
-        temp_out_names[i] = output_prefix + "temp_" + to_string(i);
-        temp_out_files[i] = ofstream(temp_out_names[i]);
-    }
-
-    string name_1, quality_1, sequence_1, name_2, quality_2, sequence_2, trash;
-    while (getline(fastq1, name_1)) {
-        getline(fastq1, sequence_1);
-        getline(fastq1, trash);
-        getline(fastq1, trash);
-        getline(fastq2, name_2);
-        getline(fastq2, sequence_2);
-        getline(fastq2, trash);
-        getline(fastq2, trash);
-
-        node_id_t current_read_node = read_to_node_vector[current_read];
-        size_t current_temp_out_id = node_to_cluster_vector[current_read_node] % temp_out_count;
-        temp_out_files[current_temp_out_id] << node_to_cluster_vector[current_read_node] << "\t" << current_read_node << "\t" << current_read << "\t";
-        temp_out_files[current_temp_out_id] << name_1 << "\t" << sequence_1 << "\t" << quality_1 << "\t";
-        temp_out_files[current_temp_out_id] << name_2 << "\t" << sequence_2 << "\t" << quality_2 << "\n";
-        current_read++;
-    }
-    read_id_to_node_id_vector().swap(read_to_node_vector);
-    node_id_to_cluster_id_vector().swap(node_to_cluster_vector);
-
-    clusters = ofstream(output_prefix + "cluster");
-    for (size_t i = 0; i < temp_out_count; i++) {
-        cout << "Processing file " << temp_out_names[i] << "\n";
-        temp_out_files[i].close();
-        ifstream temp_file;
-        temp_file.open(temp_out_names[i]);
-        vector<string> records(size_t(ceil((double)cluster_count/(double)temp_out_count)), "");
-        string record;
-        while(getline(temp_file, record)) {
-            size_t cluster_id = stoi(record.substr(0, record.find("\t"))) % temp_out_count;
-            records[cluster_id]+= record + "\n";
+        fastq1.open (input_1);
+        fastq2.open (input_2);
+        for (size_t i = 0; i < temp_out_count; i++) {
+            temp_out_names[i] = output_prefix + "temp_" + to_string(i);
+            temp_out_files[i] = ofstream(temp_out_names[i]);
         }
-        for (string record : records) {
-            clusters << record;
+
+        string name_1, quality_1, sequence_1, name_2, quality_2, sequence_2, trash;
+        while (getline(fastq1, name_1)) {
+            getline(fastq1, sequence_1);
+            getline(fastq1, trash);
+            getline(fastq1, quality_1);
+            getline(fastq2, name_2);
+            getline(fastq2, sequence_2);
+            getline(fastq2, trash);
+            getline(fastq2, quality_2);
+
+            node_id_t current_read_node = read_to_node_vector[current_read];
+            size_t current_temp_out_id = node_to_cluster_vector[current_read_node] % temp_out_count;
+            temp_out_files[current_temp_out_id] << node_to_cluster_vector[current_read_node] << "\t" << current_read_node << "\t" << current_read << "\t";
+            temp_out_files[current_temp_out_id] << name_1 << "\t" << sequence_1 << "\t" << quality_1 << "\t";
+            temp_out_files[current_temp_out_id] << name_2 << "\t" << sequence_2 << "\t" << quality_2 << "\n";
+            current_read++;
         }
-        temp_file.close();
-        remove(temp_out_names[i].c_str());
+        read_id_to_node_id_vector().swap(read_to_node_vector);
+        node_id_to_cluster_id_vector().swap(node_to_cluster_vector);
+
+        clusters = ofstream(output_prefix + "cluster");
+        for (size_t i = 0; i < temp_out_count; i++) {
+            cout << "Processing file " << temp_out_names[i] << "\n";
+            temp_out_files[i].close();
+            ifstream temp_file;
+            temp_file.open(temp_out_names[i]);
+            vector<string> records(size_t(ceil((double)cluster_count/(double)temp_out_count)), "");
+            string record;
+            while(getline(temp_file, record)) {
+                size_t cluster_id = stoi(record.substr(0, record.find("\t"))) % temp_out_count;
+                records[cluster_id]+= record + "\n";
+            }
+            for (string record : records) {
+                clusters << record;
+            }
+            temp_file.close();
+            remove(temp_out_names[i].c_str());
+        }
     }
 
 
