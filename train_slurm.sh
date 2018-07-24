@@ -1,73 +1,117 @@
 #!/bin/bash
 
-# slurm params
-# 1 = filename
-# 2 = job_name
-# 3 = mem
-# 4 = time
-# 5 = command
-# 6 = thread_count
+last_job_id=""
 function slurm {
-    echo "#!/bin/bash"                                  >  $1
-    echo "#SBATCH --job-name=$2"                        >> $1
-    echo "#SBATCH -n $6"                                 >> $1
-    echo "#SBATCH --mem $3"                             >> $1
-    echo "#SBATCH -t $4"                                >> $1
-    echo "#SBATCH --output=$1.out"                      >> $1
-    echo "#SBATCH --error=$1.err"                       >> $1
-    echo "#SBATCH --export=all"                         >> $1
-    echo "#SBATCH -p debug,express,normal,big-mem,long" >> $1
-    echo "$5"                                           >> $1
-    sbatch $1
+    filename=$1
+    job_name=$2
+    mem=$3
+    tim=$4
+    command=$5
+    thread_count=$6
+    dependencies=$7
+    echo "#!/bin/bash"                                        >  $filename
+    echo "#SBATCH --job-name=$job_name"                       >> $filename
+    echo "#SBATCH -n $thread_count"                           >> $filename
+    echo "#SBATCH --mem $mem"                                 >> $filename
+    echo "#SBATCH -t $tim"                                    >> $filename
+    echo "#SBATCH --output=$filename.out"                     >> $filename
+    echo "#SBATCH --error=$filename.err"                      >> $filename
+    echo "#SBATCH --export=all"                               >> $filename
+    echo "#SBATCH -p debug,express,normal,big-mem,long"       >> $filename
+    if [ $dependencies != "NONE" ]
+    then
+        echo "#SBATCH --dependency=afterany$dependencies"     >> $filename
+    fi
+    echo "$command"                                           >> $filename
+    last_job_id=$(sbatch $filename)
 }
 
+random_seed=$1
 num_barcodes=5000
-num_molecules=1000
-thread_count=8
-make
+num_molecules=1000000
+molecule_size_mu=300
+
+slurm_path=slurm_pbs/random_seed_"$random_seed"
+mkdir -p "$slurm_path"
+
+barcodes_deps=""
 for barcode_length in {4,8,12};
 do
-    # Initializing the expirement by creating the log files and dataset
+    job_name="barcodes.bl_$barcode_length.bn_$num_barcodes"
+    filename="$slurm_path/$job_name.pbs"
+    mem="10240"
+    tim="00:59:59"
+    command="./benchmark barcodes "
+    command=$command"num_barcodes=$num_barcodes "
+    command=$command"barcode_length=$barcode_length "
+    command=$command"random_seed=$random_seed "
+    thread_count=1
+    depends="NONE"
+    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+    barcodes_deps=$barcodes_deps":"${last_job_id##* }
+done
+
+molecules_deps=""
+for length_set in 75,HS20 150,HS25 250,MS;
+do
+    IFS=",";
+    set -- $length_set;
+    read_length=$1;
+    job_name="molecules.mn_$num_molecules.mu_$molecule_size_mu.rl_$read_length"
+    filename="$slurm_path/$job_name.pbs"
+    mem="51200"
+    tim="02:59:59"
+    command="./benchmark molecules "
+    command=$command"random_seed=$random_seed "
+    command=$command"reference_name=hg38 "
+    command=$command"bed=Panel.hg38 "
+    command=$command"num_molecules=$num_molecules "
+    command=$command"molecule_size_mu=$molecule_size_mu "
+    command=$command"read_length=$read_length "
+    thread_count=1
+    depends="$barcodes_deps"
+    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+    molecules_deps=$molecules_deps":"${last_job_id##* }
+done
+simulate_deps=""
+
+for barcode_length in {4,8,12};
+do
     for length_set in 75,HS20 150,HS25 250,MS;
     do
         IFS=",";
         set -- $length_set;
         read_length=$1;
         sequencing_machine=$2;
-        molecule_size_mu=300
-        ./benchmark simulate \
-            reference_name=hg38 \
-            bed=Panel.hg38 \
-            num_molecules=$num_molecules \
-            num_barcodes=$num_barcodes \
-            barcode_length=$barcode_length \
-            molecule_size_mu=$molecule_size_mu \
-            read_length=$read_length \
-            sequencing_machine=$sequencing_machine
-        ./benchmark make_calib_log_file \
-            reference_name=hg38 \
-            bed=Panel.hg38 \
-            num_molecules=$num_molecules \
-            num_barcodes=$num_barcodes \
-            barcode_length=$barcode_length \
-            molecule_size_mu=$molecule_size_mu \
-            read_length=$read_length \
-            sequencing_machine=$sequencing_machine
+        job_name="simulate.bl_$barcode_length.rl_$read_length"
+        filename="$slurm_path/$job_name.pbs"
+        mem="51200"
+        tim="05:59:59"
+        command="./benchmark simulate make_calib_log_file "
+        command=$command"random_seed=$random_seed "
+        command=$command"reference_name=hg38 "
+        command=$command"bed=Panel.hg38 "
+        command=$command"num_molecules=$num_molecules "
+        command=$command"num_barcodes=$num_barcodes "
+        command=$command"barcode_length=$barcode_length "
+        command=$command"molecule_size_mu=$molecule_size_mu "
+        command=$command"read_length=$read_length "
+        command=$command"sequencing_machine=$sequencing_machine "
+        thread_count=1
+        depends="$barcodes_deps""$molecules_deps"
+        slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+        simulate_deps=$simulate_deps":"${last_job_id##* }
     done
 done
+
 for barcode_length in {4,8,12};
 do
-    # Initializing the expirement by creating the log files and dataset
     for length_set in 75,HS20 150,HS25 250,MS;
     do
         IFS=",";
         set -- $length_set;
         read_length=$1;
         sequencing_machine=$2;
-        molecule_size_mu=300
-
-        slurm_path=slurm_pbs/
-        mkdir -p "$slurm_path"
         # calib_log
         for error_tolerance in 1 2
         do
@@ -83,13 +127,28 @@ do
                     filename="$slurm_path/$job_name.pbs"
                     mem="51200"
                     tim="02:59:59"
-                    command="./benchmark calib_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes barcode_length=$barcode_length molecule_size_mu=$molecule_size_mu read_length=$read_length sequencing_machine=$sequencing_machine barcode_error_tolerance=$error_tolerance kmer_size=$kmer_size minimizers_num=$minimizers_num minimizers_threshold=$minimizers_threshold thread_count=$thread_count"
-                    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count"
+                    thread_count=8
+                    command="./benchmark calib_log "
+                    command=$command"random_seed=$random_seed "
+                    command=$command"reference_name=hg38 "
+                    command=$command"bed=Panel.hg38 "
+                    command=$command"num_molecules=$num_molecules "
+                    command=$command"num_barcodes=$num_barcodes "
+                    command=$command"barcode_length=$barcode_length "
+                    command=$command"molecule_size_mu=$molecule_size_mu "
+                    command=$command"read_length=$read_length "
+                    command=$command"sequencing_machine=$sequencing_machine "
+                    command=$command"barcode_error_tolerance=$error_tolerance "
+                    command=$command"kmer_size=$kmer_size "
+                    command=$command"minimizers_num=$minimizers_num "
+                    command=$command"minimizers_threshold=$minimizers_threshold "
+                    command=$command"thread_count=$thread_count "
+                    depends="$simulate_deps"
+                    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+                    simulate_deps=$simulate_deps":"${last_job_id##* }
                 done
             done
         done
     done
 done
-
-
 exit

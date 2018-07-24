@@ -136,7 +136,6 @@ help:
 	@echo '        make simulate cluster accuracy'
 	@echo 'The results will be stored in simulating/datasets/* with file names for every part of this pipeline'
 
-
 $(barcodes):
 	@echo "Simulating barcodes"
 	mkdir -p $(barcodes_prefix)
@@ -154,7 +153,6 @@ $(references_path)hg38.fa:
 	zcat $(reference).gz > $(reference);
 	rm $(reference).gz;
 	chmod -w $(references_path)hg38.fa;
-
 $(molecules): $(reference)
 	@echo "Simulating molecules"
 	mkdir -p $(molecules_prefix)
@@ -217,6 +215,10 @@ simulate: $(forward_reads) $(reverse_reads) $(reads_log)
 simulate_clean:
 	rm -rf $(simulation_datasets_path)randomSeed_*
 
+barcodes: $(barcodes)
+molecules: $(molecules)
+barcoded_molecules: $(barcoded_molecules)
+amplified_barcoded_molecules: $(amplified_barcoded_molecules)
 
 
 cluster: calib $(forward_reads) $(reverse_reads)
