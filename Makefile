@@ -152,7 +152,9 @@ $(references_path)hg38.fa:
 		-O $(reference).gz;
 	zcat $(reference).gz > $(reference);
 	rm $(reference).gz;
+	samtools faidx $(references_path)hg38.fa;
 	chmod -w $(references_path)hg38.fa;
+
 $(molecules): $(reference)
 	@echo "Simulating molecules"
 	mkdir -p $(molecules_prefix)
@@ -215,6 +217,8 @@ simulate: $(forward_reads) $(reverse_reads) $(reads_log)
 simulate_clean:
 	rm -rf $(simulation_datasets_path)randomSeed_*
 
+
+reference: $(reference)
 barcodes: $(barcodes)
 molecules: $(molecules)
 barcoded_molecules: $(barcoded_molecules)

@@ -272,6 +272,7 @@ $(rainbow_time): $(GNU_TIME) rainbow simulate
 rainbow:
 	make -C $(benchmark_aux_path)/other_tools/rainbow
 
+gnu_time: $(GNU_TIME)
 $(GNU_TIME):
 	wget https://ftp.gnu.org/gnu/time/time-1.9.tar.gz \
 		-O $(benchmark_aux_path)/other_tools/time-1.9.tar.gz;
