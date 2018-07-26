@@ -22,7 +22,8 @@ function slurm {
     then
         echo "#SBATCH --dependency=afterany$dependencies"     >> $filename
     fi
-    echo -e "$command"                                           >> $filename
+    echo "sleep 30s"                                          >> $filename
+    echo -e "$command"                                        >> $filename
     last_job_id=$(sbatch $filename)
 }
 
