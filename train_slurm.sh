@@ -22,8 +22,8 @@ function slurm {
     then
         echo "#SBATCH --dependency=afterany$dependencies"     >> $filename
     fi
-    echo "$command"                                           >> $filename
-    # last_job_id=$(sbatch $filename)
+    echo -e "$command"                                           >> $filename
+    last_job_id=$(sbatch $filename)
 }
 
 num_barcodes=5
@@ -32,19 +32,26 @@ molecule_size_mu=300
 random_seed_start=$1
 random_seed_step=$2
 random_seed_end=$3
-
+rand_seq=()
+for random_seed in `seq $random_seed_start $random_seed_step $random_seed_end`
+do
+    rand_seq+=($random_seed)
+done
 calib_deps="NONE"
 
 ./benchmark reference reference_name=hg38 gnu_time
 make
-for random_seed in `seq $random_seed_start $random_seed_step $random_seed_end`
+
+for random_seed in "${rand_seq[@]}"
 do
+    echo "Random seed $random_seed"
     slurm_path=slurm_pbs/random_seed_"$random_seed"
     mkdir -p "$slurm_path"
 
     barcodes_deps=""
     for barcode_length in {4,8,12};
     do
+        echo "Bacode length $barcode_length"
         job_name="barcodes.bl_$barcode_length.bn_$num_barcodes"
         filename="$slurm_path/$job_name.pbs"
         mem="10240"
@@ -65,6 +72,7 @@ do
         IFS=",";
         set -- $length_set;
         read_length=$1;
+        echo "Molecules read length $read_length"
         job_name="molecules.mn_$num_molecules.mu_$molecule_size_mu.rl_$read_length"
         filename="$slurm_path/$job_name.pbs"
         mem="51200"
@@ -91,6 +99,7 @@ do
             set -- $length_set;
             read_length=$1;
             sequencing_machine=$2;
+            echo "Simulate read length $read_length"
             job_name="simulate.bl_$barcode_length.rl_$read_length"
             filename="$slurm_path/$job_name.pbs"
             mem="51200"
@@ -120,6 +129,8 @@ do
             set -- $length_set;
             read_length=$1;
             sequencing_machine=$2;
+            echo "Calibs barcode $barcode_length read length $read_length"
+
             # calib_log
             for error_tolerance in 1 2
             do
@@ -137,6 +148,7 @@ do
                         tim="02:59:59"
                         thread_count=8
                         command="./benchmark calib_log "
+                        command=$command"log_comment=rs_$random_seed "
                         command=$command"random_seed=$random_seed "
                         command=$command"reference_name=hg38 "
                         command=$command"bed=Panel.hg38 "
@@ -162,6 +174,8 @@ do
 done
 
 command=""
+mkdir -p grouped_results
+
 for barcode_length in {4,8,12};
 do
     for length_set in 75,HS20 150,HS25 250,MS;
@@ -170,8 +184,8 @@ do
         set -- $length_set;
         read_length=$1;
         sequencing_machine=$2;
-        filename="bl_$barcode_length.rl_$read_length.tsv"
-        for random_seed in `seq $random_seed_start $random_seed_step $random_seed_end`
+        filename="grouped_results/bl_$barcode_length.rl_$read_length.tsv"
+        for random_seed in "${rand_seq[@]}"
         do
             tsv_path="simulating/datasets"
             tsv_path=$tsv_path"/randS_"$random_seed
@@ -184,8 +198,9 @@ do
             tsv_path=$tsv_path"/pcrC_7.pcrDR_0.6.pcrER_0.00005/seqMach_"$sequencing_machine
             tsv_path=$tsv_path".readL_"$read_length
             tsv_path=$tsv_path"/calib_benchmarks.tsv"
+            command=$command"if [ ! -f $filename ]; then head -n1 $tsv_path > $filename; fi; awk 'NR > 1' $tsv_path >> $filename;\n"
+            command=$command"python3 train_plot.py $filename;\n"
 
-            command=$command"if [ ! -f $filename ]; then head -n1 $tsv_path > $filename; fi; awk 'NR > 1' $tsv_path >> $filename; "
         done
     done
 done
@@ -193,7 +208,7 @@ done
 job_name="group_"$random_seed_start"_"$random_seed_step"_"$random_seed_end""
 filename="slurm_pbs/$job_name.pbs"
 mem="128"
-tim="00:04:59"
+tim="00:59:59"
 thread_count=1
 depends="$calib_deps"
 slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
