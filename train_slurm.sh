@@ -26,8 +26,8 @@ function slurm {
     last_job_id=$(sbatch $filename)
 }
 
-num_barcodes=5
-num_molecules=10
+num_barcodes=5000
+num_molecules=1000000
 molecule_size_mu=300
 random_seed_start=$1
 random_seed_step=$2
