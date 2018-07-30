@@ -46,7 +46,7 @@ make
 for random_seed in "${rand_seq[@]}"
 do
     echo "Random seed $random_seed"
-    ./benchmark barcodes reference_name=hg38 gene_list_name=COSMIC_cancer_genes random_seed=$random_seed
+    ./benchmark panel reference_name=hg38 gene_list_name=COSMIC_cancer_genes random_seed=$random_seed
     slurm_path=slurm_pbs/random_seed_"$random_seed"
     mkdir -p "$slurm_path"
 

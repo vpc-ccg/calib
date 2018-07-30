@@ -1,4 +1,6 @@
-# Ignore the human genome 
-hg38.fa*
+# Ignore the human genome
+hg38.fa
+hg38.fa.fai
+hg38.gtf
 # Except this file
 !.gitignore
