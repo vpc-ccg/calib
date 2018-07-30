@@ -44,7 +44,7 @@ e_to_dash = {
 
 k_to_marker_symbol = {
     4 : 'circle' ,
-    8 : 'open_circle',
+    8 : 'square',
 }
 
 data = list()
@@ -69,7 +69,8 @@ for key, val in parameters_to_performance.items():
     if min_ari < 99:
         continue
 
-    text='Mem (GB): {:4.2f}; {:4.2f}; {:4.2f}<br>User time (min): {:4.2f}; {:4.2f}; {:4.2f}<br>ARI (%): {:4.2f}; {:4.2f}; {:4.2f}'.format(
+    text='e = {}; k = {}; m = {}; t = {}<br>Mem (GB): {:4.2f}; {:4.2f}; {:4.2f}<br>User time (min): {:4.2f}; {:4.2f}; {:4.2f}<br>ARI (%): {:4.2f}; {:4.2f}; {:4.2f}'.format(
+            e, k, m, t,
             min_mem, max_mem, avg_mem,
             min_time, max_time, avg_time,
             min_ari, max_ari, avg_ari)
@@ -82,11 +83,12 @@ for key, val in parameters_to_performance.items():
         marker=dict(
             symbol= k_to_marker_symbol[k],
             color = m_to_color[m],
+            size  = int(avg_mem)
         ),
     )
     data.append(trace)
 layout = go.Layout(
-    title='read length {}<br>barcode length {}'.format(key[1], key[0]),
+    title=tsv_path.split('/')[-1],
     hovermode='closest',
     font=dict(
         size=10,
