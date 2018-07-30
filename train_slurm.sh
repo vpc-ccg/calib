@@ -40,12 +40,13 @@ do
 done
 calib_deps="NONE"
 
-./benchmark reference reference_name=hg38 gnu_time
+./benchmark annotation reference reference_name=hg38 gnu_time
 make
 
 for random_seed in "${rand_seq[@]}"
 do
     echo "Random seed $random_seed"
+    ./benchmark barcodes reference_name=hg38 gene_list_name=COSMIC_cancer_genes random_seed=$random_seed
     slurm_path=slurm_pbs/random_seed_"$random_seed"
     mkdir -p "$slurm_path"
 
@@ -81,7 +82,7 @@ do
         command="./benchmark molecules "
         command=$command"random_seed=$random_seed "
         command=$command"reference_name=hg38 "
-        command=$command"bed=Panel.hg38 "
+        command=$command"gene_list_name=COSMIC_cancer_genes "
         command=$command"num_molecules=$num_molecules "
         command=$command"molecule_size_mu=$molecule_size_mu "
         command=$command"read_length=$read_length "
@@ -108,7 +109,7 @@ do
             command="./benchmark simulate make_calib_log_file "
             command=$command"random_seed=$random_seed "
             command=$command"reference_name=hg38 "
-            command=$command"bed=Panel.hg38 "
+            command=$command"gene_list_name=COSMIC_cancer_genes "
             command=$command"num_molecules=$num_molecules "
             command=$command"num_barcodes=$num_barcodes "
             command=$command"barcode_length=$barcode_length "
@@ -152,7 +153,7 @@ do
                         command=$command"log_comment=rs_$random_seed "
                         command=$command"random_seed=$random_seed "
                         command=$command"reference_name=hg38 "
-                        command=$command"bed=Panel.hg38 "
+                        command=$command"gene_list_name=COSMIC_cancer_genes "
                         command=$command"num_molecules=$num_molecules "
                         command=$command"num_barcodes=$num_barcodes "
                         command=$command"barcode_length=$barcode_length "
