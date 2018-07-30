@@ -204,9 +204,8 @@ do
             tsv_path=$tsv_path".readL_"$read_length
             tsv_path=$tsv_path"/calib_benchmarks.tsv"
             command=$command"if [ ! -f $filename ]; then head -n1 $tsv_path > $filename; fi; awk 'NR > 1' $tsv_path >> $filename;\n"
-            command=$command"python3 train_plot.py $filename;\n"
-
         done
+        command=$command"python3 train_plot.py $filename;\n"
     done
 done
 
