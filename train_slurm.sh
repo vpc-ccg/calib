@@ -193,7 +193,10 @@ do
             tsv_path=$tsv_path"/randS_"$random_seed
             tsv_path=$tsv_path"/barL_"$barcode_length
             tsv_path=$tsv_path".barNum_"$num_barcodes
-            tsv_path=$tsv_path"/ref_hg38.bed_Panel.hg38.molMin_"$read_length
+            tsv_path=$tsv_path"/geneNum_35"
+            tsv_path=$tsv_path".refName_hg38"
+            tsv_path=$tsv_path".geneList_COSMIC_cancer_genes"
+            tsv_path=$tsv_path"/ref_hg38.molMin_"$read_length
             tsv_path=$tsv_path".molMu_"$molecule_size_mu
             tsv_path=$tsv_path".molDev_25"
             tsv_path=$tsv_path".molNum"$num_molecules

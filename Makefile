@@ -52,7 +52,7 @@ min_molecule_size?=$(read_length)
 num_molecules?=500
 read_length?=100
 reference?=$(references_path)$(reference_name).fa
-molecules_params?=ref_$(reference_name).bed_$(bed).molMin_$(min_molecule_size).molMu_$(molecule_size_mu).molDev_$(molecule_size_dev).molNum$(num_molecules)/
+molecules_params?=ref_$(reference_name).molMin_$(min_molecule_size).molMu_$(molecule_size_mu).molDev_$(molecule_size_dev).molNum$(num_molecules)/
 molecules_prefix?=$(simulation_prefix)$(panel_params)$(molecules_params)
 molecules?=$(molecules_prefix)molecules.fa
 
