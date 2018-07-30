@@ -115,7 +115,6 @@ def generate_random_molecules(genome_file_path,
         print(">{}:{}-{}-{}".format(i, chromosome, start, end), file=output_file)
         print(genome_str[start:end], file=output_file)
 
-
 def generate_molecules_from_bed(genome_file_path,
                                 bed_file_path,
                                 output_file_path=None,
@@ -129,41 +128,39 @@ def generate_molecules_from_bed(genome_file_path,
     else:
         output_file = sys.stdout
     random.seed(random_seed)
-    genome = Fasta(genome_file_path)
-    bed_data = pd.read_csv(bed_file_path, sep='\t', header=0)
-    chromosome_ids, chromosome_ends, genome_str, genome_length = process_genome(genome)
-    ends = list(chromosome_ends.values())
-    chromosome_starts = {}
-    for i in range(len(chromosome_ids)):
-        if i > 0:
-            chromosome_starts[chromosome_ids[i]] = ends[i-1]
-        else:
-            chromosome_starts[chromosome_ids[i]] = 0
+    genome_obj = Fasta(genome_file_path)
+    genome = dict()
+    for key in genome_obj.keys():
+        genome[key] = str(genome_obj[key])
+    bed_positions = list()
+    for line in open(bed_file_path).readlines()[1:]:
+        line = line.rstrip().split('\t')
+        chr = line[0]
+        start = int(line[1])
+        end = int(line[2])
+        gene = line[3]
+        for idx in range(start, end + 1):
+            bed_positions.append((chr, idx))
 
     num_molecules = 0
-    bed_data['genomeStart'] = bed_data.apply(lambda row: chromosome_starts[row['chrom']] + row['chromStart'], axis=1)
-    bed_data['genomeEnd'] = bed_data.apply(lambda row: chromosome_ends[row['chrom']] + row['chromEnd'], axis=1)
-
     while num_molecules < number_of_molecules:
-        chromosome_idx, start, end = generate_random_molecule(molecule_size_mean,
-                                                              molecule_size_standard_dev,
-                                                              genome_length,
-                                                              chromosome_ends,
-                                                              min_molecule_size)
-        chromosome_logic = np.any(bed_data['chrom'] == chromosome_ids[chromosome_idx])
-        if not chromosome_logic:
+        mol_len = math.floor(random.normalvariate(mu=molecule_size_mean, sigma=molecule_size_standard_dev))
+        if mol_len < min_molecule_size:
             continue
-        position_logic = np.logical_or(np.logical_and(bed_data['genomeStart'] >= start,
-                                                      bed_data['genomeStart'] <= end),
-                                       np.logical_and(bed_data['genomeEnd'] >= start,
-                                                      bed_data['genomeEnd'] >= end))
-
-        if position_logic.any() and 'N' not in genome_str[start:end]:
-            num_molecules += 1
-            chromosome = chromosome_ids[chromosome_idx]
-            print(">{}:{}-{}-{}".format(num_molecules, chromosome, start, end), file=output_file)
-            print(genome_str[start:end], file=output_file)
-
+        bed_chr, bed_pos = random.choice(bed_positions)
+        if bed_pos - mol_len <= 0:
+            continue
+        chr_len = len(genome[bed_chr])
+        if bed_pos + mol_len >= chr_len:
+            continue
+        mol_start = bed_pos - random.randint(0, mol_len)
+        mol_end = mol_start + mol_len
+        mol_str = str(genome[bed_chr][mol_start: mol_end]).upper()
+        if 'N' in mol_str:
+            continue
+        print(">{}:{}-{}-{}".format(num_molecules, bed_chr, mol_start, mol_end), file=output_file)
+        print(mol_str, file=output_file)
+        num_molecules += 1
 
 def main():
     args = parse_args()
