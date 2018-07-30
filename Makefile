@@ -158,19 +158,19 @@ $(barcodes):
 $(references_path)hg38.fa:
 	@echo 'Downloading hg38 reference genome from UCSC Golden Path'
 	wget http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz \
-		-O $(reference).gz;
-	zcat $(reference).gz > $(reference);
-	rm $(reference).gz;
+		-O $(references_path)hg38.fa.gz;
+	zcat $(references_path)hg38.fa.gz >$(references_path)hg38.fa;
+	rm $(references_path)hg38.fa.gz;
 	samtools faidx $(references_path)hg38.fa;
 	chmod -w $(references_path)hg38.fa;
 
 $(references_path)hg38.gtf:
 	@echo 'Downloading hg38 GTF annotation from ENSEMBL database'
 	wget ftp://ftp.ensembl.org/pub/release-93/gtf/homo_sapiens/Homo_sapiens.GRCh38.93.gtf.gz \
-		-O $(annotation).gz;
-	zcat $(annotation).gz > $(annotation);
-	rm $(annotation).gz;
-	chmod -w $(annotation)hg38.fa;
+		-O $(references_path)hg38.gtf.gz;
+	zcat $(references_path)hg38.gtf.gz > $(references_path)hg38.gtf;
+	rm $(references_path)hg38.gtf.gz;
+	chmod -w $(references_path)hg38.gtf;
 
 $(panel): $(annotation)
 ifeq ($(gene_list_name),)
