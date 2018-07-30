@@ -11,7 +11,7 @@ function slurm {
     dependencies=$7
     echo "#!/bin/bash"                                        >  $filename
     echo "#SBATCH --job-name=$job_name"                       >> $filename
-    echo "#SBATCH -n $thread_count"                           >> $filename
+    echo "#SBATCH -c $thread_count"                           >> $filename
     echo "#SBATCH --mem $mem"                                 >> $filename
     echo "#SBATCH -t $tim"                                    >> $filename
     echo "#SBATCH --output=$filename.out"                     >> $filename
