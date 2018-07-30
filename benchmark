@@ -122,6 +122,7 @@ $(calib_time): $(GNU_TIME) calib simulate
 		--kmer-size $(kmer_size) \
 		--error-tolerance $(barcode_error_tolerance) \
 		--minimizer-threshold $(minimizers_threshold) \
+		--threads $(thread_count) \
 		$(silent) \
 		$(no_sort)
 

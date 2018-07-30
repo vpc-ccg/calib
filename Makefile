@@ -18,23 +18,43 @@ cc_files?= $(clustering_path)*.cc $(clustering_path)*.h
 cc_flags?=
 cc_args?= $(cc_flags)-std=c++11 -O3 -pthread
 art_illumina?=art_illumina
-
-
-# Common arguments
-random_seed?=42
+CONVERT_FASTQ=$(simulating_path)convert_fastq_to_true_cluster.sh
 
 # Simulation common
-CONVERT_FASTQ=$(simulating_path)convert_fastq_to_true_cluster.sh
+random_seed?=42
+simulation_prefix?=$(simulation_datasets_path)randS_$(random_seed)/
 simulation_datasets_path?=$(simulating_path)datasets/
-bed?=
-bed_flag=--bed $(references_path)$(bed).bed
-ifeq ($(bed),)
+references_path?=$(simulating_path)genomes/
+reference_name?=hg38
+
+## Generating panel
+annotation?=$(references_path)$(reference_name).gtf
+gene_list_name?=
+gene_list?=$(references_path)$(reference_name).$(gene_list_name).txt
+num_genes?=35
+panel_name?=geneNum_$(num_genes).refName_$(reference_name).geneList_$(gene_list_name)
+ifeq ($(gene_list_name),)
+	panel_name=noPanel
+endif
+panel_params?=$(panel_name)/
+panel_prefix?=$(simulation_prefix)$(panel_params)
+panel?=$(panel_prefix)panel.bed
+
+
+## Generating molecules
+bed_flag=--bed $(panel)
+ifeq ($(panel_name),noPanel)
 	bed_flag=
 endif
-reference_name?=hg38
-simulation_prefix?=$(simulation_datasets_path)randS_$(random_seed)/
-
-references_path?=$(simulating_path)genomes/
+molecule_size_mu?=200
+molecule_size_dev?=25
+min_molecule_size?=$(read_length)
+num_molecules?=500
+read_length?=100
+reference?=$(references_path)$(reference_name).fa
+molecules_params?=ref_$(reference_name).bed_$(bed).molMin_$(min_molecule_size).molMu_$(molecule_size_mu).molDev_$(molecule_size_dev).molNum$(num_molecules)/
+molecules_prefix?=$(simulation_prefix)$(panel_params)$(molecules_params)
+molecules?=$(molecules_prefix)molecules.fa
 
 ## Generating barcodes
 num_barcodes?=100
@@ -43,20 +63,9 @@ barcodes_params?=barL_$(barcode_length).barNum_$(num_barcodes)/
 barcodes_prefix?=$(simulation_prefix)$(barcodes_params)
 barcodes?=$(barcodes_prefix)barcodes.txt
 
-## Generating molecules
-molecule_size_mu?=200
-molecule_size_dev?=25
-min_molecule_size?=$(read_length)
-num_molecules?=500
-read_length?=100
-reference?=$(references_path)$(reference_name).fa
-molecules_params?=ref_$(reference_name).bed_$(bed).molMin_$(min_molecule_size).molMu_$(molecule_size_mu).molDev_$(molecule_size_dev).molNum$(num_molecules)/
-molecules_prefix?=$(simulation_prefix)$(molecules_params)
-molecules?=$(molecules_prefix)molecules.fa
-
 
 ## Barcoding molecules
-barcoded_molecules_prefix?=$(simulation_prefix)$(barcodes_params)$(molecules_params)
+barcoded_molecules_prefix?=$(simulation_prefix)$(barcodes_params)$(panel_params)$(molecules_params)
 barcoded_molecules?=$(barcoded_molecules_prefix)barcoded_molecules.fa
 
 ## PCR duplication
@@ -64,12 +73,12 @@ pcr_cycles?=7
 pcr_duplication_rate?=0.6
 pcr_error_rate?=0.00005
 pcr_params?=pcrC_$(pcr_cycles).pcrDR_$(pcr_duplication_rate).pcrER_$(pcr_error_rate)/
-amplified_barcoded_molecules_prefix?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)
+amplified_barcoded_molecules_prefix?=$(simulation_prefix)$(barcodes_params)$(panel_params)$(molecules_params)$(pcr_params)
 amplified_barcoded_molecules?=$(amplified_barcoded_molecules_prefix)amplified_barcoded_molecules.fa
 
 ## Generating reads
 sequencing_machine?=HS20
-reads_prefix?=$(simulation_prefix)$(barcodes_params)$(molecules_params)$(pcr_params)seqMach_$(sequencing_machine).readL_$(read_length)/
+reads_prefix?=$(simulation_prefix)$(barcodes_params)$(panel_params)$(molecules_params)$(pcr_params)seqMach_$(sequencing_machine).readL_$(read_length)/
 true_cluster?=$(reads_prefix)true.cluster
 reads_log?=$(reads_prefix)art_illumina.log
 
@@ -86,7 +95,7 @@ minimizers_threshold?=1
 no_sort?=--no-sort
 silent?=--silent
 
-calib_params?=l_$(barcode_length).m_$(minimizers_num).k_$(kmer_size).e_$(barcode_error_tolerance).m_$(minimizers_threshold).t_$(thread_count)
+calib_params?=l_$(barcode_length).m_$(minimizers_num).k_$(kmer_size).e_$(barcode_error_tolerance).m_$(minimizers_threshold).t_$(thread_count).
 calib_output_prefix?=$(input_reads_prefix)calib.$(calib_params)
 
 # Rand Index Accuracy arguments
@@ -155,7 +164,34 @@ $(references_path)hg38.fa:
 	samtools faidx $(references_path)hg38.fa;
 	chmod -w $(references_path)hg38.fa;
 
-$(molecules): $(reference)
+$(references_path)hg38.gtf:
+	@echo 'Downloading hg38 GTF annotation from ENSEMBL database'
+	wget ftp://ftp.ensembl.org/pub/release-93/gtf/homo_sapiens/Homo_sapiens.GRCh38.93.gtf.gz \
+		-O $(annotation).gz;
+	zcat $(annotation).gz > $(annotation);
+	rm $(annotation).gz;
+	chmod -w $(annotation)hg38.fa;
+
+$(panel): $(annotation)
+ifeq ($(gene_list_name),)
+	@echo "Making empty Panel"
+	mkdir -p $(panel_prefix)
+	touch $(panel)
+	chmod -w $(panel);
+else
+	@echo "Making panel"
+	mkdir -p $(panel_prefix)
+	$(python3) $(simulating_path)generate_panel.py \
+		--gene-annotation $(annotation) \
+		--number-of-genes $(num_genes) \
+		--gene-list $(gene_list) \
+		--random-seed $(random_seed) \
+		--output-panel $(panel);
+	chmod -w $(panel);
+endif
+
+
+$(molecules): $(reference) $(panel)
 	@echo "Simulating molecules"
 	mkdir -p $(molecules_prefix)
 	$(python3) $(simulating_path)generate_molecules.py \
@@ -218,6 +254,8 @@ simulate_clean:
 	rm -rf $(simulation_datasets_path)randomSeed_*
 
 
+panel: $(panel)
+annotation: $(annotation)
 reference: $(reference)
 barcodes: $(barcodes)
 molecules: $(molecules)
@@ -236,6 +274,7 @@ cluster: calib $(forward_reads) $(reverse_reads)
 		--kmer-size $(kmer_size) \
 		--error-tolerance $(barcode_error_tolerance) \
 		--minimizer-threshold $(minimizers_threshold) \
+		--thread-count $(thread_count) \
 		$(silent) \
 		$(no-sort)
 
