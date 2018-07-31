@@ -20,7 +20,7 @@ int minimizer_count = -1;
 int error_tolerance = -1;
 int minimizer_threshold = -1;
 int kmer_size = -1;
-int thread_count = 1;
+int thread_count = -1;
 
 void parse_flags(int argc, char *argv[]){
     for (int i = 1; i < argc; i++) {
@@ -106,7 +106,7 @@ void parse_flags(int argc, char *argv[]){
         ignored_sequence_prefix_length = 0;
     }
     if (thread_count == -1) {
-        ignored_sequence_prefix_length = 1;
+        thread_count = 1;
     }
     if (error_tolerance == -1 && kmer_size == -1 &&  minimizer_count == -1 && minimizer_threshold == -1) {
         cout << "No error or minimizer parameters passed. Selecting parameters based on barcode and inferred read length\n";
@@ -206,8 +206,6 @@ void parse_flags(int argc, char *argv[]){
         print_help();
         exit(-1);
     }
-
-    print_flags();
 }
 
 void print_flags(){
