@@ -9,6 +9,13 @@ function slurm {
     command=$5
     thread_count=$6
     dependencies=$7
+    # echo "filename "$filename
+    # echo "job_name "$job_name
+    # echo "mem "$mem
+    # echo "tim "$tim
+    # echo "command "$command
+    # echo "thread_count "$thread_count
+    # echo "dependencies "$dependencies
     echo "#!/bin/bash"                                        >  $filename
     echo "#SBATCH --job-name=$job_name"                       >> $filename
     echo "#SBATCH -c $thread_count"                           >> $filename
@@ -22,7 +29,6 @@ function slurm {
     then
         echo "#SBATCH --dependency=afterany$dependencies"     >> $filename
     fi
-    echo "sleep 30s"                                          >> $filename
     echo -e "$command"                                        >> $filename
     last_job_id=$(sbatch $filename)
 }
@@ -32,10 +38,8 @@ barcode_length=8
 molecule_size_mu=300
 read_length=150
 sequencing_machine=HS25
-thread_count=1
 
-
-./benchmark annotation reference reference_name=hg38 gnu_time cdhitest starcode dunovo rainbow
+./benchmark annotation reference reference_name=hg38 gnu_time cdhitest starcode rainbow
 make
 ./benchmark panel reference_name=hg38 gene_list_name=COSMIC_cancer_genes random_seed=$random_seed
 
@@ -63,6 +67,9 @@ do
     num_molecules=25
     ;;
     esac
+    slurm_path=slurm_pbs/"$dataset"
+    mkdir -p "$slurm_path"
+
 
     # Making barcodes
     barcodes_deps=""
@@ -75,7 +82,7 @@ do
     command=$command"barcode_length=$barcode_length "
     command=$command"random_seed=$random_seed "
     depends="NONE"
-    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
     barcodes_deps=$barcodes_deps":"${last_job_id##* }
 
     # Making molecules
@@ -92,12 +99,12 @@ do
     command=$command"molecule_size_mu=$molecule_size_mu "
     command=$command"read_length=$read_length "
     depends="$barcodes_deps"
-    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
     molecules_deps=$molecules_deps":"${last_job_id##* }
 
     # Making simulation and log files
     simulate_deps=""
-    job_name="simulate.bl_$barcode_length.rl_$read_length"
+    job_name="simulate"
     filename="$slurm_path/$job_name.pbs"
     mem="51200"
     tim="05:59:59"
@@ -112,19 +119,14 @@ do
     command=$command"read_length=$read_length "
     command=$command"sequencing_machine=$sequencing_machine "
     depends="$barcodes_deps""$molecules_deps"
-    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
     simulate_deps=$simulate_deps":"${last_job_id##* }
-
-
-
-    slurm_path=slurm_pbs/"$dataset"
-    mkdir -p "$slurm_path"
 
     # calib_log
     job_name="calib"
     filename="$slurm_path/$job_name.pbs"
     mem="51200"
-    tim="01:59:59"
+    tim="05:59:59"
     command="./benchmark calib_log "
     command=$command"log_comment=$dataset""_calib "
     command=$command"random_seed=$random_seed "
@@ -137,13 +139,9 @@ do
     command=$command"read_length=$read_length "
     command=$command"sequencing_machine=$sequencing_machine "
     depends="$simulate_deps"
-    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
 
     # starcode_log
-    starcode_umi_dist?=2
-    starcode_umi_ratio?=5
-    starcode_seq_dist?=4
-    starcode_seq_ratio?=5
     for starcode_umi_dist in 1 2 3
     do
         for starcode_umi_ratio in 1 3 5
@@ -152,11 +150,10 @@ do
             do
                 for starcode_seq_ratio in 1 3 5
                 do
-                    job_name="starcode.$starcode_umi_dist.$starcode_umi_ratio.$starcode_seq_dist.$starcode_seq_ratio"
+                    job_name="starcode"_"$starcode_umi_dist"_"$starcode_umi_ratio"_"$starcode_seq_dist"_"$starcode_seq_ratio"
                     filename="$slurm_path/$job_name.pbs"
                     mem="614400"
-                    tim="11:59:59"
-                    slurm "$filename" "$job_name" "$mem" "$tim" "$command"
+                    tim="05:59:59"
                     command="./benchmark starcode_log "
                     command=$command"log_comment=$dataset""_starcode "
                     command=$command"random_seed=$random_seed "
@@ -173,7 +170,7 @@ do
                     command=$command"starcode_seq_dist=$starcode_seq_dist "
                     command=$command"starcode_seq_ratio=$starcode_seq_ratio "
                     depends="$simulate_deps"
-                    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+                    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
                 done
             done
         done
@@ -185,7 +182,7 @@ do
         for div in "true" "false"
         do
             # rainbow_log
-            job_name="rainbow.$rainbow_mismatch.$div"
+            job_name="rainbow"_"$rainbow_mismatch"_"$div"
             filename="$slurm_path/$job_name.pbs"
             mem="51200"
             tim="05:59:59"
@@ -203,17 +200,17 @@ do
             command=$command"rainbow_mismatch=$rainbow_mismatch "
             command=$command"rainbow_div=$rainbow_div "
             depends="$simulate_deps"
-            slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+            slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
         done
     done
 
     # cd-hit-est
     for cdhitest_dist in 0.85 0.95 0.96 0.97 0.98
     do
-        job_name="cdhitest.$cdhitest_dist"
+        job_name="cdhitest"_"$cdhitest_dist"
         filename="$slurm_path/$job_name.pbs"
         mem="204800"
-        tim="23:59:59"
+        tim="05:59:59"
         command="./benchmark cdhitest_log "
         command=$command"log_comment=$dataset""_cdhit "
         command=$command"random_seed=$random_seed "
@@ -227,7 +224,7 @@ do
         command=$command"sequencing_machine=$sequencing_machine "
         command=$command"cdhitest_dist=$cdhitest_dist "
         depends="$simulate_deps"
-        slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+        slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
     done
 done
 exit
