@@ -14,7 +14,7 @@
 #define CALIB_COMMANDLINE_H
 
 void parse_flags(int argc, char *argv[]);
-void print_flags(std::ofstream &out);
+void print_flags();
 void print_help();
 
 #endif //CALIB_COMMANDLINE_H
