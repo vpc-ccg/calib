@@ -142,35 +142,39 @@ do
     slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
 
     # starcode_log
-    for starcode_umi_dist in 1 2 3
+    for starcode_seq_trim in 0 50 100
     do
-        for starcode_umi_ratio in 1 3 5
+        for starcode_umi_dist in 1 2 3
         do
-            for starcode_seq_dist in 1 3 5 7
+            for starcode_umi_ratio in 1 3 5
             do
-                for starcode_seq_ratio in 1 3 5
+                for starcode_seq_dist in 3 5 8
                 do
-                    job_name="starcode"_"$starcode_umi_dist"_"$starcode_umi_ratio"_"$starcode_seq_dist"_"$starcode_seq_ratio"
-                    filename="$slurm_path/$job_name.pbs"
-                    mem="614400"
-                    tim="05:59:59"
-                    command="./benchmark starcode_log "
-                    command=$command"log_comment=$dataset""_starcode "
-                    command=$command"random_seed=$random_seed "
-                    command=$command"reference_name=hg38 "
-                    command=$command"gene_list_name=COSMIC_cancer_genes "
-                    command=$command"num_molecules=$num_molecules "
-                    command=$command"num_barcodes=$num_barcodes "
-                    command=$command"barcode_length=$barcode_length "
-                    command=$command"molecule_size_mu=$molecule_size_mu "
-                    command=$command"read_length=$read_length "
-                    command=$command"sequencing_machine=$sequencing_machine "
-                    command=$command"starcode_umi_dist=$starcode_umi_dist "
-                    command=$command"starcode_umi_ratio=$starcode_umi_ratio "
-                    command=$command"starcode_seq_dist=$starcode_seq_dist "
-                    command=$command"starcode_seq_ratio=$starcode_seq_ratio "
-                    depends="$simulate_deps"
-                    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
+                    for starcode_seq_ratio in 1 3 5
+                    do
+                        job_name="starcode_"$starcode_umi_dist"_"$starcode_umi_ratio"_"$starcode_seq_dist"_"$starcode_seq_ratio"_"$starcode_seq_ratio""
+                        filename="$slurm_path/$job_name.pbs"
+                        mem="614400"
+                        tim="05:59:59"
+                        command="./benchmark starcode_log "
+                        command=$command"log_comment=$dataset""_starcode "
+                        command=$command"random_seed=$random_seed "
+                        command=$command"reference_name=hg38 "
+                        command=$command"gene_list_name=COSMIC_cancer_genes "
+                        command=$command"num_molecules=$num_molecules "
+                        command=$command"num_barcodes=$num_barcodes "
+                        command=$command"barcode_length=$barcode_length "
+                        command=$command"molecule_size_mu=$molecule_size_mu "
+                        command=$command"read_length=$read_length "
+                        command=$command"sequencing_machine=$sequencing_machine "
+                        command=$command"starcode_seq_trim=$starcode_seq_trim "
+                        command=$command"starcode_umi_dist=$starcode_umi_dist "
+                        command=$command"starcode_umi_ratio=$starcode_umi_ratio "
+                        command=$command"starcode_seq_dist=$starcode_seq_dist "
+                        command=$command"starcode_seq_ratio=$starcode_seq_ratio "
+                        depends="$simulate_deps"
+                        slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
+                    done
                 done
             done
         done
@@ -182,7 +186,7 @@ do
         for rainbow_div in "true" "false"
         do
             # rainbow_log
-            job_name="rainbow"_"$rainbow_mismatch"_"$div"
+            job_name="rainbow_"$rainbow_mismatch"_"$div""
             filename="$slurm_path/$job_name.pbs"
             mem="51200"
             tim="05:59:59"
@@ -207,7 +211,7 @@ do
     # cd-hit-est
     for cdhitest_dist in 0.85 0.95 0.96 0.97 0.98
     do
-        job_name="cdhitest"_"$cdhitest_dist"
+        job_name="cdhitest_"$cdhitest_dist""
         filename="$slurm_path/$job_name.pbs"
         mem="204800"
         tim="05:59:59"
