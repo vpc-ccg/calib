@@ -179,7 +179,7 @@ do
     # rainbow_log
     for rainbow_mismatch in 1 2 3 4 5 6 7 8 9
     do
-        for div in "true" "false"
+        for rainbow_div in "true" "false"
         do
             # rainbow_log
             job_name="rainbow"_"$rainbow_mismatch"_"$div"

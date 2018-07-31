@@ -1,21 +1,20 @@
-#!/bin/bash
-# 1 = rainbow
-# 2 = forward_reads
-# 3 = reverse_reads
-# 4 = rainbow_mismatch
-# 5 = rainbow_div
-# 6 = rainbow_output
-if [ $5 = "false" ]; then
+rainbow=$1
+forward_reads=$2
+reverse_reads=$3
+rainbow_mismatch=$4
+rainbow_div=$5
+rainbow_output=$6
+if [ $rainbow_div = "false" ]; then
     $1 cluster \
-        -1 $2 \
-        -2 $3 \
-        -m $4 \
-        > $6
+        -1 $forward_reads \
+        -2 $reverse_reads \
+        -m $rainbow_mismatch \
+        > $rainbow_output
 else
     $1 cluster \
-        -1 $2 \
-        -2 $3 \
-        -m $4 \
+        -1 $forward_reads \
+        -2 $reverse_reads \
+        -m $rainbow_mismatch \
         | $1 div \
-        > $6
+        > $rainbow_output
 fi
