@@ -7,8 +7,8 @@ echo make
 random_seed=5000
 num_barcodes=5000
 barcode_length=8
-# echo ./benchmark barcodes num_barcodes=$num_barcodes random_seed=$random_seed barcode_length=$barcode_length
-# echo ./benchmark panel gene_list_name=COSMIC_cancer_genes reference_name=hg38 random_seed=$random_seed
+echo ./benchmark barcodes num_barcodes=$num_barcodes random_seed=$random_seed barcode_length=$barcode_length
+echo ./benchmark panel gene_list_name=COSMIC_cancer_genes reference_name=hg38 random_seed=$random_seed
 molecule_size_mu=300
 read_length=150
 sequencing_machine=HS25
@@ -24,15 +24,12 @@ do
     command=$command"molecule_size_mu=$molecule_size_mu "
     command=$command"read_length=$read_length "
     command=$command"sequencing_machine=$sequencing_machine "
-    # echo -e $command
+    echo -e $command
 done
-error_tolerance=2
-kmer_size=8
-minimizers_num=5
-minimizers_threshold=2
+
 for num_molecules in 100000 1000000 2000000
 do
-    for thread_count in 1 4 8
+    for thread_count in 1 2 4 8
     do
         command="./benchmark calib_log "
         command=$command"log_comment=t_$thread_count "
@@ -45,12 +42,8 @@ do
         command=$command"molecule_size_mu=$molecule_size_mu "
         command=$command"read_length=$read_length "
         command=$command"sequencing_machine=$sequencing_machine "
-        command=$command"barcode_error_tolerance=$error_tolerance "
-        command=$command"kmer_size=$kmer_size "
-        command=$command"minimizers_num=$minimizers_num "
-        command=$command"minimizers_threshold=$minimizers_threshold "
         command=$command"thread_count=$thread_count "
-        # echo -e $command
+        echo -e $command
     done
 done
 
@@ -92,10 +85,6 @@ do
     done
 done
 
-error_tolerance=2
-kmer_size=8
-minimizers_num=5
-minimizers_threshold=2
 thread_count=1
 for num_molecules in 100000 1000000 2000000
 do
@@ -113,12 +102,8 @@ do
         command=$command"pcr_cycles=$pcr_cycles "
         command=$command"read_length=$read_length "
         command=$command"sequencing_machine=$sequencing_machine "
-        command=$command"barcode_error_tolerance=$error_tolerance "
-        command=$command"kmer_size=$kmer_size "
-        command=$command"minimizers_num=$minimizers_num "
-        command=$command"minimizers_threshold=$minimizers_threshold "
         command=$command"thread_count=$thread_count "
-        # echo -e $command
+        echo -e $command
     done
 done
 

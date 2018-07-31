@@ -89,6 +89,7 @@ void parse_flags(int argc, char *argv[]){
         }
 
         cout << "Unrecognized parameter or repeated parameter: " << current_param << "\n";
+        print_help();
         exit(-1);
     }
     if (barcode_length < 1) {

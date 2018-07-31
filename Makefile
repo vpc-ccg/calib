@@ -88,10 +88,10 @@ forward_reads?=$(input_reads_prefix)1.fq
 reverse_reads?=$(input_reads_prefix)2.fq
 ignored_sequence_prefix_length?=0
 thread_count?=1
-minimizers_num?=3
-kmer_size?=8
-barcode_error_tolerance?=2
-minimizers_threshold?=1
+minimizers_num?=-1
+kmer_size?=-1
+barcode_error_tolerance?=-1
+minimizers_threshold?=-1
 no_sort?=--no-sort
 silent?=--silent
 
