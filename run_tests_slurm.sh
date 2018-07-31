@@ -1,24 +1,44 @@
 #!/bin/bash
 
-# slurm params
-# 1 = filename
-# 2 = job_name
-# 3 = mem
-# 4 = time
-# 5 = command
+last_job_id=""
 function slurm {
-    echo "#!/bin/bash"                                  >  $1
-    echo "#SBATCH --job-name=$2"                        >> $1
-    echo "#SBATCH -n 1"                                 >> $1
-    echo "#SBATCH --mem $3"                             >> $1
-    echo "#SBATCH -t $4"                                >> $1
-    echo "#SBATCH --output=$1.out"                      >> $1
-    echo "#SBATCH --error=$1.err"                       >> $1
-    echo "#SBATCH --export=all"                         >> $1
-    echo "#SBATCH -p debug,express,normal,big-mem,long" >> $1
-    echo "$5"                                           >> $1
-    sbatch $1
+    filename=$1
+    job_name=$2
+    mem=$3
+    tim=$4
+    command=$5
+    thread_count=$6
+    dependencies=$7
+    echo "#!/bin/bash"                                        >  $filename
+    echo "#SBATCH --job-name=$job_name"                       >> $filename
+    echo "#SBATCH -c $thread_count"                           >> $filename
+    echo "#SBATCH --mem $mem"                                 >> $filename
+    echo "#SBATCH -t $tim"                                    >> $filename
+    echo "#SBATCH --output=$filename.out"                     >> $filename
+    echo "#SBATCH --error=$filename.err"                      >> $filename
+    echo "#SBATCH --export=all"                               >> $filename
+    echo "#SBATCH -p debug,express,normal,big-mem,long"       >> $filename
+    if [ $dependencies != "NONE" ]
+    then
+        echo "#SBATCH --dependency=afterany$dependencies"     >> $filename
+    fi
+    echo "sleep 30s"                                          >> $filename
+    echo -e "$command"                                        >> $filename
+    last_job_id=$(sbatch $filename)
 }
+
+random_seed=42
+barcode_length=8
+molecule_size_mu=300
+read_length=150
+sequencing_machine=HS25
+thread_count=1
+
+
+./benchmark annotation reference reference_name=hg38 gnu_time cdhitest starcode dunovo rainbow
+make
+./benchmark panel reference_name=hg38 gene_list_name=COSMIC_cancer_genes random_seed=$random_seed
+
 for dataset in $@
 do
     case $dataset in
@@ -40,48 +60,123 @@ do
     ;;
     "tiny")  echo "Test dataset five"
     num_barcodes=100
-    num_molecules=10
+    num_molecules=25
     ;;
     esac
-    # Initializing the expirement by creating the log files and dataset
-    echo Initializing the expirement by creating the log files and dataset
-    ./benchmark simulate reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes
-    ./benchmark make_log_files reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes
+
+    # Making barcodes
+    barcodes_deps=""
+    job_name="barcodes"
+    filename="$slurm_path/$job_name.pbs"
+    mem="10240"
+    tim="00:29:59"
+    command="./benchmark barcodes "
+    command=$command"num_barcodes=$num_barcodes "
+    command=$command"barcode_length=$barcode_length "
+    command=$command"random_seed=$random_seed "
+    depends="NONE"
+    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+    barcodes_deps=$barcodes_deps":"${last_job_id##* }
+
+    # Making molecules
+    molecules_deps=""
+    job_name="molecules"
+    filename="$slurm_path/$job_name.pbs"
+    mem="51200"
+    tim="02:59:59"
+    command="./benchmark molecules "
+    command=$command"random_seed=$random_seed "
+    command=$command"reference_name=hg38 "
+    command=$command"gene_list_name=COSMIC_cancer_genes "
+    command=$command"num_molecules=$num_molecules "
+    command=$command"molecule_size_mu=$molecule_size_mu "
+    command=$command"read_length=$read_length "
+    depends="$barcodes_deps"
+    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+    molecules_deps=$molecules_deps":"${last_job_id##* }
+
+    # Making simulation and log files
+    simulate_deps=""
+    job_name="simulate.bl_$barcode_length.rl_$read_length"
+    filename="$slurm_path/$job_name.pbs"
+    mem="51200"
+    tim="05:59:59"
+    command="./benchmark simulate make_log_files "
+    command=$command"random_seed=$random_seed "
+    command=$command"reference_name=hg38 "
+    command=$command"gene_list_name=COSMIC_cancer_genes "
+    command=$command"num_molecules=$num_molecules "
+    command=$command"num_barcodes=$num_barcodes "
+    command=$command"barcode_length=$barcode_length "
+    command=$command"molecule_size_mu=$molecule_size_mu "
+    command=$command"read_length=$read_length "
+    command=$command"sequencing_machine=$sequencing_machine "
+    depends="$barcodes_deps""$molecules_deps"
+    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+    simulate_deps=$simulate_deps":"${last_job_id##* }
+
+
 
     slurm_path=slurm_pbs/"$dataset"
     mkdir -p "$slurm_path"
 
-   # calib_log
-    for error_tolerance in 1 2
-    do
-        for kmer_size in 4 8
-        do
-            for param_set in 3,1 3,2 4,1 4,2 4,3 5,2 5,3 5,4;
-            do
-                IFS=",";
-                set -- $param_set;
-                job_name="calib.$error_tolerance.$kmer_size.$1.$2"
-                filename="$slurm_path/$job_name.pbs"
-                mem="102400"
-                tim="05:59:59"
-                command="./benchmark calib_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes barcode_error_tolerance=$error_tolerance kmer_size=$kmer_size minimizers_num=$1 minimizers_threshold=$2"
-                slurm "$filename" "$job_name" "$mem" "$tim" "$command"
-            done
-        done
-    done
+    # calib_log
+    job_name="calib"
+    filename="$slurm_path/$job_name.pbs"
+    mem="51200"
+    tim="01:59:59"
+    command="./benchmark calib_log "
+    command=$command"log_comment=$dataset""_calib "
+    command=$command"random_seed=$random_seed "
+    command=$command"reference_name=hg38 "
+    command=$command"gene_list_name=COSMIC_cancer_genes "
+    command=$command"num_molecules=$num_molecules "
+    command=$command"num_barcodes=$num_barcodes "
+    command=$command"barcode_length=$barcode_length "
+    command=$command"molecule_size_mu=$molecule_size_mu "
+    command=$command"read_length=$read_length "
+    command=$command"sequencing_machine=$sequencing_machine "
+    depends="$simulate_deps"
+    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
 
     # starcode_log
-    for starcode_dist in 1 2 3 4 5 6 7 8
+    starcode_umi_dist?=2
+    starcode_umi_ratio?=5
+    starcode_seq_dist?=4
+    starcode_seq_ratio?=5
+    for starcode_umi_dist in 1 2 3
     do
-      for starcode_ratio in 1 2 3 4 5
-      do
-          job_name="starcode.$starcode_dist.$starcode_ratio"
-          filename="$slurm_path/$job_name.pbs"
-          mem="614400"
-          tim="11:59:59"
-          command="./benchmark starcode_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes starcode_dist=$starcode_dist starcode_ratio=$starcode_ratio"
-          slurm "$filename" "$job_name" "$mem" "$tim" "$command"
-      done
+        for starcode_umi_ratio in 1 3 5
+        do
+            for starcode_seq_dist in 1 3 5 7
+            do
+                for starcode_seq_ratio in 1 3 5
+                do
+                    job_name="starcode.$starcode_umi_dist.$starcode_umi_ratio.$starcode_seq_dist.$starcode_seq_ratio"
+                    filename="$slurm_path/$job_name.pbs"
+                    mem="614400"
+                    tim="11:59:59"
+                    slurm "$filename" "$job_name" "$mem" "$tim" "$command"
+                    command="./benchmark starcode_log "
+                    command=$command"log_comment=$dataset""_starcode "
+                    command=$command"random_seed=$random_seed "
+                    command=$command"reference_name=hg38 "
+                    command=$command"gene_list_name=COSMIC_cancer_genes "
+                    command=$command"num_molecules=$num_molecules "
+                    command=$command"num_barcodes=$num_barcodes "
+                    command=$command"barcode_length=$barcode_length "
+                    command=$command"molecule_size_mu=$molecule_size_mu "
+                    command=$command"read_length=$read_length "
+                    command=$command"sequencing_machine=$sequencing_machine "
+                    command=$command"starcode_umi_dist=$starcode_umi_dist "
+                    command=$command"starcode_umi_ratio=$starcode_umi_ratio "
+                    command=$command"starcode_seq_dist=$starcode_seq_dist "
+                    command=$command"starcode_seq_ratio=$starcode_seq_ratio "
+                    depends="$simulate_deps"
+                    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
+                done
+            done
+        done
     done
 
     # rainbow_log
@@ -89,12 +184,26 @@ do
     do
         for div in "true" "false"
         do
+            # rainbow_log
             job_name="rainbow.$rainbow_mismatch.$div"
             filename="$slurm_path/$job_name.pbs"
             mem="51200"
             tim="05:59:59"
-            command="./benchmark rainbow_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes rainbow_mismatch=$rainbow_mismatch rainbow_div=$div"
-            slurm "$filename" "$job_name" "$mem" "$tim" "$command"
+            command="./benchmark rainbow_log "
+            command=$command"log_comment=$dataset""_rainbow "
+            command=$command"random_seed=$random_seed "
+            command=$command"reference_name=hg38 "
+            command=$command"gene_list_name=COSMIC_cancer_genes "
+            command=$command"num_molecules=$num_molecules "
+            command=$command"num_barcodes=$num_barcodes "
+            command=$command"barcode_length=$barcode_length "
+            command=$command"molecule_size_mu=$molecule_size_mu "
+            command=$command"read_length=$read_length "
+            command=$command"sequencing_machine=$sequencing_machine "
+            command=$command"rainbow_mismatch=$rainbow_mismatch "
+            command=$command"rainbow_div=$rainbow_div "
+            depends="$simulate_deps"
+            slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
         done
     done
 
@@ -105,9 +214,20 @@ do
         filename="$slurm_path/$job_name.pbs"
         mem="204800"
         tim="23:59:59"
-        command="./benchmark cdhitest_log reference_name=hg38 bed=Panel.hg38 num_molecules=$num_molecules num_barcodes=$num_barcodes cdhitest_dist=$cdhitest_dist"
-        slurm "$filename" "$job_name" "$mem" "$tim" "$command"
+        command="./benchmark cdhitest_log "
+        command=$command"log_comment=$dataset""_cdhit "
+        command=$command"random_seed=$random_seed "
+        command=$command"reference_name=hg38 "
+        command=$command"gene_list_name=COSMIC_cancer_genes "
+        command=$command"num_molecules=$num_molecules "
+        command=$command"num_barcodes=$num_barcodes "
+        command=$command"barcode_length=$barcode_length "
+        command=$command"molecule_size_mu=$molecule_size_mu "
+        command=$command"read_length=$read_length "
+        command=$command"sequencing_machine=$sequencing_machine "
+        command=$command"cdhitest_dist=$cdhitest_dist "
+        depends="$simulate_deps"
+        slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"
     done
-
 done
 exit
