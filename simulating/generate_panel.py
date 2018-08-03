@@ -49,7 +49,7 @@ def main():
         output_file = open(args.output_panel, 'w+')
     else:
         output_file = sys.stdout
-    print('chrom', 'chromStart', 'chromEnd', 'geneName', 'y', 'z', sep='\t', file=output_file)
+    bed_records = list()
     gene_name_template = 'gene_name "{}";'
     for line in open(args.gene_annotation):
         if line[0] == "#":
@@ -64,8 +64,13 @@ def main():
                 break
         if current_gene_name == "None":
             continue
-
-        print("chr{}".format(line[0]), line[3], line[4], current_gene_name, 'y', 'z',sep='\t', file=output_file)
+        current_chr = 'chr{}'.format(line[0].lstrip('chr'))
+        current_start = str(int(line[3]))
+        current_end = str(int(line[4]))
+        bed_record = '\t'.join([current_chr, current_start, current_end, current_gene_name])
+        bed_records.append(bed_record)
+    for bed_record in bed_records:
+        print(bed_record, file=output_file)
 
 if __name__ == "__main__":
     main()
