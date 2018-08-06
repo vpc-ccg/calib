@@ -46,8 +46,8 @@ def attach_barcodes(barcodes_file_path, molecules_file_path, seed=None, output_f
             barcode_a = barcodes[random.randrange(0, len(barcodes))]
             barcode_b = barcodes[random.randrange(0, len(barcodes))]
 
-            print(">{}_{}_{}".format(barcode_a, barcode_b, lines[0][1:]), file=output_file)
-            print(barcode_a + lines[1] + barcode_b, file=output_file)
+            print(">{}:{}:{}".format(lines[0][1:], barcode_a, barcode_b), file=output_file)
+            print('{}{}{}'.format(barcode_a, lines[1], barcode_b), file=output_file)
 
 
 def main():
