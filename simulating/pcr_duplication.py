@@ -1,6 +1,5 @@
 import numpy as np
 import argparse
-from numpy import random
 import math
 import sys
 
@@ -49,79 +48,92 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-
-def flatten_dictionary(dictionary):
-    flattened_dict = []
-    for key, item in dictionary.items():
-        for i in range(len(item)):
-            new_tuple = (key, item[i])
-            flattened_dict.append(new_tuple)
-    return flattened_dict
-
-
-def pcr_cycle(molecules, duplication_rate, error_rate, pcr_results, cycles_left=0):
-    choices = flatten_dictionary(pcr_results)
-    num_duplications = int(math.floor(len(choices) * duplication_rate))
-    duplicate_choice_idxs = np.random.choice(len(choices), size=num_duplications, replace=False)
-    # print('PCR cycles left: ', cycles_left, file=sys.stderr)
-    # print('Select {} out of {} molecules'.format(num_duplications, len(choices)), file=sys.stderr)
-    for i in duplicate_choice_idxs:
-        molecule_id, existing_mutations = choices[i]
-        molecule = molecules[molecule_id]
-        error_choices = np.random.choice([True, False], p=[error_rate, 1-error_rate], size=len(molecule))
-        error_idxs = np.where(error_choices)[0]
-        mutations = []
-        for error_idx in error_idxs:
-            mutation_choices = nucleotides - set(molecule[error_idx])
-            mutation = np.random.choice(list(mutation_choices), size=1)[0]
-            mutations.append((error_idx, mutation))
-        mutations = mutations + existing_mutations
-        # print(mutations)
-        pcr_results[molecule_id].append(mutations)
-        # if len(molecules[molecule_id]) <= max(error_choices)
-    if cycles_left == 1:
-        return pcr_results
-    else:
-        return pcr_cycle(molecules, duplication_rate, error_rate, pcr_results, cycles_left-1)
-
-
 def main():
     args = parse_args()
-    random.seed(args.random_seed)
     np.random.seed(args.random_seed)
     molecules_file = open(args.molecules)
-    pcr_results = {}
-    molecules = {}
-    line = 'init'
-    while not line == '':
+    molecule_names = list()
+    molecule_seqs = list()
+    molecule_cycles = list()
+    molecule_parents = list()
+    molecule_roots = list()
+    line = molecules_file.readline()
+    while len(line) > 0:
+        molecule_names.append(line.rstrip())
         line = molecules_file.readline()
-        if line == '':
-            break
-        molecule_id = line.rstrip()
-        molecule = molecules_file.readline().rstrip()
-        molecules[molecule_id] = molecule
-        # pcr_results is a list of lists of error indices
-        pcr_results[molecule_id] = [[]]
-    pcr_results = pcr_cycle(molecules,
-                            args.duplication_rate_per_cycle,
-                            args.error_rate,
-                            pcr_results,
-                            cycles_left=args.number_of_cycles)
+        molecule_seqs.append(line.rstrip())
+        line = molecules_file.readline()
+        molecule_cycles.append(0)
+        molecule_parents.append(len(molecule_parents))
+        molecule_roots.append(len(molecule_roots))
+    mutations = dict(
+        A=['C','G','T'],
+        C=['A','G','T'],
+        G=['C','A','T'],
+        T=['C','G','A'],
+        a=['C','G','T'],
+        c=['A','G','T'],
+        g=['C','A','T'],
+        t=['C','G','A'],
+        N=['A','C','G','T'],
+        n=['A','C','G','T'],
+    )
+    for cycle in range(1, args.number_of_cycles+1):
+        duplication_idxs_size = math.ceil(len(molecule_seqs)*args.duplication_rate_per_cycle)
+        duplication_idxs_size = max(duplication_idxs_size, 2)
+
+        duplication_idxs = list(np.random.choice(
+                                len(molecule_seqs),
+                                size=duplication_idxs_size,
+                                replace=False))
+        duplicated_molecules = list()
+        duplicated_pos = list()
+        for idx in duplication_idxs:
+            duplicated_molecules.append(molecule_seqs[idx])
+            for pos in range(len(duplicated_molecules[-1])):
+                duplicated_pos.append((len(duplicated_molecules)-1, pos))
+            molecule_parents.append(idx)
+            molecule_roots.append(molecule_roots[idx])
+            molecule_cycles.append(cycle)
+        duplication_err_idxs_size = math.ceil(len(duplicated_pos)*args.error_rate)
+        duplication_err_idxs_size = max(duplication_err_idxs_size, 2)
+
+        duplication_err_idxs = list(np.random.choice(
+                                len(duplicated_pos),
+                                size=duplication_err_idxs_size,
+                                replace=False))
+        duplication_err_idxs = [duplicated_pos[idx] for idx in duplication_err_idxs]
+        for (idx, pos) in duplication_err_idxs:
+            base = duplicated_molecules[idx][pos]
+            mutation = str(np.random.choice(mutations[base]))
+            duplicated_molecules[idx] = '{}{}{}'.format(
+                                            duplicated_molecules[idx][0:pos-1],
+                                            mutation,
+                                            duplicated_molecules[idx][pos+1:]
+                                            )
+        molecule_seqs.extend(duplicated_molecules)
+
+    output_molecule_count = len(molecule_seqs)
+    molecule_cycle_ancestry = [list()]*output_molecule_count
+    for idx in range(output_molecule_count):
+        ancestry = molecule_cycle_ancestry[molecule_parents[idx]].copy()
+        ancestry.append(str(molecule_cycles[idx]))
+        molecule_cycle_ancestry[idx] = ancestry
+    output_molecules = list()
+    for idx in range(output_molecule_count):
+        output_molecules.append('{}:{}\n{}'.format(
+            molecule_names[molecule_roots[idx]],
+            '.'.join(molecule_cycle_ancestry[idx]),
+            molecule_seqs[idx]
+            )
+        )
+    np.random.shuffle(output_molecules)
     if args.pcr_product:
         output = open(args.pcr_product, 'w')
     else:
         output = sys.stdout
-    final_molecule_count = 0
-    for molecule_id, pcr_result in pcr_results.items():
-        molecule_number = 0
-        for mutations in pcr_result:
-            molecule = molecules[molecule_id]
-            for error_idx, mutation in mutations:
-                molecule = molecule[0:error_idx] + mutation + molecule[error_idx+1:]
-            print(">{}_{}_{}".format(final_molecule_count, molecule_id[1:], str(molecule_number)), file=output)
-            molecule_number += 1
-            final_molecule_count += 1
-            print(molecule, file=output)
+    for molecule in output_molecules:
+        print(molecule, file=output)
 
 
 if __name__ == "__main__":
