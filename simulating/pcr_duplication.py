@@ -71,20 +71,16 @@ def main():
         molecule_mutations.append(list())
         output_molecule_count += 1
     mutations = dict(
-        # A=['C','G','T'],
-        # C=['A','G','T'],
-        # G=['C','A','T'],
-        # T=['C','G','A'],
-        # a=['C','G','T'],
-        # c=['A','G','T'],
-        # g=['C','A','T'],
-        # t=['C','G','A'],
-        # N=['A','C','G','T'],
-        # n=['A','C','G','T'],
-        A=['x'],
-        C=['x'],
-        G=['x'],
-        T=['x'],
+        A=['C','G','T'],
+        C=['A','G','T'],
+        G=['C','A','T'],
+        T=['C','G','A'],
+        a=['C','G','T'],
+        c=['A','G','T'],
+        g=['C','A','T'],
+        t=['C','G','A'],
+        N=['A','C','G','T'],
+        n=['A','C','G','T'],
     )
     for cycle in range(1, args.number_of_cycles+1):
         print('Cycle {}'.format(cycle))
