@@ -9,13 +9,6 @@ function slurm {
     command=$5
     thread_count=$6
     dependencies=$7
-    # echo "filename "$filename
-    # echo "job_name "$job_name
-    # echo "mem "$mem
-    # echo "tim "$tim
-    # echo "command "$command
-    # echo "thread_count "$thread_count
-    # echo "dependencies "$dependencies
     echo "#!/bin/bash"                                        >  $filename
     echo "#SBATCH --job-name=$job_name"                       >> $filename
     echo "#SBATCH -c $thread_count"                           >> $filename
@@ -186,7 +179,7 @@ do
         for rainbow_div in "true" "false"
         do
             # rainbow_log
-            job_name="rainbow_"$rainbow_mismatch"_"$div""
+            job_name="rainbow_"$rainbow_mismatch"_"$rainbow_div""
             filename="$slurm_path/$job_name.pbs"
             mem="51200"
             tim="05:59:59"
