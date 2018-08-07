@@ -43,6 +43,10 @@ do
     num_barcodes=100
     num_molecules=100000
     ;;
+    "small-medium")  echo "Test dataset one and half"
+    num_barcodes=100
+    num_molecules=1000000
+    ;;
     "medium")  echo "Test dataset two"
     num_barcodes=5000
     num_molecules=1000000
