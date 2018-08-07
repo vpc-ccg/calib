@@ -112,20 +112,6 @@ def main():
             mol_pos = np.random.randint(0, len(root_molecule_seqs[molecule_roots[mol_id]]))
             molecule_mutations[mol_id].append(mol_pos)
 
-        # for cum_pos in mutation_cum_positions:
-        #     guess_idx = int(cum_pos/cum_length*len(parenting_ids))
-        #     search_iterator = None
-        #     if cum_pos < cum_starts[guess_idx]:
-        #         search_iterator = reversed(range(0, guess_idx))
-        #     else:
-        #         search_iterator = range(guess_idx, len(parenting_ids))
-        #     for mol_id in search_iterator:
-        #         if cum_pos >= cum_starts[mol_id] and cum_pos < cum_starts[mol_id+1]:
-        #             mol_pos = cum_pos - cum_starts[mol_id]
-        #             break
-        #     mol_id = len(molecule_mutations) - parenting_count + mol_id
-        #     molecule_mutations[mol_id].append(mol_pos)
-
     molecule_cycle_ancestry = [list()]*output_molecule_count
     for idx in range(output_molecule_count):
         ancestry = molecule_cycle_ancestry[molecule_parents[idx]].copy()
@@ -136,7 +122,7 @@ def main():
         molecule = root_molecule_seqs[molecule_roots[idx]].copy()
         for pos in molecule_mutations[idx]:
             molecule[pos] = str(np.random.choice(mutations[molecule[pos]]))
-        output_molecules.append('{}:{}\t{}'.format(
+        output_molecules.append('{}:{}\n{}'.format(
                                 molecule_names[molecule_roots[idx]],
                                 '.'.join(molecule_cycle_ancestry[idx]),
                                 ''.join(molecule),
