@@ -53,67 +53,83 @@ def main():
     np.random.seed(args.random_seed)
     molecules_file = open(args.molecules)
     molecule_names = list()
-    molecule_seqs = list()
+    root_molecule_seqs = list()
     molecule_cycles = list()
     molecule_parents = list()
     molecule_roots = list()
+    molecule_mutations = list()
     line = molecules_file.readline()
+    output_molecule_count = 0
     while len(line) > 0:
         molecule_names.append(line.rstrip())
         line = molecules_file.readline()
-        molecule_seqs.append(line.rstrip())
+        root_molecule_seqs.append(list(line.rstrip()))
         line = molecules_file.readline()
         molecule_cycles.append(0)
         molecule_parents.append(len(molecule_parents))
         molecule_roots.append(len(molecule_roots))
+        molecule_mutations.append(list())
+        output_molecule_count += 1
     mutations = dict(
-        A=['C','G','T'],
-        C=['A','G','T'],
-        G=['C','A','T'],
-        T=['C','G','A'],
-        a=['C','G','T'],
-        c=['A','G','T'],
-        g=['C','A','T'],
-        t=['C','G','A'],
-        N=['A','C','G','T'],
-        n=['A','C','G','T'],
+        # A=['C','G','T'],
+        # C=['A','G','T'],
+        # G=['C','A','T'],
+        # T=['C','G','A'],
+        # a=['C','G','T'],
+        # c=['A','G','T'],
+        # g=['C','A','T'],
+        # t=['C','G','A'],
+        # N=['A','C','G','T'],
+        # n=['A','C','G','T'],
+        A=['x'],
+        C=['x'],
+        G=['x'],
+        T=['x'],
     )
     for cycle in range(1, args.number_of_cycles+1):
-        duplication_idxs_size = math.ceil(len(molecule_seqs)*args.duplication_rate_per_cycle)
-        duplication_idxs_size = max(duplication_idxs_size, 2)
+        print('Cycle {}'.format(cycle))
+        parenting_count = math.ceil(output_molecule_count*args.duplication_rate_per_cycle)
 
-        duplication_idxs = list(np.random.choice(
-                                len(molecule_seqs),
-                                size=duplication_idxs_size,
+        parenting_ids = list(np.random.choice(
+                                output_molecule_count,
+                                size=parenting_count,
                                 replace=False))
-        duplicated_molecules = list()
-        duplicated_pos = list()
-        for idx in duplication_idxs:
-            duplicated_molecules.append(molecule_seqs[idx])
-            for pos in range(len(duplicated_molecules[-1])):
-                duplicated_pos.append((len(duplicated_molecules)-1, pos))
-            molecule_parents.append(idx)
-            molecule_roots.append(molecule_roots[idx])
+        output_molecule_count += len(parenting_ids)
+
+        cum_starts = list()
+        cum_length = 0
+        cum_starts.append(cum_length)
+        for parent_id in parenting_ids:
+            molecule_parents.append(parent_id)
+            molecule_roots.append(molecule_roots[parent_id])
             molecule_cycles.append(cycle)
-        duplication_err_idxs_size = math.ceil(len(duplicated_pos)*args.error_rate)
-        duplication_err_idxs_size = max(duplication_err_idxs_size, 2)
+            molecule_mutations.append(molecule_mutations[parent_id].copy())
+            cum_length += len(root_molecule_seqs[molecule_roots[-1]])
+            cum_starts.append(cum_length)
+        mutation_count = math.ceil(cum_length*args.error_rate)
+        mutation_molecules = list(np.random.choice(
+                                parenting_count,
+                                size=mutation_count,
+                                replace=True))
+        for mol_id in mutation_molecules:
+            mol_id = len(molecule_mutations) - parenting_count + mol_id
+            mol_pos = np.random.randint(0, len(root_molecule_seqs[molecule_roots[mol_id]]))
+            molecule_mutations[mol_id].append(mol_pos)
 
-        duplication_err_idxs = list(np.random.choice(
-                                len(duplicated_pos),
-                                size=duplication_err_idxs_size,
-                                replace=False))
-        duplication_err_idxs = [duplicated_pos[idx] for idx in duplication_err_idxs]
-        for (idx, pos) in duplication_err_idxs:
-            base = duplicated_molecules[idx][pos]
-            mutation = str(np.random.choice(mutations[base]))
-            duplicated_molecules[idx] = '{}{}{}'.format(
-                                            duplicated_molecules[idx][0:pos-1],
-                                            mutation,
-                                            duplicated_molecules[idx][pos+1:]
-                                            )
-        molecule_seqs.extend(duplicated_molecules)
+        # for cum_pos in mutation_cum_positions:
+        #     guess_idx = int(cum_pos/cum_length*len(parenting_ids))
+        #     search_iterator = None
+        #     if cum_pos < cum_starts[guess_idx]:
+        #         search_iterator = reversed(range(0, guess_idx))
+        #     else:
+        #         search_iterator = range(guess_idx, len(parenting_ids))
+        #     for mol_id in search_iterator:
+        #         if cum_pos >= cum_starts[mol_id] and cum_pos < cum_starts[mol_id+1]:
+        #             mol_pos = cum_pos - cum_starts[mol_id]
+        #             break
+        #     mol_id = len(molecule_mutations) - parenting_count + mol_id
+        #     molecule_mutations[mol_id].append(mol_pos)
 
-    output_molecule_count = len(molecule_seqs)
     molecule_cycle_ancestry = [list()]*output_molecule_count
     for idx in range(output_molecule_count):
         ancestry = molecule_cycle_ancestry[molecule_parents[idx]].copy()
@@ -121,12 +137,14 @@ def main():
         molecule_cycle_ancestry[idx] = ancestry
     output_molecules = list()
     for idx in range(output_molecule_count):
-        output_molecules.append('{}:{}\n{}'.format(
-            molecule_names[molecule_roots[idx]],
-            '.'.join(molecule_cycle_ancestry[idx]),
-            molecule_seqs[idx]
-            )
-        )
+        molecule = root_molecule_seqs[molecule_roots[idx]].copy()
+        for pos in molecule_mutations[idx]:
+            molecule[pos] = str(np.random.choice(mutations[molecule[pos]]))
+        output_molecules.append('{}:{}\t{}'.format(
+                                molecule_names[molecule_roots[idx]],
+                                '.'.join(molecule_cycle_ancestry[idx]),
+                                ''.join(molecule),
+                                ))
     np.random.shuffle(output_molecules)
     if args.pcr_product:
         output = open(args.pcr_product, 'w')
