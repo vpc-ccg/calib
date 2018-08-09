@@ -2,5 +2,10 @@
 hg38.fa
 hg38.fa.fai
 hg38.gtf
+hg38.fa.amb
+hg38.fa.ann
+hg38.fa.bwt
+hg38.fa.pac
+hg38.fa.sa
 # Except this file
 !.gitignore
