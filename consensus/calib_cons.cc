@@ -35,8 +35,7 @@ void process_clusters(const std::vector<std::string>& read_to_sequence, const st
             auto alignment = alignment_engine->align_sequence_with_graph(read_to_sequence[rid], graph);
             graph->add_alignment(alignment, read_to_sequence[rid]);
         }
-        std::string spoa_consensus = graph->generate_consensus();
-        std::stringstream calib_consensus;
+        std::string consensus;
         std::vector<std::string> msa;
         graph->generate_multiple_sequence_alignment(msa);
 
@@ -53,34 +52,37 @@ void process_clusters(const std::vector<std::string>& read_to_sequence, const st
                 profile[col][it[col]]++;
             }
         }
+
+        consensus.reserve(profile_width);
         for (int col = 0; col < profile_width; col++) {
             if        (profile[col]['A']/profile_height > MSA_MAJORITY) {
-                calib_consensus << 'A';
+                consensus += 'A';
             } else if (profile[col]['C']/profile_height > MSA_MAJORITY) {
-                calib_consensus << 'C';
+                consensus += 'C';
             } else if (profile[col]['G']/profile_height > MSA_MAJORITY) {
-                calib_consensus << 'G';
+                consensus += 'G';
             } else if (profile[col]['T']/profile_height > MSA_MAJORITY) {
-                calib_consensus << 'T';
+                consensus += 'T';
             } else if (profile[col]['-']/profile_height > MSA_MAJORITY) {
                 /* code */
             } else {
-                calib_consensus << 'N';
+                consensus += 'N';
             }
         }
 
 
 
         output_lock.lock();
-        ofastq << ">" << header.str() << '\n';
-        ofastq << calib_consensus.str() << '\n';
+        ofastq << "@" << header.str() << '\n';
+        ofastq << consensus << '\n';
         ofastq << '+' << '\n';
-        std::string qual(calib_consensus.str().size(), 'K');
+        std::string qual(consensus.size(), 'K');
         ofastq << qual << '\n';
 
-        omsa << ">" << header.str() << '\n';
-        omsa << calib_consensus.str() << '\n';
-        omsa << spoa_consensus        << '\n';
+        omsa << "@" << header.str() << '\n';
+        omsa << consensus << '\n';
+        omsa << graph->generate_consensus() << '\n';
+        omsa << graph->generate_consensus() << '\n';
         omsa << '+' << '\n';
         for (const auto& it: msa) {
             omsa << it << '\n';
