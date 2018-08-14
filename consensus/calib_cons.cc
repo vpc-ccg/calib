@@ -1,11 +1,11 @@
 #include "spoa/spoa.hpp"
+#include <stdio.h>
 #include <iostream>
 #include <sstream>
 #include <iterator>
 #include <fstream>
 #include <iostream>
 #include <thread>
-#include <mutex>
 #include <functional>
 #include <locale>
 
@@ -17,12 +17,13 @@
 #define MSA_MAJORITY 0.5
 
 size_t thread_count = 8;
-std::mutex output_lock;
 
 typedef uint32_t cluster_id_t;
 typedef uint32_t read_id_t;
 
-void process_clusters(const std::vector<std::string>& read_to_sequence, const std::vector<std::vector<read_id_t> >& cluster_to_reads, std::ofstream& ofastq, std::ofstream& omsa, size_t thread_id) {
+void process_clusters(const std::vector<std::string>& read_to_sequence, const std::vector<std::vector<read_id_t> >& cluster_to_reads, std::string o_filename_prefix, size_t thread_id) {
+    std::ofstream ofastq(o_filename_prefix + ".fastq" + std::to_string(thread_id));
+    std::ofstream omsa(o_filename_prefix + ".msa" + std::to_string(thread_id));
     for (cluster_id_t cid = thread_id; cid < cluster_to_reads.size(); cid+=thread_count) {
         auto alignment_engine = spoa::createAlignmentEngine(
             static_cast<spoa::AlignmentType>(ALIGNMENT_TYPE_GLOBAL), SCORE_M, SCORE_X, SCORE_G
@@ -52,7 +53,6 @@ void process_clusters(const std::vector<std::string>& read_to_sequence, const st
                 profile[col][it[col]]++;
             }
         }
-
         consensus.reserve(profile_width);
         for (int col = 0; col < profile_width; col++) {
             if        (profile[col]['A']/profile_height > MSA_MAJORITY) {
@@ -69,10 +69,6 @@ void process_clusters(const std::vector<std::string>& read_to_sequence, const st
                 consensus += 'N';
             }
         }
-
-
-
-        output_lock.lock();
         ofastq << "@" << header.str() << '\n';
         ofastq << consensus << '\n';
         ofastq << '+' << '\n';
@@ -87,7 +83,6 @@ void process_clusters(const std::vector<std::string>& read_to_sequence, const st
         for (const auto& it: msa) {
             omsa << it << '\n';
         }
-        output_lock.unlock();
     }
 }
 
@@ -115,12 +110,14 @@ int main(int argc, char** argv) {
     }
 
     //Get read sequences from each FASTQ file, and pass it for MSA and output
-    for (int i = 2; i < argc; i++) {
-        std::string filename = argv[i];
+
+    for (int i = 2; i < argc; i+=2) {
+        std::string ifastq_filename = argv[i];
+        std::string o_filename_prefix = argv[i+1];
 
         std::vector<std::string> read_to_sequence(read_count);
         std::ifstream ifastq;
-        ifastq.open(filename);
+        ifastq.open(ifastq_filename);
         read_id_t rid = 0;
         while (getline(ifastq, line_buffer)) {
             getline(ifastq, read_to_sequence[rid]);
@@ -128,15 +125,24 @@ int main(int argc, char** argv) {
             getline(ifastq, line_buffer);
             rid++;
         }
-        std::ofstream ofastq(filename + ".consensus.fastq");
-        std::ofstream omsa(filename + ".msa");
-
         std::vector<std::thread> threads(thread_count);
         for (size_t thread_id = 0; thread_id < thread_count; thread_id++) {
-            threads[thread_id] = std::thread(process_clusters, std::ref(read_to_sequence), std::ref(cluster_to_reads), std::ref(ofastq), std::ref(omsa), thread_id);
+            threads[thread_id] = std::thread(process_clusters, std::ref(read_to_sequence), std::ref(cluster_to_reads), o_filename_prefix, thread_id);
         }
+        std::ofstream ofastq(o_filename_prefix + ".fastq");
+        std::ofstream omsa(o_filename_prefix + ".msa");
         for (size_t thread_id = 0; thread_id < thread_count; thread_id++) {
             threads[thread_id].join();
+
+            std::string fastq_t_filename = o_filename_prefix + ".fastq" + std::to_string(thread_id);
+            std::ifstream ofastq_t(fastq_t_filename);
+            ofastq << ofastq_t.rdbuf();
+            remove(fastq_t_filename.c_str());
+
+            std::string msa_t_filename = o_filename_prefix + ".msa" + std::to_string(thread_id);
+            std::ifstream omsa_t(msa_t_filename);
+            omsa << omsa_t.rdbuf();
+            remove(msa_t_filename.c_str());
         }
     }
     return 0;
