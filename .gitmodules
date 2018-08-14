@@ -19,3 +19,6 @@
 [submodule "consensus/bwa_v0.7.17"]
 	path = consensus/bwa_v0.7.17
 	url = https://github.com/lh3/bwa
+[submodule "consensus/sinvict"]
+	path = consensus/sinvict
+	url = https://github.com/sfu-compbio/sinvict.git
