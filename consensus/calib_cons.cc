@@ -25,6 +25,9 @@ void process_clusters(const std::vector<std::string>& read_to_sequence, const st
     std::ofstream ofastq(o_filename_prefix + ".fastq" + std::to_string(thread_id));
     std::ofstream omsa(o_filename_prefix + ".msa" + std::to_string(thread_id));
     for (cluster_id_t cid = thread_id; cid < cluster_to_reads.size(); cid+=thread_count) {
+        if (cluster_to_reads[cid].size() < 1) {
+            continue;
+        }
         auto alignment_engine = spoa::createAlignmentEngine(
             static_cast<spoa::AlignmentType>(ALIGNMENT_TYPE_GLOBAL), SCORE_M, SCORE_X, SCORE_G
         );
@@ -120,6 +123,9 @@ int main(int argc, char** argv) {
         ifastq.open(ifastq_filename);
         read_id_t rid = 0;
         while (getline(ifastq, line_buffer)) {
+            if (read_to_sequence.size() <= rid) {
+                read_to_sequence.resize(rid+1);
+            }
             getline(ifastq, read_to_sequence[rid]);
             getline(ifastq, line_buffer);
             getline(ifastq, line_buffer);
