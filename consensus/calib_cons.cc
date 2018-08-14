@@ -80,8 +80,6 @@ void process_clusters(const std::vector<std::string>& read_to_sequence, const st
 
         omsa << "@" << header.str() << '\n';
         omsa << consensus << '\n';
-        omsa << graph->generate_consensus() << '\n';
-        omsa << graph->generate_consensus() << '\n';
         omsa << '+' << '\n';
         for (const auto& it: msa) {
             omsa << it << '\n';

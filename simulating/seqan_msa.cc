@@ -1,65 +1,86 @@
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
 #include <seqan/align.h>
 #include <seqan/graph_msa.h>
 
-using namespace seqan;
+#define MSA_MAJORITY 0.5
+#define ASCII_SIZE 128
+
+std::string process_cluster(const std::vector<std::string> &sequences) {
+    seqan::Align<seqan::Dna5String> align;
+    seqan::resize(seqan::rows(align), sequences.size());
+    for (int i = 0; i < sequences.size(); i++) {
+        seqan::assignSource(seqan::row(align, i), sequences[i]);
+    }
+    std::string consensus = "";
+
+    seqan::globalMsaAlignment(align, seqan::SimpleScore(5, -3, -9));
+
+    std::vector<std::string> msa;
+    for (int i = 0; i < sequences.size(); i++) {
+        std::stringstream ss;
+        ss << seqan::row(align,i);
+        msa.push_back(ss.str());
+    }
+    size_t profile_width = msa[0].size();
+    size_t profile_height = msa.size();
+    float profile[profile_width][ASCII_SIZE];
+    for (int col = 0; col < profile_width; col++) {
+        for (int row = 0; row < ASCII_SIZE; row++) {
+            profile[col][row] = 0;
+        }
+    }
+    for (const auto& it : msa) {
+        for (int col = 0; col < profile_width; col++) {
+            profile[col][it[col]]++;
+        }
+    }
+    consensus.reserve(profile_width);
+    for (int col = 0; col < profile_width; col++) {
+        if        (profile[col]['A']/profile_height > MSA_MAJORITY) {
+            consensus += 'A';
+        } else if (profile[col]['C']/profile_height > MSA_MAJORITY) {
+            consensus += 'C';
+        } else if (profile[col]['G']/profile_height > MSA_MAJORITY) {
+            consensus += 'G';
+        } else if (profile[col]['T']/profile_height > MSA_MAJORITY) {
+            consensus += 'T';
+        } else if (profile[col]['-']/profile_height > MSA_MAJORITY) {
+            /* code */
+        } else {
+            consensus += 'N';
+        }
+    }
+    return consensus;
+}
 
 int main (int argc, char *argv[]) {
-    std::string input_sequence;
-    if (argc != 3) {
+    if (argc != 2) {
         return -1;
     }
     std::ifstream input(argv[1]);
-    std::ofstream output(std::string(argv[2])+std::string(".stat"));
-    std::ofstream output_msa(argv[2]);
+    std::ofstream output(std::string(argv[1])+std::string(".seqan.fastq"));
 
+    std::string input_sequence, consensus;
     std::vector<std::string> sequences;
+    getline (input, consensus);
     while (getline (input, input_sequence)) {
-        if (input_sequence.at(0) == '>') {
+        if (input_sequence.at(0) == '@') {
+            consensus += '\t';
+            consensus += process_cluster(sequences);
+            output << consensus << "\n";
             sequences.clear();
-            output << input_sequence.substr(1) << "\t";
-            output_msa << input_sequence << "\n";
-        } else if (input_sequence.at(0) == '<') {
-            Align<Dna5String> align;
-            resize(rows(align), sequences.size());
-            for (int i = 0; i < sequences.size(); i++) {
-                assignSource(row(align, i), sequences[i]);
-            }
-            globalMsaAlignment(align, SimpleScore(5, -3, -1, -3));
-
-            String<ProfileChar<Dna5> > profile;
-            resize(profile, length(row(align, 0)));
-            for (unsigned rowNo = 0; rowNo < sequences.size(); ++rowNo) {
-                for (unsigned i = 0; i < length(row(align, rowNo)); ++i) {
-                    profile[i].count[ordValue(getValue(row(align, rowNo), i))] += 1;
-                }
-            }
-
-            int corrected_count = 0;
-            int incorrigible_count = 0;
-            for (unsigned i = 0; i < length(profile); ++i) {
-                int max_idx = getMaxIndex(profile[i]);
-                if (max_idx >= 0 && max_idx <= 4){
-                    if (profile[i].count[max_idx] > sequences.size()/2) {
-                        corrected_count += sequences.size() - profile[i].count[max_idx];
-                    } else if (sequences.size() > 2) {
-                        incorrigible_count += sequences.size();
-                    }
-                }
-            }
-            output << corrected_count << "\t" << incorrigible_count << "\n";
-            for (int i = 0; i < sequences.size(); i++) {
-                output_msa << row(align,i) << "\n";
-            }
-            output_msa << input_sequence << corrected_count << "\t" << incorrigible_count << "\n";
-
+            consensus = input_sequence;
         } else {
             sequences.push_back(input_sequence);
         }
     }
-
+    consensus += '\t';
+    consensus += process_cluster(sequences);
+    output << consensus << "\n";
+    sequences.clear();
     return 0;
 }
