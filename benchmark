@@ -274,7 +274,11 @@ rainbow:
 	make -C $(benchmark_aux_path)/other_tools/rainbow
 
 umi_tools:
+ifeq ("$(shell umi_tools --version)",  "UMI-tools version: 0.5.4")
+	@echo UMI-tools v0.5.4 is installed
+else
 	cd $(benchmark_aux_path)/other_tools/UMI-tools; pip install -r requirements.txt; python setup.py install --user --prefix=;
+endif
 
 gnu_time: $(GNU_TIME)
 $(GNU_TIME):
