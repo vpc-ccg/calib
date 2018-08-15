@@ -22,3 +22,6 @@
 [submodule "consensus/sinvict"]
 	path = consensus/sinvict
 	url = https://github.com/sfu-compbio/sinvict.git
+[submodule "aux/other_tools/UMI-tools"]
+	path = aux/other_tools/UMI-tools
+	url = https://github.com/CGATOxford/UMI-tools.git
