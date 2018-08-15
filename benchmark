@@ -273,6 +273,9 @@ $(rainbow_time): $(GNU_TIME) rainbow simulate
 rainbow:
 	make -C $(benchmark_aux_path)/other_tools/rainbow
 
+umi_tools:
+	cd $(benchmark_aux_path)/other_tools/UMI-tools; pip install -r requirements.txt; python setup.py install --user --prefix=;
+
 gnu_time: $(GNU_TIME)
 $(GNU_TIME):
 	wget https://ftp.gnu.org/gnu/time/time-1.9.tar.gz \
