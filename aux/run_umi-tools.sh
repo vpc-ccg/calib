@@ -14,7 +14,7 @@ umi_tools extract \
 
 bwa mem -t 32 $ref "$working_dir/barcode-extracted.1.fastq" "$working_dir/barcode-extracted.2.fastq" | \
     awk 'substr($0,1,1) == "@" || $2 < 256' | \
-    $samtools sort - -O BAM -@ 32 -m 2G -o "$working_dir/barcode-extracted.bam"
+    $samtools sort - -O BAM -@ 32 -o "$working_dir/barcode-extracted.bam"
 $samtools index "$working_dir/barcode-extracted.bam"
 umi_tools group  \
     --paired \
@@ -22,4 +22,4 @@ umi_tools group  \
     --edit-distance-threshold 2 \
     --soft-clip-threshold 9 \
     -I "$working_dir/barcode-extracted.bam" \
-    --group-out "$out_dir/umi-tools.cluster.tsv"
+    --group-out "$out_dir/umi-tools.out"
