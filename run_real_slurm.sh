@@ -21,7 +21,7 @@ convert_umitools="aux/convert_umitools_to_cluster.sh"
 restore_cluster_missing_reads="aux/restore_cluster_missing_reads.sh"
 
 mkdir -p $out_dir
-for tool in calib rainbow umi-tools
+for tool in calib rainbow umi-tools raw
 do
     # Slurm header
     echo "Preparing things for $tool"
@@ -51,11 +51,20 @@ do
     ;;
     esac
     # Consensus, mapping, and SNV calling
-    echo "$calib_cons $out_dir/$tool.cluster $fq_1 $out_dir/$tool.1 $fq_2 $out_dir/$tool.2" >> "$out_dir/$tool.pbs"
-    echo "$bwa mem $ref $out_dir/$tool.1.fastq $out_dir/$tool.2.fastq -t 32 | $samtools sort - -O BAM -@ 16 -m 2G -o $out_dir/$tool.bam" >> "$out_dir/$tool.pbs"
-    echo "$samtools index $out_dir/$tool.bam" >> "$out_dir/$tool.pbs"
-    echo "mkdir -p $out_dir/$tool.bam-readcount" >> "$out_dir/$tool.pbs"
-    echo "$bam_readcount -l $panel -f $ref -w 1 $out_dir/$tool.bam > $out_dir/$tool.bam-readcount/out.tsv" >> "$out_dir/$tool.pbs"
-
+    if [ $tool == "raw" ]
+    then
+        echo "$bwa mem $ref $fq_1 $fq_2 -t 32 | $samtools sort - -O BAM -@ 32 -m 2G -o $out_dir/$tool.bam" >> "$out_dir/$tool.pbs"
+        echo "$samtools index $out_dir/$tool.bam" >> "$out_dir/$tool.pbs"
+        echo "mkdir -p $out_dir/$tool.bam-readcount" >> "$out_dir/$tool.pbs"
+        echo "$bam_readcount -l $panel -f $ref -w 1 $out_dir/$tool.bam > $out_dir/$tool.bam-readcount/out.tsv" >> "$out_dir/$tool.pbs"
+        echo "$sinvict -m 55 -t $out_dir/umi-tools.bam-readcount -o $out_dir/umi-tools.sinvict" >> "$out_dir/$tool.pbs"
+    else
+        echo "$calib_cons $out_dir/$tool.cluster $fq_1 $out_dir/$tool.1 $fq_2 $out_dir/$tool.2" >> "$out_dir/$tool.pbs"
+        echo "$bwa mem $ref $out_dir/$tool.1.fastq $out_dir/$tool.2.fastq -t 32 | $samtools sort - -O BAM -@ 32 -m 2G -o $out_dir/$tool.bam" >> "$out_dir/$tool.pbs"
+        echo "$samtools index $out_dir/$tool.bam" >> "$out_dir/$tool.pbs"
+        echo "mkdir -p $out_dir/$tool.bam-readcount" >> "$out_dir/$tool.pbs"
+        echo "$bam_readcount -l $panel -f $ref -w 1 $out_dir/$tool.bam > $out_dir/$tool.bam-readcount/out.tsv" >> "$out_dir/$tool.pbs"
+        echo "$sinvict -m 3 -t $out_dir/umi-tools.bam-readcount -o $out_dir/umi-tools.sinvict" >> "$out_dir/$tool.pbs"
+    fi
     sbatch "$out_dir/$tool.pbs"
 done
