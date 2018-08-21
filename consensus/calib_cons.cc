@@ -16,7 +16,7 @@
 #define ASCII_SIZE 128
 #define MSA_MAJORITY 0.5
 
-int thread_count = -1;
+int thread_count = 4;
 int min_reads_per_cluster = 1;
 std::string cluster_filename = "";
 std::vector<std::string> fastq_filenames;
@@ -41,7 +41,7 @@ void print_help(){
     std::cout << "  -c  --cluster                  (string;\n";
     std::cout << "                                    REQUIRED paramter)\n";
     std::cout << "  -t  --threads                  (positive integer;\n";
-    std::cout << "                                    default: 1)\n";
+    std::cout << "                                    default: 4)\n";
     std::cout << "  -m  --min-reads-per-cluster    (positive integer;\n";
     std::cout << "                                    default: 2)\n";
     std::cout << "  -h  --help\n";
@@ -104,6 +104,7 @@ void parse_flags(int argc, char *argv[]){
     }
     if (thread_count < 0 || thread_count > 16) {
         std::cout << "Thread count must be between 1 and 16." << '\n';
+        print_help();
         exit(-1);
     }
     if (fastq_filenames.size() != output_filenames.size()) {
