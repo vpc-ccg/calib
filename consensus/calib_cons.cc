@@ -16,16 +16,114 @@
 #define ASCII_SIZE 128
 #define MSA_MAJORITY 0.5
 
-size_t thread_count = 8;
-
+int thread_count = -1;
+int min_reads_per_cluster = 1;
+std::string cluster_filename = "";
+std::vector<std::string> fastq_filenames;
+std::vector<std::string> output_filenames;
 typedef uint32_t cluster_id_t;
 typedef uint32_t read_id_t;
+
+
+void print_help(){
+    std::cout << "Calib Consensus: Generating consensus sequence from Calib clusters." << "\n";
+    std::cout << "Usage: calib_cons [--PARAMETER VALUE]" << "\n";
+    std::cout << "Example 1: calib_cons -t 8 -c input.cluster -q 1.fastq 2.fastq -o 1.out 2.out" << "\n";
+    std::cout << "Example 2: calib_cons -q 1.fastq -q 2.fastq -o 1.out 2.out -c input.cluster" << "\n";
+    std::cout << "Calib's paramters arguments:" << "\n";
+    std::cout << "  -q  --fastq                    (type: space separated string list;\n";
+    std::cout << "                                    REQUIRED paramter;\n";
+    std::cout << "                                    can be set multiple times like in Example 2)\n";
+    std::cout << "  -o  --output-prefix            (type: space separated string list;\n";
+    std::cout << "                                    REQUIRED paramter;\n";
+    std::cout << "                                    can be set multiple times like in Example 2;\n";
+    std::cout << "                                    must be same size as fastq list)\n";
+    std::cout << "  -c  --cluster                  (string;\n";
+    std::cout << "                                    REQUIRED paramter)\n";
+    std::cout << "  -t  --threads                  (positive integer;\n";
+    std::cout << "                                    default: 1)\n";
+    std::cout << "  -m  --min-reads-per-cluster    (positive integer;\n";
+    std::cout << "                                    default: 2)\n";
+    std::cout << "  -h  --help\n";
+}
+
+void parse_flags(int argc, char *argv[]){
+    for (int i = 1; i < argc; i++) {
+        std::string current_param(argv[i]);
+        if (current_param == "-h" || current_param == "--help") {
+            print_help();
+            exit(0);
+        }
+        if (current_param == "-c" || current_param == "--cluster") {
+            i++;
+            cluster_filename = std::string(argv[i]);
+            continue;
+        }
+        if (current_param == "-t" || current_param == "--threads") {
+            i++;
+            thread_count = atoi(argv[i]);
+            continue;
+        }
+        if (current_param == "-m" || current_param == "--min-reads-per-cluster") {
+            i++;
+            min_reads_per_cluster = atoi(argv[i]);
+            continue;
+        }
+        if (current_param == "-q" || current_param == "--fastq") {
+            i++;
+            for (; i < argc; i++) {
+                std::string fastq_filename(argv[i]);
+                if (fastq_filename[0] == '-') {
+                    i--;
+                    break;
+                }
+                fastq_filenames.push_back(fastq_filename);
+            }
+            continue;
+        }
+        if (current_param == "-o" || current_param == "--output-prefix") {
+            i++;
+            for (; i < argc; i++) {
+                std::string output_filename(argv[i]);
+                if (output_filename[0] == '-') {
+                    i--;
+                    break;
+                }
+                output_filenames.push_back(output_filename);
+            }
+            continue;
+        }
+        std::cout << "Unrecognized parameter, " << argv[i] << ", was passed.\n";
+        print_help();
+        exit(-1);
+    }
+    if (min_reads_per_cluster < 0 ) {
+        std::cout << "Minimum reads per cluster ("<<min_reads_per_cluster<<") must be positive value." << '\n';
+        print_help();
+        exit(-1);
+    }
+    if (thread_count < 0 || thread_count > 16) {
+        std::cout << "Thread count must be between 1 and 16." << '\n';
+        exit(-1);
+    }
+    if (fastq_filenames.size() != output_filenames.size()) {
+        std::cout << "Number of fastq files ("<< fastq_filenames.size() <<") must be equal number of output files ("<< output_filenames.size() <<")\n";
+        print_help();
+        exit(-1);
+    }
+    if (cluster_filename == "") {
+        std::cout << "No cluster filename was passed.\n";
+        print_help();
+        exit(-1);
+    }
+
+}
 
 void process_clusters(const std::vector<std::string>& read_to_sequence, const std::vector<std::vector<read_id_t> >& cluster_to_reads, std::string o_filename_prefix, size_t thread_id) {
     std::ofstream ofastq(o_filename_prefix + ".fastq" + std::to_string(thread_id));
     std::ofstream omsa(o_filename_prefix + ".msa" + std::to_string(thread_id));
     for (cluster_id_t cid = thread_id; cid < cluster_to_reads.size(); cid+=thread_count) {
-        if (cluster_to_reads[cid].size() < 1) {
+        if (cluster_to_reads[cid].size() < min_reads_per_cluster) {
             continue;
         }
         auto alignment_engine = spoa::createAlignmentEngine(
@@ -87,13 +185,12 @@ void process_clusters(const std::vector<std::string>& read_to_sequence, const st
     }
 }
 
-int main(int argc, char** argv) {
+void run_consensus(){
     std::vector<std::vector<read_id_t> > cluster_to_reads;
     size_t read_count = 0;
-
     std::string line_buffer;
     std::ifstream clusters_file;
-    clusters_file.open(argv[1]);
+    clusters_file.open(cluster_filename);
     // Get mapping of clusters to reads
     while (getline(clusters_file, line_buffer)) {
         std::stringstream ss(line_buffer);
@@ -111,10 +208,9 @@ int main(int argc, char** argv) {
     }
 
     //Get read sequences from each FASTQ file, and pass it for MSA and output
-
-    for (int i = 2; i < argc; i+=2) {
-        std::string ifastq_filename = argv[i];
-        std::string o_filename_prefix = argv[i+1];
+    for (int i = 0; i < fastq_filenames.size(); i++) {
+        std::string ifastq_filename = fastq_filenames[i];
+        std::string o_filename_prefix = output_filenames[i];
 
         std::vector<std::string> read_to_sequence(read_count);
         std::ifstream ifastq;
@@ -149,5 +245,10 @@ int main(int argc, char** argv) {
             remove(msa_t_filename.c_str());
         }
     }
+}
+
+int main(int argc, char** argv) {
+    parse_flags(argc, argv);
+    run_consensus();
     return 0;
 }
