@@ -17,7 +17,7 @@
 #define MSA_MAJORITY 0.5
 
 int thread_count = 4;
-int min_reads_per_cluster = 1;
+int min_reads_per_cluster = 2;
 std::string cluster_filename = "";
 std::vector<std::string> fastq_filenames;
 std::vector<std::string> output_filenames;
@@ -193,6 +193,7 @@ void run_consensus(){
     std::ifstream clusters_file;
     clusters_file.open(cluster_filename);
     // Get mapping of clusters to reads
+    std::cout << "Reading cluster file: " << cluster_filename << '\n';
     while (getline(clusters_file, line_buffer)) {
         std::stringstream ss(line_buffer);
         std::istream_iterator<std::string> begin(ss);
@@ -210,7 +211,9 @@ void run_consensus(){
 
     //Get read sequences from each FASTQ file, and pass it for MSA and output
     for (int i = 0; i < fastq_filenames.size(); i++) {
+        std::cout << "Reading fastq file: " << fastq_filenames[i] << '\n';
         std::string ifastq_filename = fastq_filenames[i];
+        std::cout << "Writing output files: " << output_filenames[i] << '\n';
         std::string o_filename_prefix = output_filenames[i];
 
         std::vector<std::string> read_to_sequence(read_count);
