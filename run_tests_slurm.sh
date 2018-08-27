@@ -32,7 +32,7 @@ molecule_size_mu=300
 read_length=150
 sequencing_machine=HS25
 
-./benchmark annotation reference reference_name=hg38 gnu_time cdhitest starcode rainbow
+./benchmark annotation reference reference_name=hg38 gnu_time cdhitest starcode rainbow dunovo
 make
 ./benchmark panel reference_name=hg38 gene_list_name=COSMIC_cancer_genes random_seed=$random_seed
 
@@ -227,5 +227,28 @@ do
         depends="$simulate_deps"
         slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
     done
+
+
+    # du novo
+    for dunovo_dist in 1 #2 3 4
+    do
+        job_name="dunovo_"$dunovo_dist""
+        filename="$slurm_path/$job_name.sh"
+        command="./benchmark dunovo_log "
+        command=$command"log_comment=$dataset""_dunovo "
+        command=$command"random_seed=$random_seed "
+        command=$command"reference_name=hg38 "
+        command=$command"gene_list_name=COSMIC_cancer_genes "
+        command=$command"num_molecules=$num_molecules "
+        command=$command"num_barcodes=$num_barcodes "
+        command=$command"barcode_length=$barcode_length "
+        command=$command"molecule_size_mu=$molecule_size_mu "
+        command=$command"read_length=$read_length "
+        command=$command"sequencing_machine=$sequencing_machine "
+        command=$command"dunovo_dist=$dunovo_dist "
+        depends="$simulate_deps"
+        echo -e "$command" > $filename
+    done
+
 done
 exit

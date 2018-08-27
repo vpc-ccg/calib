@@ -60,12 +60,12 @@ rainbow_time=$(rainbow_output_prefix)time
 # dunovo_prefix is the directory where dunovo is cloned
 dunovo_prefix?=$(benchmark_aux_path)/other_tools/dunovo
 DUNOVO_RUN=$(benchmark_aux_path)/run_dunovo.sh
-dunovo_temp_directory?=$(my_current_dir)temp
 dunovo_dist?=2
 dunovo_barcode_length?=$(barcode_length)
 dunovo_invariant?=0
 dunovo_params=dist_$(dunovo_dist).
 dunovo_output_prefix=$(input_reads_prefix)dunovo.$(dunovo_params)
+dunovo_temp_directory?=$(dunovo_output_prefix)temp
 dunovo_output=$(dunovo_output_prefix)out
 dunovo_cluster=$(dunovo_output_prefix)cluster
 dunovo_accuracy=$(dunovo_output_prefix)accuracy
@@ -222,7 +222,7 @@ $(dunovo_accuracy): $(dunovo_time)
 
 $(dunovo_time): $(GNU_TIME) dunovo simulate
 	$(eval rand := $(shell $(RAW_AWK) 'BEGIN{srand();printf("%d", 65536*rand())}'))
-	conda create --name calib_dunovo$(rand) -c faircloth-lab -c bioconda samtools python=2.7 networkx bowtie -y;
+	conda create --name calib_dunovo$(rand) -c faircloth-lab -c bioconda samtools=0.1.19 python=2.7 networkx bowtie=1.2.2 -y;
 	$(GNU_TIME) -v -o $(dunovo_time) \
 		$(DUNOVO_RUN) \
 			$(dunovo_temp_directory) \
