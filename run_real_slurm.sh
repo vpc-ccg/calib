@@ -8,20 +8,32 @@ gtime="gtime"
 calib_cons="consensus/calib_cons"
 bam_readcount="consensus/bam-readcount_v0.8.0/bin/bam-readcount"
 bwa="consensus/bwa_v0.7.17/bwa"
-ref="simulating/genomes/hg38.fa"
+ref="consensus/hg19.fa"
 samtools="samtools"
 sinvict="consensus/sinvict/sinvict"
 # Clustering tools and scripts
 calib="./calib"
 starcode_umi="aux/other_tools/starcode/starcode-umi"
 starcode="aux/other_tools/starcode/starcode"
-convert_starcode="aux/convert_star_to_cluster.sh"
+convert_starcode="aux/convert_starcode_to_cluster.sh"
 rainbow="aux/other_tools/rainbow/rainbow"
 run_rainbow="aux/run_rainbow.sh"
 convert_rainbow="aux/convert_rainbow_to_cluster.sh"
 run_umi_tools="aux/run_umi-tools.sh"
 convert_umitools="aux/convert_umitools_to_cluster.sh"
 restore_cluster_missing_reads="aux/restore_cluster_missing_reads.sh"
+
+if [ ! -f $ref ]; then
+    echo "Reference not found. Downloading..."
+    wget 'ftp://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz' -O chromFa.tar.gz
+    tar xvzfO chromFa.tar.gz > $ref
+    rm chromFa.tar.gz
+fi
+if [ ! -f "$ref.bwt" ]; then
+    echo "Reference BWT index is not there. Indexing..."
+    $bwa index $ref
+fi
+
 
 mkdir -p $out_dir
 for tool in calib starcode rainbow umi-tools raw
@@ -93,7 +105,7 @@ do
     echo "        $fq_1 \\"                           >> "$out_dir/$tool.pbs"
     echo "        $fq_2 \\"                           >> "$out_dir/$tool.pbs"
     echo "        $out_dir \\"                        >> "$out_dir/$tool.pbs"
-    echo "        $out_dir/umi-tools_work \\"         >> "$out_dir/$tool.pbs"
+    echo "        $out_dir/umi-tools.work \\"         >> "$out_dir/$tool.pbs"
     echo "        $bwa \\"                            >> "$out_dir/$tool.pbs"
     echo "        $ref \\"                            >> "$out_dir/$tool.pbs"
     echo "        $samtools"                          >> "$out_dir/$tool.pbs"
@@ -144,6 +156,7 @@ do
     echo "    -w 1 \\"                                     >> "$out_dir/$tool.pbs"
     echo "    $out_dir/$tool.bam \\"                       >> "$out_dir/$tool.pbs"
     echo "        > $out_dir/$tool.bam-readcount/out.tsv"  >> "$out_dir/$tool.pbs"
+    echo "mkdir -p $out_dir/$tool.sinvict"  >> "$out_dir/$tool.pbs"
     echo "$sinvict \\"                             >> "$out_dir/$tool.pbs"
     echo "    -5 1 \\"                             >> "$out_dir/$tool.pbs"
     echo "    -m $sinvict_depth \\"                >> "$out_dir/$tool.pbs"
