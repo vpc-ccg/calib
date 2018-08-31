@@ -23,6 +23,7 @@ function slurm {
         echo "#SBATCH --dependency=afterany$dependencies"     >> $filename
     fi
     echo -e "$command"                                        >> $filename
+    echo -e "SUCCESS"                                         >> $filename
     last_job_id=$(sbatch $filename)
 }
 

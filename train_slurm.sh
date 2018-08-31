@@ -24,6 +24,7 @@ function slurm {
     fi
     echo "sleep 30s"                                          >> $filename
     echo -e "$command"                                        >> $filename
+    echo -e "SUCCESS"                                         >> $filename
     last_job_id=$(sbatch $filename)
 }
 

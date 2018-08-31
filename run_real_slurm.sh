@@ -162,5 +162,7 @@ do
     echo "    -m $sinvict_depth \\"                >> "$out_dir/$tool.pbs"
     echo "    -t $out_dir/$tool.bam-readcount \\"  >> "$out_dir/$tool.pbs"
     echo "    -o $out_dir/$tool.sinvict "          >> "$out_dir/$tool.pbs"
+
+    echo "SUCCESS"                                 >> "$out_dir/$tool.pbs"
     sbatch "$out_dir/$tool.pbs"
 done
