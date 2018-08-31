@@ -43,10 +43,6 @@ do
     num_barcodes=100
     num_molecules=100000
     ;;
-    "small-medium")  echo "Test dataset one and half"
-    num_barcodes=100
-    num_molecules=1000000
-    ;;
     "medium")  echo "Test dataset two"
     num_barcodes=5000
     num_molecules=1000000
@@ -66,7 +62,6 @@ do
     esac
     slurm_path=slurm_pbs/"$dataset"
     mkdir -p "$slurm_path"
-
 
     # Making barcodes
     barcodes_deps=""
@@ -123,7 +118,7 @@ do
     job_name="calib"
     filename="$slurm_path/$job_name.pbs"
     mem="51200"
-    tim="05:59:59"
+    tim="00:59:59"
     command="./benchmark calib_log "
     command=$command"log_comment=$dataset""_calib "
     command=$command"random_seed=$random_seed "
@@ -138,21 +133,84 @@ do
     depends="$simulate_deps"
     slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
 
-    # starcode_log
-    for starcode_seq_trim in 0 50 100
+    # cd-hit-est
+    for cdhitest_dist in 0.80 0.85 0.90 0.95 0.96 0.97 0.98
     do
-        for starcode_umi_dist in 1 2 3
+        job_name="cdhitest_"$cdhitest_dist""
+        filename="$slurm_path/$job_name.pbs"
+        mem="25000"
+        tim="23:59:59"
+        command="./benchmark cdhitest_log "
+        command=$command"log_comment=$dataset""_cdhit "
+        command=$command"random_seed=$random_seed "
+        command=$command"reference_name=hg38 "
+        command=$command"gene_list_name=COSMIC_cancer_genes "
+        command=$command"num_molecules=$num_molecules "
+        command=$command"num_barcodes=$num_barcodes "
+        command=$command"barcode_length=$barcode_length "
+        command=$command"molecule_size_mu=$molecule_size_mu "
+        command=$command"read_length=$read_length "
+        command=$command"sequencing_machine=$sequencing_machine "
+        command=$command"cdhitest_dist=$cdhitest_dist "
+        depends="$simulate_deps"
+        slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
+    done
+
+    # rainbow_log
+    for rainbow_mismatch in 1 2 3 4 5 6 7 8 9
+    do
+        for rainbow_div in "true" "false"
         do
-            for starcode_umi_ratio in 1 3 5
+            # rainbow_log
+            job_name="rainbow_"$rainbow_mismatch"_"$rainbow_div""
+            filename="$slurm_path/$job_name.pbs"
+            mem="51200"
+            tim="00:59:59"
+            command="./benchmark rainbow_log "
+            command=$command"log_comment=$dataset""_rainbow "
+            command=$command"random_seed=$random_seed "
+            command=$command"reference_name=hg38 "
+            command=$command"gene_list_name=COSMIC_cancer_genes "
+            command=$command"num_molecules=$num_molecules "
+            command=$command"num_barcodes=$num_barcodes "
+            command=$command"barcode_length=$barcode_length "
+            command=$command"molecule_size_mu=$molecule_size_mu "
+            command=$command"read_length=$read_length "
+            command=$command"sequencing_machine=$sequencing_machine "
+            command=$command"rainbow_mismatch=$rainbow_mismatch "
+            command=$command"rainbow_div=$rainbow_div "
+            depends="$simulate_deps"
+            slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
+        done
+    done
+
+    # starcode_log
+    for starcode_seq_trim in 50 75 100
+    do
+        for starcode_umi_dist in 0 1 2
+        do
+            for starcode_umi_ratio in 3 1 5
             do
                 for starcode_seq_dist in 3 5 8
                 do
                     for starcode_seq_ratio in 1 3 5
                     do
-                        job_name="starcode_"$starcode_umi_dist"_"$starcode_umi_ratio"_"$starcode_seq_dist"_"$starcode_seq_ratio"_"$starcode_seq_ratio""
+                        job_name="starcode_"$starcode_umi_dist"_"$starcode_umi_ratio"_"$starcode_seq_dist"_"$starcode_seq_ratio"_"$starcode_seq_trim""
                         filename="$slurm_path/$job_name.pbs"
-                        mem="614400"
+                        case $starcode_seq_trim in
+                        50)
+                        mem="51200"
+                        tim="00:59:59"
+                        ;;
+                        75)
+                        mem="102400"
                         tim="05:59:59"
+                        ;;
+                        100)
+                        mem="102400"
+                        tim="05:59:59"
+                        ;;
+                        esac
                         command="./benchmark starcode_log "
                         command=$command"log_comment=$dataset""_starcode "
                         command=$command"random_seed=$random_seed "
@@ -177,60 +235,8 @@ do
         done
     done
 
-    # rainbow_log
-    for rainbow_mismatch in 1 2 3 4 5 6 7 8 9
-    do
-        for rainbow_div in "true" "false"
-        do
-            # rainbow_log
-            job_name="rainbow_"$rainbow_mismatch"_"$rainbow_div""
-            filename="$slurm_path/$job_name.pbs"
-            mem="51200"
-            tim="05:59:59"
-            command="./benchmark rainbow_log "
-            command=$command"log_comment=$dataset""_rainbow "
-            command=$command"random_seed=$random_seed "
-            command=$command"reference_name=hg38 "
-            command=$command"gene_list_name=COSMIC_cancer_genes "
-            command=$command"num_molecules=$num_molecules "
-            command=$command"num_barcodes=$num_barcodes "
-            command=$command"barcode_length=$barcode_length "
-            command=$command"molecule_size_mu=$molecule_size_mu "
-            command=$command"read_length=$read_length "
-            command=$command"sequencing_machine=$sequencing_machine "
-            command=$command"rainbow_mismatch=$rainbow_mismatch "
-            command=$command"rainbow_div=$rainbow_div "
-            depends="$simulate_deps"
-            slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
-        done
-    done
-
-    # cd-hit-est
-    for cdhitest_dist in 0.85 0.95 0.96 0.97 0.98
-    do
-        job_name="cdhitest_"$cdhitest_dist""
-        filename="$slurm_path/$job_name.pbs"
-        mem="204800"
-        tim="05:59:59"
-        command="./benchmark cdhitest_log "
-        command=$command"log_comment=$dataset""_cdhit "
-        command=$command"random_seed=$random_seed "
-        command=$command"reference_name=hg38 "
-        command=$command"gene_list_name=COSMIC_cancer_genes "
-        command=$command"num_molecules=$num_molecules "
-        command=$command"num_barcodes=$num_barcodes "
-        command=$command"barcode_length=$barcode_length "
-        command=$command"molecule_size_mu=$molecule_size_mu "
-        command=$command"read_length=$read_length "
-        command=$command"sequencing_machine=$sequencing_machine "
-        command=$command"cdhitest_dist=$cdhitest_dist "
-        depends="$simulate_deps"
-        slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
-    done
-
-
     # du novo
-    for dunovo_dist in 1 #2 3 4
+    for dunovo_dist in 1 2 3 4
     do
         job_name="dunovo_"$dunovo_dist""
         filename="$slurm_path/$job_name.sh"
@@ -249,6 +255,5 @@ do
         depends="$simulate_deps"
         echo -e "$command" > $filename
     done
-
 done
 exit
