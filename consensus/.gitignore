@@ -1,3 +1,11 @@
-cmake-3.12.0
-spoa_v1.1.3
-calib_cons
+# Ignore the human genome
+hg19.fa
+hg19.fa.fai
+hg19.gtf
+hg19.fa.amb
+hg19.fa.ann
+hg19.fa.bwt
+hg19.fa.pac
+hg19.fa.sa
+# Except this file
+!.gitignore
