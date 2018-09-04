@@ -22,9 +22,10 @@ function slurm {
     then
         echo "#SBATCH --dependency=afterany$dependencies"     >> $filename
     fi
+    echo -e "touch $filename.no_success"                      >> $filename
     echo "sleep 30s"                                          >> $filename
     echo -e "$command"                                        >> $filename
-    echo -e "SUCCESS"                                         >> $filename
+    echo -e "rm $filename.no_success"                         >> $filename
     last_job_id=$(sbatch $filename)
 }
 

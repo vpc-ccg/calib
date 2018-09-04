@@ -49,6 +49,7 @@ do
     echo "#SBATCH --error=$out_dir/$tool.pbs.err"        >> "$out_dir/$tool.pbs"
     echo "#SBATCH --export=all"                          >> "$out_dir/$tool.pbs"
     echo "#SBATCH -p debug,express,normal,big-mem,long"  >> "$out_dir/$tool.pbs"
+    echo "touch $filename.no_success"                     >> "$out_dir/$tool.pbs"
     # Tool specific commands
     case $tool in
     "calib")
@@ -163,6 +164,6 @@ do
     echo "    -t $out_dir/$tool.bam-readcount \\"  >> "$out_dir/$tool.pbs"
     echo "    -o $out_dir/$tool.sinvict "          >> "$out_dir/$tool.pbs"
 
-    echo "SUCCESS"                                 >> "$out_dir/$tool.pbs"
+    echo -e "rm $filename.no_success"  >> "$out_dir/$tool.pbs"
     sbatch "$out_dir/$tool.pbs"
 done

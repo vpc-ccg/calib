@@ -7,15 +7,18 @@ RAW_AWK := awk
 AWK := $(RAW_AWK) -f
 benchmark_aux_path = $(my_current_dir)aux
 GNU_TIME?=$(benchmark_aux_path)/other_tools/time-1.9/time
+BWA_DIR := $(my_current_dir)consensus/bwa_v0.7.17
 GET_USER_TIME := $(benchmark_aux_path)/get_user_time.awk
 GET_WALL_TIME := $(benchmark_aux_path)/get_wall_time.awk
 GET_MEM := $(benchmark_aux_path)/get_mem.awk
 GET_ACCURACY := $(benchmark_aux_path)/get_accuracy.awk
+BWA?=$(BWA_DIR)/bwa
+reference_bwa_index := $(reference).bwt
 CONVERT_CDHITEST := $(benchmark_aux_path)/convert_cdhitest_to_cluster.sh
 CONVERT_STARCODE := $(benchmark_aux_path)/convert_starcode_to_cluster.sh
 CONVERT_RAINBOW := $(benchmark_aux_path)/convert_rainbow_to_cluster.sh
+CONVERT_UMITOOLS := $(benchmark_aux_path)/convert_umitools_to_cluster.sh
 CONVERT_DUNOVO := $(benchmark_aux_path)/convert_dunovo_to_cluster.sh
-
 
 calib_params?=l_$(barcode_length).m_$(minimizers_num).k_$(kmer_size).e_$(barcode_error_tolerance).t_$(minimizers_threshold).tc_$(thread_count).
 calib_output_prefix=$(input_reads_prefix)calib.$(calib_params)
@@ -71,27 +74,38 @@ dunovo_cluster=$(dunovo_output_prefix)cluster
 dunovo_accuracy=$(dunovo_output_prefix)accuracy
 dunovo_time=$(dunovo_output_prefix)time
 
+UMITOOLS_RUN=$(benchmark_aux_path)/run_umi-tools.sh
+umitools_params=edit_2.
+umitools_output_prefix=$(input_reads_prefix)umitools.$(umitools_params)
+umitools_temp_directory?=$(umitools_output_prefix)temp
+umitools_output=$(umitools_output_prefix)out
+umitools_cluster=$(umitools_output_prefix)cluster
+umitools_accuracy=$(umitools_output_prefix)accuracy
+umitools_time=$(umitools_output_prefix)time
 
 log_comment?=no_comment
-calib_log_comment?=$(log_comment)
-cdhitest_log_comment?=$(log_comment)
-starcode_log_comment?=$(log_comment)
-dunovo_log_comment?=$(log_comment)
-rainbow_log_comment?=$(log_comment)
+calib_log_comment?=calib_$(log_comment)
+cdhitest_log_comment?=cdhitest_$(log_comment)
+starcode_log_comment?=starcode_$(log_comment)
+dunovo_log_comment?=dunovo_$(log_comment)
+rainbow_log_comment?=rainbow_$(log_comment)
+umitools_log_comment?=umitools_$(log_comment)
 
 calib_log_file?=$(input_reads_prefix)calib_benchmarks.tsv
 cdhitest_log_file?=$(input_reads_prefix)cdhitest_benchmarks.tsv
 starcode_log_file?=$(input_reads_prefix)starcode_benchmarks.tsv
 dunovo_log_file?=$(input_reads_prefix)dunovo_benchmarks.tsv
 rainbow_log_file?=$(input_reads_prefix)rainbow_benchmarks.tsv
-run: calib_log starcode_log rainbow_log cdhitest_log
+umitools_log_file?=$(input_reads_prefix)umitools_benchmarks.tsv
+run: calib_log cdhitest_log starcode_log rainbow_log  rainbow_log umitools_log
 
-make_log_files: make_calib_log_file make_cdhitest_log_file make_starcode_log_file make_dunovo_log_file make_rainbow_log_file
-make_calib_log_file: $(calib_log_file)
-make_cdhitest_log_file: $(cdhitest_log_file)
-make_starcode_log_file: $(starcode_log_file)
-make_dunovo_log_file: $(dunovo_log_file)
-make_rainbow_log_file: $(rainbow_log_file)
+log_files: calib_log_file cdhitest_log_file starcode_log_file dunovo_log_file rainbow_log_file umitools_log_file
+calib_log_file: $(calib_log_file)
+cdhitest_log_file: $(cdhitest_log_file)
+starcode_log_file: $(starcode_log_file)
+dunovo_log_file: $(dunovo_log_file)
+rainbow_log_file: $(rainbow_log_file)
+umitools_log_file: $(umitools_log_file)
 
 calib_log: $(calib_log_file) $(calib_accuracy)
 	$(eval my_user_time:= $(shell $(AWK) $(GET_USER_TIME) $(calib_time)))
@@ -273,12 +287,57 @@ $(rainbow_time): $(GNU_TIME) rainbow simulate
 rainbow:
 	make -C $(benchmark_aux_path)/other_tools/rainbow
 
-umi_tools:
+#UMI-tools
+umitools_log: $(umitools_log_file) $(umitools_accuracy)
+	$(eval my_user_time:= $(shell $(AWK) $(GET_USER_TIME) $(umitools_time)))
+	$(eval my_wall_time:= $(shell $(AWK) $(GET_WALL_TIME) $(umitools_time)))
+	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(umitools_time)))
+	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(umitools_accuracy)))
+	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
+	$(ECHO) "$(umitools_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t2" >> $(umitools_log);
+	rm $(umitools_accuracy) $(umitools_time) $(umitools_cluster) $(umitools_output) $(umitools_temp_directory) -r;
+
+$(umitools_log_file):
+	$(ECHO) "log_comment\tmy_timestamp\tuser_time\twall_time\tmem\tARI\tumitools_edit" > $(umitools_log_file)
+
+$(umitools_accuracy): $(umitools_time)
+	$(CONVERT_UMITOOLS) $(umitools_output) > $(umitools_cluster);
+	$(python3) $(simulating_path)rand_index.py \
+		--true-cluster-file $(true_cluster) \
+		--predicted-cluster-file $(umitools_cluster) \
+		--output-accuracy-results $(umitools_accuracy)
+
+$(umitools_time): $(GNU_TIME) umitools simulate $(BWA) $(reference_bwa_index) $(reference) $(forward_reads)_umitools.1.fq $(reverse_reads)_umitools.2.fq
+	$(GNU_TIME) -v -o $(umitools_time) \
+		$(UMITOOLS_RUN) \
+			$(forward_reads)_umitools.1.fq \
+			$(reverse_reads)_umitools.2.fq \
+			$(umitools_output) \
+			$(umitools_temp_directory) \
+			$(BWA) \
+			$(reference) \
+			samtools
+	rm $(forward_reads)_umitools.1.fq $(reverse_reads)_umitools.2.fq
+
+$(forward_reads)_umitools.1.fq:
+	$(RAW_AWK) 'BEGIN{n=0} NR % 4 == 1 {print "@"n++} NR % 4 != 1 {print}' $(forward_reads) > $(forward_reads)_umitools.1.fq
+$(reverse_reads)_umitools.2.fq:
+	$(RAW_AWK) 'BEGIN{n=0} NR % 4 == 1 {print "@"n++} NR % 4 != 1 {print}' $(reverse_reads) > $(reverse_reads)_umitools.2.fq
+
+umitools:
 ifeq ("$(shell umi_tools --version)",  "UMI-tools version: 0.5.4")
-	@echo UMI-tools v0.5.4 is installed
+	@echo "UMI-tools v0.5.4 is installed"
 else
 	cd $(benchmark_aux_path)/other_tools/UMI-tools; pip install -r requirements.txt; python setup.py install --user --prefix=;
 endif
+
+reference_bwa_index: $(reference_bwa_index)
+$(reference_bwa_index): $(BWA) $(reference)
+	$(BWA) index $(reference)
+
+bwa: $(BWA)
+$(BWA):
+	make -C $(BWA_DIR)
 
 gnu_time: $(GNU_TIME)
 $(GNU_TIME):

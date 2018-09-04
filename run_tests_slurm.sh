@@ -22,8 +22,9 @@ function slurm {
     then
         echo "#SBATCH --dependency=afterany$dependencies"     >> $filename
     fi
+    echo -e "touch $filename.no_success"                      >> $filename
     echo -e "$command"                                        >> $filename
-    echo -e "SUCCESS"                                         >> $filename
+    echo -e "rm $filename.no_success"                         >> $filename
     last_job_id=$(sbatch $filename)
 }
 
@@ -33,7 +34,7 @@ molecule_size_mu=300
 read_length=150
 sequencing_machine=HS25
 
-./benchmark annotation reference reference_name=hg38 gnu_time cdhitest starcode rainbow dunovo
+./benchmark annotation reference reference_name=hg38 gnu_time cdhitest starcode rainbow dunovo umitools bwa reference_bwa_index
 make
 ./benchmark panel reference_name=hg38 gene_list_name=COSMIC_cancer_genes random_seed=$random_seed
 
@@ -121,7 +122,7 @@ do
     mem="51200"
     tim="00:59:59"
     command="./benchmark calib_log "
-    command=$command"log_comment=$dataset""_calib "
+    command=$command"log_comment=$dataset "
     command=$command"random_seed=$random_seed "
     command=$command"reference_name=hg38 "
     command=$command"gene_list_name=COSMIC_cancer_genes "
@@ -134,6 +135,25 @@ do
     depends="$simulate_deps"
     slurm "$filename" "$job_name" "$mem" "$tim" "$command" "1" "$depends"
 
+    # umitools_log
+    job_name="umitools"
+    filename="$slurm_path/$job_name.pbs"
+    mem="102400"
+    tim="23:59:59"
+    command="./benchmark umitools_log "
+    command=$command"log_comment=$dataset "
+    command=$command"random_seed=$random_seed "
+    command=$command"reference_name=hg38 "
+    command=$command"gene_list_name=COSMIC_cancer_genes "
+    command=$command"num_molecules=$num_molecules "
+    command=$command"num_barcodes=$num_barcodes "
+    command=$command"barcode_length=$barcode_length "
+    command=$command"molecule_size_mu=$molecule_size_mu "
+    command=$command"read_length=$read_length "
+    command=$command"sequencing_machine=$sequencing_machine "
+    depends="$simulate_deps"
+    slurm "$filename" "$job_name" "$mem" "$tim" "$command" "32" "$depends"
+
     # cd-hit-est
     for cdhitest_dist in 0.80 0.85 0.90 0.95 0.96 0.97 0.98
     do
@@ -142,7 +162,7 @@ do
         mem="25000"
         tim="23:59:59"
         command="./benchmark cdhitest_log "
-        command=$command"log_comment=$dataset""_cdhit "
+        command=$command"log_comment=$dataset "
         command=$command"random_seed=$random_seed "
         command=$command"reference_name=hg38 "
         command=$command"gene_list_name=COSMIC_cancer_genes "
@@ -168,7 +188,7 @@ do
             mem="51200"
             tim="00:59:59"
             command="./benchmark rainbow_log "
-            command=$command"log_comment=$dataset""_rainbow "
+            command=$command"log_comment=$dataset "
             command=$command"random_seed=$random_seed "
             command=$command"reference_name=hg38 "
             command=$command"gene_list_name=COSMIC_cancer_genes "
@@ -201,19 +221,19 @@ do
                         case $starcode_seq_trim in
                         50)
                         mem="51200"
-                        tim="00:59:59"
+                        tim="23:59:59"
                         ;;
                         75)
                         mem="102400"
-                        tim="05:59:59"
+                        tim="23:59:59"
                         ;;
                         100)
-                        mem="102400"
-                        tim="05:59:59"
+                        mem="204800"
+                        tim="23:59:59"
                         ;;
                         esac
                         command="./benchmark starcode_log "
-                        command=$command"log_comment=$dataset""_starcode "
+                        command=$command"log_comment=$dataset "
                         command=$command"random_seed=$random_seed "
                         command=$command"reference_name=hg38 "
                         command=$command"gene_list_name=COSMIC_cancer_genes "
@@ -242,7 +262,7 @@ do
         job_name="dunovo_"$dunovo_dist""
         filename="$slurm_path/$job_name.sh"
         command="./benchmark dunovo_log "
-        command=$command"log_comment=$dataset""_dunovo "
+        command=$command"log_comment=$dataset "
         command=$command"random_seed=$random_seed "
         command=$command"reference_name=hg38 "
         command=$command"gene_list_name=COSMIC_cancer_genes "

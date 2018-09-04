@@ -1,6 +1,6 @@
 fq_1=$1
 fq_2=$2
-out_dir=$3
+out_path=$3
 working_dir=$4
 bwa=$5
 ref=$6
@@ -22,4 +22,4 @@ umi_tools group  \
     --edit-distance-threshold 2 \
     --soft-clip-threshold 9 \
     -I "$working_dir/barcode-extracted.bam" \
-    --group-out "$out_dir/umi-tools.out"
+    --group-out "$out_path"
