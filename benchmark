@@ -294,7 +294,7 @@ umitools_log: $(umitools_log_file) $(umitools_accuracy)
 	$(eval my_mem := $(shell $(AWK) $(GET_MEM) $(umitools_time)))
 	$(eval my_accuracy := $(shell $(AWK) $(GET_ACCURACY) $(umitools_accuracy)))
 	$(eval my_timestamp := $(shell /bin/date "+%Y-%m-%d---%H-%M-%S"))
-	$(ECHO) "$(umitools_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t2" >> $(umitools_log);
+	$(ECHO) "$(umitools_log_comment)\t$(my_timestamp)\t$(my_user_time)\t$(my_wall_time)\t$(my_mem)\t$(my_accuracy)\t2" >> $(umitools_log_file);
 	rm $(umitools_accuracy) $(umitools_time) $(umitools_cluster) $(umitools_output) $(umitools_temp_directory) -r;
 
 $(umitools_log_file):
