@@ -117,7 +117,7 @@ do
             filename="$slurm_path/$job_name.pbs"
             mem="51200"
             tim="05:59:59"
-            command="./benchmark simulate make_calib_log_file "
+            command="./benchmark simulate calib_log_file "
             command=$command"random_seed=$random_seed "
             command=$command"reference_name=hg38 "
             command=$command"gene_list_name=COSMIC_cancer_genes "
@@ -216,7 +216,7 @@ do
             tsv_path=$tsv_path"/calib_benchmarks.tsv"
             command=$command"if [ ! -f $filename ]; then head -n1 $tsv_path > $filename; fi; awk 'NR > 1' $tsv_path >> $filename;\n"
         done
-        command=$command"slurm_scripts/calib_parameters_tests_plotting.py $filename;\n"
+        command=$command"slurm_scripts/calib_parameter_tests_plotting.py $filename;\n"
     done
 done
 job_name="group_"$random_seed_start"_"$random_seed_step"_"$random_seed_end""
