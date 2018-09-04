@@ -119,8 +119,8 @@ do
     # calib_log
     job_name="calib"
     filename="$slurm_path/$job_name.pbs"
-    mem="51200"
-    tim="00:59:59"
+    mem="102400"
+    tim="02:59:59"
     command="./benchmark calib_log "
     command=$command"log_comment=$dataset "
     command=$command"random_seed=$random_seed "
