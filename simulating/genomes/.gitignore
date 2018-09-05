@@ -7,5 +7,13 @@ hg38.fa.ann
 hg38.fa.bwt
 hg38.fa.pac
 hg38.fa.sa
+hg19.fa
+hg19.fa.fai
+hg19.gtf
+hg19.fa.amb
+hg19.fa.ann
+hg19.fa.bwt
+hg19.fa.pac
+hg19.fa.sa
 # Except this file
 !.gitignore
