@@ -102,7 +102,7 @@ do
     filename="$slurm_path/$job_name.pbs"
     mem="51200"
     tim="05:59:59"
-    command="./benchmark simulate make_log_files "
+    command="./benchmark simulate log_files "
     command=$command"random_seed=$random_seed "
     command=$command"reference_name=hg38 "
     command=$command"gene_list_name=COSMIC_cancer_genes "
