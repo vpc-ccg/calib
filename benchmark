@@ -84,12 +84,12 @@ umitools_accuracy=$(umitools_output_prefix)accuracy
 umitools_time=$(umitools_output_prefix)time
 
 log_comment?=no_comment
-calib_log_comment?=calib_$(log_comment)
-cdhitest_log_comment?=cdhitest_$(log_comment)
-starcode_log_comment?=starcode_$(log_comment)
-dunovo_log_comment?=dunovo_$(log_comment)
-rainbow_log_comment?=rainbow_$(log_comment)
-umitools_log_comment?=umitools_$(log_comment)
+calib_log_comment?=$(log_comment)_calib
+cdhitest_log_comment?=$(log_comment)_cdhitest
+starcode_log_comment?=$(log_comment)_starcode
+dunovo_log_comment?=$(log_comment)_dunovo
+rainbow_log_comment?=$(log_comment)_rainbow
+umitools_log_comment?=$(log_comment)_umitools
 
 calib_log_file?=$(input_reads_prefix)calib_benchmarks.tsv
 cdhitest_log_file?=$(input_reads_prefix)cdhitest_benchmarks.tsv

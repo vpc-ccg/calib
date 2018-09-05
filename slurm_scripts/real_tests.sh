@@ -7,10 +7,10 @@ barcode_length=8
 gtime="gtime"
 calib_cons="consensus/calib_cons"
 bam_readcount="consensus/bam-readcount_v0.8.0/bin/bam-readcount"
-bwa="consensus/bwa_v0.7.17/bwa"
-ref="consensus/hg19.fa"
+bwa="aux/other_tools/bwa/bwa"
+ref="simulating/genomes/hg19.fa"
 samtools="samtools"
-sinvict="consensus/sinvict/sinvict"
+sinvict="aux/other_tools/sinvict/sinvict"
 # Clustering tools and scripts
 calib="./calib"
 starcode_umi="aux/other_tools/starcode/starcode-umi"
