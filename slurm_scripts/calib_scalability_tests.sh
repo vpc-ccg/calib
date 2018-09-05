@@ -94,7 +94,7 @@ job_name="scalibility_plots"
 filename="$slurm_path/$job_name.pbs"
 mem="10240"
 tim="00:59:59"
-command="slurm_scripts/calib_scalability_plotting.py $output_html"
+command="slurm_scripts/calib_scalability_tests_plotting.py $output_html"
 for num_molecules in 100000 1000000 2000000
 do
     tsv_path="simulating/datasets"
@@ -111,7 +111,7 @@ do
     tsv_path=$tsv_path"/pcrC_7.pcrDR_0.6.pcrER_0.00005/seqMach_"$sequencing_machine
     tsv_path=$tsv_path".readL_"$read_length
     tsv_path=$tsv_path"/calib_benchmarks.tsv"
-    command="$command \ \n    $tsv_path"
+    command="$command $tsv_path"
 done
 depends="$calib_deps"
 slurm "$filename" "$job_name" "$mem" "$tim" "$command" "$thread_count" "$depends"

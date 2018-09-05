@@ -29,7 +29,7 @@ for tsv_path in sys.argv[2:]:
     thread_count_to_performance = dict()
     for line in tsv_lines[1:]:
         line = line.rstrip().split('\t')
-        c = int(line[field_to_idx['log_comment']].split('_')[1])
+        c = int(line[field_to_idx['log_comment']].split('_')[-1])
         mem = float(line[field_to_idx['mem']])/1024/1024
         mem = round(mem, 2)
         wall_time = line[field_to_idx['wall_time']].split(':')
