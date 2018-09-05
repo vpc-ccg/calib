@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 import numpy as np
 from dateutil import parser
@@ -18,8 +19,8 @@ data = list()
 mems = list()
 wall_times = list()
 
-
-for tsv_path in sys.argv[1:]:
+output_html = sys.argv[1]
+for tsv_path in sys.argv[2:]:
     num_molecules = int(tsv_path.split('molNum')[1].split('/')[0])
     tsv_lines = open(tsv_path).readlines()
     field_to_idx = dict()
