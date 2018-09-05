@@ -1,0 +1,5 @@
+log_comment	my_timestamp	user_time	wall_time	mem	ARI	barcode_length	minimizers_num	kmer_size	barcode_error_tolerance	minimizers_threshold
+calib_t_8	2018-09-04---17-28-03	4082.24	22:28.96	53104888	0.9996147810575712	8	-1	-1	-1	-1
+calib_t_4	2018-09-04---17-29-15	3609.16	23:40.34	35763896	0.9996147810575712	8	-1	-1	-1	-1
+calib_t_2	2018-09-04---17-45-21	3701.51	39:12.99	27923464	0.9996147810575712	8	-1	-1	-1	-1
+calib_t_1	2018-09-04---18-20-35	4135.68	1:15:17	23076580	0.9996147810575712	8	-1	-1	-1	-1
