@@ -21,7 +21,7 @@ wall_times = list()
 
 output_html = sys.argv[1]
 for tsv_path in sys.argv[2:]:
-    num_molecules = int(tsv_path.split('molNum')[1].split('/')[0])
+    num_molecules = int(tsv_path.split('molNum')[1].split('/')[0].split('.')[0])
     tsv_lines = open(tsv_path).readlines()
     field_to_idx = dict()
     for idx, field in enumerate(tsv_lines[0].rstrip().split('\t')):
@@ -125,4 +125,4 @@ layout = go.Layout(
     ),
 )
 fig = go.Figure(data=data, layout=layout)
-plot(fig, filename='{}.html'.format('scalibility_plots'), auto_open=False, image='svg', image_filename='scalibility_plots',image_height=900, image_width=1600)
+plot(fig, filename='{}.html'.format(output_html.rstrip('.html')), auto_open=False, image_height=900, image_width=1600)
