@@ -36,7 +36,7 @@ fi
 
 
 mkdir -p $out_dir
-for tool in umitools #calib starcode rainbow umitools raw
+for tool in umitools calib starcode rainbow umitools raw
 do
     # Slurm header
     echo "Preparing things for $tool"
@@ -64,8 +64,12 @@ do
     "starcode")
     echo "$gtime -o $out_dir/starcode.gtime -v \\"   >> "$out_dir/$tool.pbs"
     echo "    $starcode_umi \\"                      >> "$out_dir/$tool.pbs"
-    echo "        --starcode-path $starcode \\"      >> "$out_dir/$tool.pbs"
+    echo "        --seq-trim 50 \\"                  >> "$out_dir/$tool.pbs"
     echo "        --umi-len $barcode_length \\"      >> "$out_dir/$tool.pbs"
+    echo "        --umi-d 2 \\"                      >> "$out_dir/$tool.pbs"
+    echo "        --seq-d 5 \\"                      >> "$out_dir/$tool.pbs"
+    echo "        --umi-cluster-ratio 1 \\"          >> "$out_dir/$tool.pbs"
+    echo "        --seq-cluster-ratio 1 \\"          >> "$out_dir/$tool.pbs"
     echo "        --seq-id \\"                       >> "$out_dir/$tool.pbs"
     echo "        $fq_1 \\"                          >> "$out_dir/$tool.pbs"
     echo "        $fq_2 \\"                          >> "$out_dir/$tool.pbs"
@@ -84,7 +88,7 @@ do
     echo "        $rainbow \\"                      >> "$out_dir/$tool.pbs"
     echo "        $fq_1 \\"                         >> "$out_dir/$tool.pbs"
     echo "        $fq_2 \\"                         >> "$out_dir/$tool.pbs"
-    echo "        3 \\"                             >> "$out_dir/$tool.pbs"
+    echo "        2 \\"                             >> "$out_dir/$tool.pbs"
     echo "        true \\"                          >> "$out_dir/$tool.pbs"
     echo "        $out_dir/rainbow.out"             >> "$out_dir/$tool.pbs"
     echo "$convert_rainbow \\"                      >> "$out_dir/$tool.pbs"
@@ -152,13 +156,15 @@ do
     echo "    -w 1 \\"                                     >> "$out_dir/$tool.pbs"
     echo "    $out_dir/$tool.bam \\"                       >> "$out_dir/$tool.pbs"
     echo "        > $out_dir/$tool.bam-readcount/out.tsv"  >> "$out_dir/$tool.pbs"
-    echo "mkdir -p $out_dir/$tool.sinvict"  >> "$out_dir/$tool.pbs"
-    echo "$sinvict \\"                             >> "$out_dir/$tool.pbs"
-    echo "    -5 1 \\"                             >> "$out_dir/$tool.pbs"
-    echo "    -m $sinvict_depth \\"                >> "$out_dir/$tool.pbs"
-    echo "    -t $out_dir/$tool.bam-readcount \\"  >> "$out_dir/$tool.pbs"
-    echo "    -o $out_dir/$tool.sinvict "          >> "$out_dir/$tool.pbs"
-
+    for seq_err in 0.01 0.001 0.0001
+    do
+        echo "mkdir -p $out_dir/$tool.sinvict/$seq_err"  >> "$out_dir/$tool.pbs"
+        echo "$sinvict \\"                               >> "$out_dir/$tool.pbs"
+        echo "    -5 1 \\"                               >> "$out_dir/$tool.pbs"
+        echo "    -m $sinvict_depth \\"                  >> "$out_dir/$tool.pbs"
+        echo "    -t $out_dir/$tool.bam-readcount \\"    >> "$out_dir/$tool.pbs"
+        echo "    -o $out_dir/$tool.sinvict/$seq_err"    >> "$out_dir/$tool.pbs"
+    done
     echo -e "rm $out_dir/$tool.pbs.no_success"  >> "$out_dir/$tool.pbs"
     sbatch "$out_dir/$tool.pbs"
 done
