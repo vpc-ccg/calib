@@ -74,7 +74,7 @@ dunovo_cluster=$(dunovo_output_prefix)cluster
 dunovo_accuracy=$(dunovo_output_prefix)accuracy
 dunovo_time=$(dunovo_output_prefix)time
 
-UMITOOLS_RUN=$(benchmark_aux_path)/run_umi-tools.sh
+UMITOOLS_RUN=$(benchmark_aux_path)/run_umitools.sh
 umitools_params=edit_2.
 umitools_output_prefix=$(input_reads_prefix)umitools.$(umitools_params)
 umitools_temp_directory?=$(umitools_output_prefix)temp
