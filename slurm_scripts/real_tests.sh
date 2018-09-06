@@ -19,7 +19,7 @@ convert_starcode="aux/convert_starcode_to_cluster.sh"
 rainbow="aux/other_tools/rainbow/rainbow"
 run_rainbow="aux/run_rainbow.sh"
 convert_rainbow="aux/convert_rainbow_to_cluster.sh"
-run_umi_tools="aux/run_umi-tools.sh"
+run_umitools="aux/run_umitools.sh"
 convert_umitools="aux/convert_umitools_to_cluster.sh"
 restore_cluster_missing_reads="aux/restore_cluster_missing_reads.sh"
 
@@ -36,7 +36,7 @@ fi
 
 
 mkdir -p $out_dir
-for tool in calib starcode rainbow umi-tools raw
+for tool in umitools #calib starcode rainbow umitools raw
 do
     # Slurm header
     echo "Preparing things for $tool"
@@ -49,7 +49,7 @@ do
     echo "#SBATCH --error=$out_dir/$tool.pbs.err"        >> "$out_dir/$tool.pbs"
     echo "#SBATCH --export=all"                          >> "$out_dir/$tool.pbs"
     echo "#SBATCH -p debug,express,normal,big-mem,long"  >> "$out_dir/$tool.pbs"
-    echo "touch $filename.no_success"                     >> "$out_dir/$tool.pbs"
+    echo "touch $out_dir/$tool.pbs.no_success"           >> "$out_dir/$tool.pbs"
     # Tool specific commands
     case $tool in
     "calib")
@@ -100,23 +100,23 @@ do
     echo "    $fq_1 \\"                             >> "$out_dir/$tool.pbs"
     echo "        > $out_dir/rainbow.cluster"       >> "$out_dir/$tool.pbs"
     ;;
-    "umi-tools")
-    echo "$gtime -o $out_dir/umi-tools.gtime -v \\"   >> "$out_dir/$tool.pbs"
-    echo "    $run_umi_tools \\"                      >> "$out_dir/$tool.pbs"
-    echo "        $fq_1 \\"                           >> "$out_dir/$tool.pbs"
-    echo "        $fq_2 \\"                           >> "$out_dir/$tool.pbs"
-    echo "        $out_dir \\"                        >> "$out_dir/$tool.pbs"
-    echo "        $out_dir/umi-tools.work \\"         >> "$out_dir/$tool.pbs"
-    echo "        $bwa \\"                            >> "$out_dir/$tool.pbs"
-    echo "        $ref \\"                            >> "$out_dir/$tool.pbs"
-    echo "        $samtools"                          >> "$out_dir/$tool.pbs"
-    echo "$convert_umitools \\"                       >> "$out_dir/$tool.pbs"
-    echo "    $out_dir/umi-tools.out \\"              >> "$out_dir/$tool.pbs"
-    echo "        > $out_dir/umi-tools.cluster.temp"  >> "$out_dir/$tool.pbs"
-    echo "$restore_cluster_missing_reads \\"          >> "$out_dir/$tool.pbs"
-    echo "    $out_dir/umi-tools.cluster.temp \\"     >> "$out_dir/$tool.pbs"
-    echo "    $fq_1 \\"                               >> "$out_dir/$tool.pbs"
-    echo "        > $out_dir/umi-tools.cluster"       >> "$out_dir/$tool.pbs"
+    "umitools")
+    echo "$gtime -o $out_dir/umitools.gtime -v \\"   >> "$out_dir/$tool.pbs"
+    echo "    $run_umitools \\"                      >> "$out_dir/$tool.pbs"
+    echo "        $fq_1 \\"                          >> "$out_dir/$tool.pbs"
+    echo "        $fq_2 \\"                          >> "$out_dir/$tool.pbs"
+    echo "        $out_dir/umitools.out \\"          >> "$out_dir/$tool.pbs"
+    echo "        $out_dir/umitools.work \\"         >> "$out_dir/$tool.pbs"
+    echo "        $bwa \\"                           >> "$out_dir/$tool.pbs"
+    echo "        $ref \\"                           >> "$out_dir/$tool.pbs"
+    echo "        $samtools"                         >> "$out_dir/$tool.pbs"
+    echo "$convert_umitools \\"                      >> "$out_dir/$tool.pbs"
+    echo "    $out_dir/umitools.out \\"              >> "$out_dir/$tool.pbs"
+    echo "        > $out_dir/umitools.cluster.temp"  >> "$out_dir/$tool.pbs"
+    echo "$restore_cluster_missing_reads \\"         >> "$out_dir/$tool.pbs"
+    echo "    $out_dir/umitools.cluster.temp \\"     >> "$out_dir/$tool.pbs"
+    echo "    $fq_1 \\"                              >> "$out_dir/$tool.pbs"
+    echo "        > $out_dir/umitools.cluster"       >> "$out_dir/$tool.pbs"
     ;;
     esac
     # Consensus, mapping, and SNV calling
@@ -164,6 +164,6 @@ do
     echo "    -t $out_dir/$tool.bam-readcount \\"  >> "$out_dir/$tool.pbs"
     echo "    -o $out_dir/$tool.sinvict "          >> "$out_dir/$tool.pbs"
 
-    echo -e "rm $filename.no_success"  >> "$out_dir/$tool.pbs"
+    echo -e "rm $out_dir/$tool.pbs.no_success"  >> "$out_dir/$tool.pbs"
     sbatch "$out_dir/$tool.pbs"
 done
