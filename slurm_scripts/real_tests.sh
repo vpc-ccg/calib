@@ -36,7 +36,7 @@ fi
 
 
 mkdir -p $out_dir
-for tool in umitools calib starcode rainbow umitools raw
+for tool in umitools calib starcode rainbow raw
 do
     # Slurm header
     echo "Preparing things for $tool"
