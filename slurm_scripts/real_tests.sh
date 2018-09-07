@@ -22,7 +22,12 @@ convert_rainbow="aux/convert_rainbow_to_cluster.sh"
 run_umitools="aux/run_umitools.sh"
 convert_umitools="aux/convert_umitools_to_cluster.sh"
 restore_cluster_missing_reads="aux/restore_cluster_missing_reads.sh"
+# Plotting
+run_plotting="slurm_scripts/real_tests_plotting.py"
+verified_snv="experiments/real_tests/SNV.on_panel.verified.hg19.tsv"
+reported_snv="experiments/real_tests/SNV.on_panel.reported.hg19.tsv"
 
+./benchmark starcode rainbow umitools bwa calib
 if [ ! -f $ref ]; then
     echo "Reference not found. Downloading..."
     wget 'ftp://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz' -O chromFa.tar.gz
@@ -34,7 +39,8 @@ if [ ! -f "$ref.bwt" ]; then
     $bwa index $ref
 fi
 
-
+last_job_id=""
+deps=""
 mkdir -p $out_dir
 for tool in umitools calib starcode rainbow raw
 do
@@ -64,8 +70,9 @@ do
     "starcode")
     echo "$gtime -o $out_dir/starcode.gtime -v \\"   >> "$out_dir/$tool.pbs"
     echo "    $starcode_umi \\"                      >> "$out_dir/$tool.pbs"
-    echo "        --seq-trim 50 \\"                  >> "$out_dir/$tool.pbs"
+    echo "        --starcode-path $starcode \\"      >> "$out_dir/$tool.pbs"
     echo "        --umi-len $barcode_length \\"      >> "$out_dir/$tool.pbs"
+    echo "        --seq-trim 50 \\"                  >> "$out_dir/$tool.pbs"
     echo "        --umi-d 2 \\"                      >> "$out_dir/$tool.pbs"
     echo "        --seq-d 5 \\"                      >> "$out_dir/$tool.pbs"
     echo "        --umi-cluster-ratio 1 \\"          >> "$out_dir/$tool.pbs"
@@ -161,10 +168,26 @@ do
         echo "mkdir -p $out_dir/$tool.sinvict/$seq_err"  >> "$out_dir/$tool.pbs"
         echo "$sinvict \\"                               >> "$out_dir/$tool.pbs"
         echo "    -5 1 \\"                               >> "$out_dir/$tool.pbs"
+        echo "    -e $seq_err \\"                        >> "$out_dir/$tool.pbs"
         echo "    -m $sinvict_depth \\"                  >> "$out_dir/$tool.pbs"
         echo "    -t $out_dir/$tool.bam-readcount \\"    >> "$out_dir/$tool.pbs"
         echo "    -o $out_dir/$tool.sinvict/$seq_err"    >> "$out_dir/$tool.pbs"
     done
     echo -e "rm $out_dir/$tool.pbs.no_success"  >> "$out_dir/$tool.pbs"
-    sbatch "$out_dir/$tool.pbs"
+    last_job_id=$(sbatch "$out_dir/$tool.pbs")
+    deps=$deps":"${last_job_id##* }
 done
+
+echo "Preparing things for plotting"
+echo "#!/bin/bash"                                         >  "$out_dir/plotting.pbs"
+echo "#SBATCH --job-name=real_tests_plotting"              >> "$out_dir/plotting.pbs"
+echo "#SBATCH -c 1"                                        >> "$out_dir/plotting.pbs"
+echo "#SBATCH --mem 16G"                                   >> "$out_dir/plotting.pbs"
+echo "#SBATCH -t 02:59:59"                                 >> "$out_dir/plotting.pbs"
+echo "#SBATCH --output=$out_dir/plotting.pbs.out"          >> "$out_dir/plotting.pbs"
+echo "#SBATCH --error=$out_dir/plotting.pbs.err"           >> "$out_dir/plotting.pbs"
+echo "#SBATCH --export=all"                                >> "$out_dir/plotting.pbs"
+echo "#SBATCH -p debug,express,normal,big-mem,long"        >> "$out_dir/plotting.pbs"
+echo "#SBATCH --dependency=afterany$deps"                  >> "$out_dir/plotting.pbs"
+echo "$run_plotting $out_dir $verified_snv $reported_snv"  >> "$out_dir/plotting.pbs"
+sbatch "$out_dir/plotting.pbs"

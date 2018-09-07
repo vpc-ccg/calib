@@ -6,11 +6,11 @@ import plotly.graph_objs as go
 import math
 
 results_path=sys.argv[1].rstrip('/')
-snps_path=sys.argv[2].rstrip('/')
-variants_path=sys.argv[3].rstrip('/')
+variants_path=sys.argv[2].rstrip('/')
+snps_path=sys.argv[3].rstrip('/')
 
 snps = set()
-for line in open(snps_path):
+for line in open(variants_path):
     line = line.rstrip().split('\t')
     chrom = line[0]
     pos = int(line[1])
@@ -24,7 +24,7 @@ for line in open(snps_path):
             alt
         )
     )
-for line in open(variants_path):
+for line in open(snps_path):
     line = line.rstrip().split('\t')
     chrom = line[0]
     pos = int(line[1])
