@@ -14,7 +14,7 @@ For barcode length 4 (4+4), and error tolerance of 1, there are eight such masks
 11111101 
 11111110 
 ```
-Any two nodes in Calib graph that have identical barcodes after applying a mask, and after having sufficient number of minimizers (check the main README file [here](../../)).
+Any two nodes in Calib graph that have identical barcodes after applying a mask, and after having sufficient number of minimizers (check the main README file [here](../../README.md)).
 Thus, each mask implies a set of edges on Calib's graph.
 Note that these sets of edges are not necessarily disjoint, especially of error tolerance is > 1.
 
