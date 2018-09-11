@@ -18,7 +18,7 @@ else
 	CMAKE=$(my_current_dir)cmake-3.12.0/bin/cmake
 endif
 
-calib_cons: $(cc_files)
+calib_cons: $(cc_files) spoa_v1.1.3/build/
 	$(cc) $(cc_files) $(cc_args) -o calib_cons
 
 
