@@ -1,17 +1,57 @@
 # Calib parameter selection
 
-Calib's clustering input is paired-end FASTQ files. Calib currently only supports paired-end reads, but support for single-end is planned soon. Calib does not support interleaved FASTQ files (yet). The fixed length barcode tags of each read should be at the beginning of the sequence of either read mates (no adapters should be present in the read sequences).
+## Peak into Calib clustering algorithm
 
-### Algorithm
+Calib clusters reads by defining **barcode similarity** and **sequence similarity** between a given pair of reads. First, let's define barcode and sequence:
 
-Calib clusters reads by defining barcode similarity and sequence similarity between pair of reads. Two reads barcodes are considered similar if they are no more than `e` [Hamming distance](https://en.wikipedia.org/wiki/Hamming_distance) from one another. Sequence similarity is defined in terms of the sequence minimizers. Minimizers are
+- A read's barcode is its first barcode tag concatenated to its second barcode tag
+- A mate's sequence is the sequence that starts after the barcode tag
 
-### Tests for pre-configured parameter selections
-If no clustering parameters are passed to Calib, Calib will automatically selects its own parameters based on the the barcode length and inferred read length.
-The selection of the parameter was done using extensive testing of wide range of possible paramters.
-The testing script is available [here](../../slurm_scripts/).
+Then define barcode and sequence similarities: 
 
-Basically, we tested 9 different dataset types by using:
+- Two barcodes are considered similar if they are no more than `-e` (or `--error-tolerance`) [Hamming distance](https://en.wikipedia.org/wiki/Hamming_distance) from one another
+- Two sequences are considered similar if at least  `-t` (or `--minimizer-threshold`) of their ordered `-m` (or `--minimizer-count`)  minimizers are identical.
+
+Then we define read similarity as:
+
+- Two reads are considered similar if their:
+  - Barcodes are similar
+  - First mates' sequences are similar
+  - Second mates' sequences are similar
+
+Which leaves us with explaining what minimizers are:
+
+- A minimizer is defined as the lexicographically smallest substring of size `-k`  (or `--kmer-size`) in a given string
+
+To extract minimizers of a mate sequence:
+
+- Split the sequence into `-m` segments of equal size
+- Extract a minimizer from each segment
+
+Thus each mate will have an ordered list of `-m` minimizers.
+
+Calib has each read represented in a node on an undirected graph, with an edge added for any two nodes with similar reads. Then each connected component is considered as a cluster. 
+
+
+
+The algorithm is summarized in the following figure:
+
+![Calib's algorithm](algorithm_figure.svg)
+
+> **Calib clustering of paired-end reads of UMI tagged DNA molecules**.
+>
+> A) In this example, 6 paired-end reads are given to Calib as input. Each read has two mates. Since each mate comes from the start of the tagged molecule (with tag length of 2 in this example), the first two nucleotides are the tag, and the rest is the sequence.
+>
+> B) From the two mates of each read, the barcode is extracted. The barcode is a concatenation of both mates' tags. From each mate, Calib extract an ordered list of minimizers. In this example `-k` is 2; and `-m` is 2. The first two reads have identical barcodes and minimizers, and thus will be represented by a single node (node 1).
+>
+> C) With `-e` of 1; and barcode tag length, `-l`, of 2 (barcode length of 4), there are 4 possible templates. When processing each template, all pairs of nodes that have identical barcodes, after removing the bases ignored by the template, will be checked to see if they have enough matching minimizers. In this example `-t` is 1. In the first template, only nodes 2 and 3 have identical masked barcodes but they do not have enough matching minimizers.
+>
+> D) Once all edges are processed, Nodes in a connected component are considered as a cluster. Reads represented by nodes in a cluster are considered to be originating from the same UMI tagged molecule.
+
+## Selection of pre-configured parameter sets
+
+As explained, Calib has four clustering parameters that need to be set. If no clustering parameters are passed to Calib, Calib will automatically selects its own parameters based on the the barcode length and inferred read length. The selection of the parameter was done using extensive testing of wide range of possible parameters. Basically, we tested 9 different dataset types by using:
+
 - Barcode tag lengths of 4, 8, or 12
 - Read mate length of 75, 150, or 250
 Then, for each dataset type, we generated 10 different datasets, each using a different random seed.
@@ -93,6 +133,10 @@ if (barcode_length >= 12) {
 }
 ```
 
-Note that `mean_read_size` if the average read lenght of the first 10,000 reads in the first FASTQ file.
+Note that `mean_read_size` if the average read length of the first 10,000 reads in the first FASTQ file.
 This preconfiguration is what we deemed suitable tradeoff between accuracy, time, and memory use, with more preference on better accuracy than on better time or memory.
 Please feel free to select a different set of parameters based on the plot results if that suits your application more.
+
+## Testing other parameters and dataset types
+
+If you wish to test other parameters you can use parameter selection testing script available [here](../../slurm_scripts/).
