@@ -10,3 +10,7 @@ This directory includes the following:
   - Max RAM use
   - Adjusted Rand Index (ARI) accuracy
   - Parameter list and their values
+
+## Running simulated datasets tests
+
+Please check the testing script available [here](../../slurm_scripts/).

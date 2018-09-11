@@ -24,3 +24,7 @@ Once a thread completes computing its graph on all its masks, it will lock the m
 This comes with the downside of using more RAM with every extra thread used as shown in the tests plotted up here.
 The plot is generated from the scripts in [here](../../slurm_scripts/).
 The exact results are in the the TSV files in this directory.
+
+## Running simulated datasets tests
+
+Please check the testing script available [here](

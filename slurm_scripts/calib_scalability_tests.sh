@@ -34,6 +34,7 @@ output_html="slurm_scripts/calib_scalability_tests_out.html"
 slurm_path="slurm_scripts/slurm_files/calib_scalability_tests"
 mkdir -p "$slurm_path"
 
+make
 ./benchmark annotation reference reference_name=hg38 gnu_time calib
 ./benchmark barcodes num_barcodes=$num_barcodes random_seed=$random_seed barcode_length=$barcode_length
 ./benchmark panel gene_list_name=COSMIC_cancer_genes reference_name=hg38 random_seed=$random_seed

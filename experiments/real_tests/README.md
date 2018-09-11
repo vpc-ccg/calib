@@ -20,4 +20,4 @@ The results are summarized in this figure:
 
 ## Running real dataset tests
 
-Please check the testing script available [here](../../slurm_scripts/)
+Please check the testing script available [here](../../slurm_scripts/).

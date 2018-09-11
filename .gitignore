@@ -198,5 +198,5 @@ fabric.properties
 # Calib ignores
 calib
 aux/other_tools/time-1.9/
+consensus/calib_cons
 cpu_profile.pdf
-slurm_pbs

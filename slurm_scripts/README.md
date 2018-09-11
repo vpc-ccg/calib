@@ -1,61 +1,92 @@
-# Calib
-Calib clusters paired-end reads using their barcodes and sequences. Calib is suitable for amplicon sequencing where a molecule is tagged, then PCR amplified with high depth.
-
-## Reproducing Benchmarks
-
-If you are insterested in reprodcuing our paper's benchmarks, please switch to the paper git branch, and follow instructions at [Paper Branch](https://github.com/vpc-ccg/calib/tree/paper/)
-
-### Simulation Prerequisites
-The simulatation module of Calib is implemented in Python 3 and requires that the following Python packages to be installed and importable:
-
-- [pyfaidx](https://pypi.python.org/pypi/pyfaidx)
-- [numpy](https://pypi.python.org/pypi/numpy)
-- [scipy](https://pypi.python.org/pypi/scipy)
-- [scikit-learn](https://pypi.python.org/pypi/scikit-learn)
-- [biopython](https://pypi.python.org/pypi/biopython)
-- [pandas](https://pypi.python.org/pypi/pandas)
-
-In addition, ART Illumina version 2.5.8 need to be in your `PATH`.
-- [ART Illumina](https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm) (version 2.5.8)
-
-Finally, our tests are run on hg38 reference genome. Please download it and have it in `simulaing/genomes` directory. To do this, assuming you are in Calib's directory:
+# Calib Experiments Scripts
+We performed four experiments for Calib. The results of the experiments are [here](../experiments/). This directory contains scripts for running those experiments on [Slurm Workload Manager](https://slurm.schedmd.com/). However, the Slurm files generated are still BASH files and can be run using:
 
 ```bash
-wget http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz 
-zcat hg38.fa.gz > simulating/genomes/hg38.fa
+bash <slurm_file_name>
 ```
 
-Please ensure the correct naming of the reference genome FASTA file is used.
+Note: **All Slurm scripts must be run from Calib's root directory!**
 
-All these prerequisites can easily be satisfied using [Anaconda](https://docs.anaconda.com/anaconda/install/linux).
+## Simulated Datasets
 
-### Calib, Rainbow, and starcode Prerequisites
-We are benchmarking Calib against [Rainbow](https://github.com/ChongLab/rainbow), [starcode](https://github.com/gui11aume/starcode), and [Du Novo](https://github.com/galaxyproject/dunovo). Rainbow and starcode need to be downloaded, compiled, and their executables to be in your `PATH`. Calib was tested using GCC 5.2, but earlier versions supporting C++11 should work.
+To run the simulated dataset tests, you need first to clone the other tools by running:
 
-
-### Du Novo Prerequistes
-Do Novo requires using Python 2.7, and some old version of samtools. We handled this by a script that creates a special Anaconda environment for Du Novo to run in. All what you need is:
-- Install [Anaconda](https://docs.anaconda.com/anaconda/install/linux)
-- Download [Du Novo](https://github.com/galaxyproject/dunovo) to `~/bin/dunovo` or make sure to modify the line in `run_dunovo_test.sh` to reflect where dunovo is installed. Make sure to not add `/` at the end:
 ```bash
-dunovo_path=~/bin/dunovo
+cd <CALIB_ROOT_DIRECTORY>
+git submodule update --init --recursive
 ```
 
-## Running Tests
+Then run the Slurm generating and running script:
 
-To run tests [GNU Time](https://ftp.gnu.org/gnu/time/) must be installed in `/usr/bin/time`. If it is installed somewhere else, please edit the line in `benchmark` file:
 ```bash
-GNU_TIME?=/usr/bin/time
-```
-To reflect where GNU Time is installed. Reported tests were collected using GNU Time 1.8.
-
-There are 3 different datasets we preconfigured, and one tiny additional dataset. To run any of those just run:
-```bash
-./run_tests.sh tiny small medium huge
-```
-Where you can omit any of the dataset names. To run Du Novo's benchmarking, run:
-```bash
-./run_dunovo_test.sh tiny small medium huge
+cd <CALIB_ROOT_DIRECTORY>
+slurum_scripts/simulated_tests.sh <dataset_name>
 ```
 
-All results will be in `simulating/datasets/*tsv`. Details of clusterings are also present in the same directory, with decriptive filenames.
+There are three datasets tests reported in Calib's paper, 
+
+- `small`: Has 100K molecules and 100 barcode tags
+- `medium`: Has 1M molecules and 5K barcode tags
+- `large` Has 1M molecules and 25K barcode tags
+
+The results will be in TSV files off different tools. For `small`:
+
+> `simulating/datasets/randS_42/barL_8.barNum_100/geneNum_35.refName_hg38.geneList_COSMIC_cancer_genes/ref_hg38.molMin_150.molMu_300.molDev_25.molNum100000/pcrC_7.pcrDR_0.6.pcrER_0.00005/seqMach_HS25.readL_150/*_benchmarks.tsv`
+
+For `medium`:
+
+> `simulating/datasets/randS_42/barL_8.barNum_25000/geneNum_35.refName_hg38.geneList_COSMIC_cancer_genes/ref_hg38.molMin_150.molMu_300.molDev_25.molNum1000000/pcrC_7.pcrDR_0.6.pcrER_0.00005/seqMach_HS25.readL_150/*_benchmarks.tsv`
+
+For `large`:
+
+> `simulating/datasets/randS_42/barL_8.barNum_5000/geneNum_35.refName_hg38.geneList_COSMIC_cancer_genes/ref_hg38.molMin_150.molMu_300.molDev_25.molNum1000000/pcrC_7.pcrDR_0.6.pcrER_0.00005/seqMach_HS25.readL_150/*_benchmarks.tsv`
+
+### Note on running things without Slurm
+
+If you wish to run the Slurm scripts on BASH, you need to run one Slurm file at a time. The Slurm files have dependency on one another, and things can break down if the dependency is not respected. This is true especially in case of simulating the datasets. If two scripts end up trying to generate the same reads at the same time, they will end up inevitably corrupting the simulation outputs.
+
+## Real dataset
+
+To run the simulated dataset tests, you need first to clone the other tools by running:
+
+```bash
+cd <CALIB_ROOT_DIRECTORY>
+git submodule update --init --recursive
+```
+
+Then run the Slurm generating and running script:
+
+```bash
+cd <CALIB_ROOT_DIRECTORY>
+slurm_scripts/real_tests.sh <R1.fastq> <R2.fastq> <panel.hg19.bed> <output_directory>
+```
+
+`<R1.fastq>` and `<R2.fastq>` are the real dataset FASTQ files which can be downloaded from [here (BROKEN LINK)]().  `panel.hg19.bed` is the panel of targeted regions used to pull down material for sequencing which is also included in the download link of the FASTQ files. Finally, output directory is where the results will be put of running the complete pipeline.
+
+### Notes
+
+If you are not going to use Slurm, follow the same note mentioned in the simulated dataset runs above.
+
+The real dataset testing pipeline assumes that `samtools` is in your `$PATH`. If `samtools` is installed somewhere else, please edit the corresponding variable in `slurm_scripts/real_tests.sh`.
+
+## Scalability of multithreading
+
+Simply run:
+
+```bash
+cd <CALIB_ROOT_DIRECTORY>
+slurm_scripts/calib_scalability_tests.sh
+```
+
+Feel free to edit the variables and for loop in the script to try different parameters. The same not applies regarding not running Slurm as above.
+
+## Parameter selection
+
+Simply run:
+
+```bash
+cd <CALIB_ROOT_DIRECTORY>
+slurm_scripts/calib_parameter_tests.sh
+```
+
+Feel free to edit the variables and for loop in the script to try different parameters. The same not applies regarding not running Slurm as above.
