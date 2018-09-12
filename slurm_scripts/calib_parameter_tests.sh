@@ -216,9 +216,10 @@ do
             tsv_path=$tsv_path"/calib_benchmarks.tsv"
             command=$command"if [ ! -f $filename ]; then head -n1 $tsv_path > $filename; fi; awk 'NR > 1' $tsv_path >> $filename;\n"
         done
-        command=$command"slurm_scripts/calib_parameter_tests_plotting.py $filename;\n"
     done
 done
+command=$command"slurm_scripts/calib_parameter_tests_plotting.py $output_directory;\n"
+
 job_name="group_"$random_seed_start"_"$random_seed_step"_"$random_seed_end""
 filename="$slurm_path_prefix/$job_name.pbs"
 mem="128"
