@@ -146,4 +146,4 @@ layout = go.Layout(
     ),
 )
 fig = go.Figure(data=data, layout=layout)
-plotly.offline.plot(fig, filename='{}/plots.html'.format(results_path), auto_open=False, image='svg', image_width=width, image_height=height, image_filename='sinvict')
+plotly.offline.plot(fig, filename='{}/plots.html'.format(results_path), auto_open=False)
