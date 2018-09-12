@@ -140,8 +140,8 @@ layout = go.Layout(
     ),
     legend=dict(
         traceorder='grouped+reversed',
-        x=0.50,
-        y=0.05,
+        #x=0.50,
+        #y=0.05,
         tracegroupgap=20,
     ),
 )

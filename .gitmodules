@@ -14,7 +14,7 @@
 	path = aux/other_tools/starcode
 	url = https://github.com/gui11aume/starcode.git
 [submodule "consensus/bam-readcount_v0.8.0"]
-	path = consensus/bam-readcount_v0.8.0
+	path = aux/other_tools/bam-readcount_v0.8.0
 	url = https://github.com/genome/bam-readcount.git
 [submodule "consensus/bwa_v0.7.17"]
 	path = aux/other_tools/bwa
