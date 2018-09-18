@@ -3,14 +3,17 @@ Calib clusters paired-end reads using their barcodes and sequences. Calib is sui
 
 Calib stands for Clustering without alignment using (locality sensitive hashing) LSH and MinHashing of barcoded reads. Calib comes for the Arabic word قالب /IPA:qaːlib/ which means template and is a reference to Calib's use of LSH templates.
 
-## Calib Prerequisites
+## Prerequisites
 
+### Calib clustering
 Calib main module has one prerequisite:
 
 - GCC with version 5.2 or higher
 
+### Calib error correction
 Calib error correction depends [SPOA](https://github.com/rvaser/spoa) v1.1.3 which in turn depends on CMake v3.2 or higher. However, Calib error correction installation script automatically detects if `cmake` in the `$PATH` is CMake v3.2 or higher. If it's not, then it downloads CMake and v3.12, installs it. Then the installation script will clone SPOA v1.1.3 and install it using CMake.
 
+### Calib Simulation
 Calib simulation module has some Python3 prerequisites that can be easily satisfied using [Conda](https://conda.io/) package manager:
 
 - [pyfaidx](https://pypi.python.org/pypi/pyfaidx)
