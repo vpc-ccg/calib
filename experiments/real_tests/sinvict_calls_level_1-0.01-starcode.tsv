@@ -1,4 +1,4 @@
-chrom   pos_hg19    sample  ref read_depth  alt alt_depth   VAF pos_strand_depth    neg_strand_depth    normalized_mean_in_read_position    type    Verified_or_Reported    Verified_allele_freq
+chrom	pos_hg19	sample	ref	read_depth	alt	alt_depth	VAF	pos_strand_depth	neg_strand_depth	normalized_mean_in_read_position	type	Verified_or_Reported	Verified_allele_freq
 chr7	55241707	out	G	585	A	158	27.0085	+:83	-:75	0.44	Somatic	V	24.5
 chr3	178952085	out	A	376	G	73	19.4149	+:32	-:41	0.57	Somatic	V	17.5
 chr12	25398281	out	C	386	T	66	17.0984	+:32	-:34	0.57	Somatic	V	15
