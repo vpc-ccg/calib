@@ -1,7 +1,7 @@
 # Calib
 Calib clusters paired-end reads using their barcodes and sequences. Calib is suitable for amplicon sequencing where a molecule is tagged, then PCR amplified with high depth, also known as Unique Molecule Identifier (UMI) sequencing. 
 
-Calib stands for Clustering without alignment using (locality sensitive hashing) LSH and MinHashing of barcoded reads. Calib comes for the Arabic word قالب /IPA:qaːlib/ which means template and is a reference to Calib's use of LSH templates.
+Calib stands for Clustering without alignment using (locality sensitive hashing) LSH and MinHashing of barcoded reads. Calib comes for the Arabic word [قالب](https://en.wiktionary.org/wiki/قالب) /IPA:qaːlib/ which means template and is a reference to Calib's use of LSH templates.
 
 ## Prerequisites
 
