@@ -1,4 +1,5 @@
 comment,my_timestamp,user_time_(min),wall_time_(HH:MM:SS),mem_(GB),ARI,parameters
+small_molecule_calib,2018-11-07---15-10-56,11.14,13:16.96,2.72,0.9999,barcode_length=8;minimizers_num=-1;kmer_size=-1;barcode_error_tolerance=-1;minimizers_threshold=-1;
 small_calib,2018-08-30---18-16-29,4.92,5:04.72,1.11,0.9995,barcode_length=8;minimizers_num=-1;kmer_size=-1;barcode_error_tolerance=-1;minimizers_threshold=-1;
 small_cdhit,2018-08-30---19-22-31,70.30,1:11:06,2.71,0.6423,cdhitest_dist=0.95;
 small_cdhit,2018-08-30---20-04-09,111.01,1:52:45,3.16,0.3243,cdhitest_dist=0.96;
