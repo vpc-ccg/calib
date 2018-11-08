@@ -1,4 +1,5 @@
 comment,my_timestamp,user_time_(min),wall_time_(HH:MM:SS),mem_(GB),ARI,parameters
+medium_small_mol_calib,2018-11-07---15-10-56,11.14,13:16.96,2.72,0.9999,barcode_length=8;minimizers_num=-1;kmer_size=-1;barcode_error_tolerance=-1;minimizers_threshold=-1;
 medium_calib,2018-08-30---19-23-58,37.86,0:39:56,11.00,0.9996,barcode_length=8;minimizers_num=-1;kmer_size=-1;barcode_error_tolerance=-1;minimizers_threshold=-1;
 medium_dunovo,2018-09-06---20-06-19,448.02,7:33:01,2.58,0.8954,dunovo_dist=1;
 medium_dunovo,2018-09-06---20-03-19,446.34,7:30:52,2.48,0.8954,dunovo_dist=2;
