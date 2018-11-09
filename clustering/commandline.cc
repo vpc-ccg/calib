@@ -15,7 +15,7 @@ string output_prefix = "";
 bool silent = false;
 bool no_sort = false;
 int barcode_length = -1;
-int ignored_sequence_prefix_length = 0;
+int ignored_sequence_prefix_length = -1;
 int minimizer_count = -1;
 int error_tolerance = -1;
 int minimizer_threshold = -1;
@@ -48,7 +48,7 @@ void parse_flags(int argc, char *argv[]){
             silent = true;
             continue;
         }
-        if ((no_sort == false) && (current_param == "--no-sort")) {
+        if ((no_sort == false) && (current_param == "-q" || current_param == "--no-sort")) {
             no_sort = true;
             continue;
         }
