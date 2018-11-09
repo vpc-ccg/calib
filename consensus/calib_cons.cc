@@ -139,6 +139,7 @@ void process_clusters(const std::vector<std::string>& read_to_sequence, const st
             graph->add_alignment(alignment, read_to_sequence[rid]);
         }
         std::string consensus;
+        std::string qual;
         std::vector<std::string> msa;
         graph->generate_multiple_sequence_alignment(msa);
 
@@ -157,24 +158,38 @@ void process_clusters(const std::vector<std::string>& read_to_sequence, const st
         }
         consensus.reserve(profile_width);
         for (int col = 0; col < profile_width; col++) {
+            double majority_percentage = 0;
             if        (profile[col]['A']/profile_height > MSA_MAJORITY) {
                 consensus += 'A';
+                majority_percentage = profile[col]['A']/profile_height;
             } else if (profile[col]['C']/profile_height > MSA_MAJORITY) {
                 consensus += 'C';
+                majority_percentage = profile[col]['C']/profile_height;
             } else if (profile[col]['G']/profile_height > MSA_MAJORITY) {
                 consensus += 'G';
+                majority_percentage = profile[col]['G']/profile_height;
             } else if (profile[col]['T']/profile_height > MSA_MAJORITY) {
                 consensus += 'T';
+                majority_percentage = profile[col]['T']/profile_height;
             } else if (profile[col]['-']/profile_height > MSA_MAJORITY) {
                 /* code */
             } else {
                 consensus += 'N';
             }
+
+            if (majority_percentage > 0.90) {
+                qual += 'K';
+            } else if (majority_percentage > 0.70) {
+                qual += 'A';
+            } else if (majority_percentage > 0.50) {
+                qual += '.';
+            } else {
+                qual += '$';
+            }
         }
         ofastq << "@" << header.str() << '\n';
         ofastq << consensus << '\n';
         ofastq << '+' << '\n';
-        std::string qual(consensus.size(), 'K');
         ofastq << qual << '\n';
 
         omsa << "@" << header.str() << '\n';
