@@ -159,6 +159,7 @@ void process_clusters(const std::vector<std::string>& read_to_sequence, const st
         consensus.reserve(profile_width);
         for (int col = 0; col < profile_width; col++) {
             double majority_percentage = 0;
+            bool is_gap = false;
             if        (profile[col]['A']/profile_height > MSA_MAJORITY) {
                 consensus += 'A';
                 majority_percentage = profile[col]['A']/profile_height;
@@ -172,19 +173,21 @@ void process_clusters(const std::vector<std::string>& read_to_sequence, const st
                 consensus += 'T';
                 majority_percentage = profile[col]['T']/profile_height;
             } else if (profile[col]['-']/profile_height > MSA_MAJORITY) {
-                /* code */
+                is_gap = true;
             } else {
                 consensus += 'N';
             }
-
-            if (majority_percentage > 0.90) {
-                qual += 'K';
-            } else if (majority_percentage > 0.70) {
-                qual += 'A';
-            } else if (majority_percentage > 0.50) {
-                qual += '.';
-            } else {
-                qual += '$';
+            
+            if (is_gap == false) {
+                if (majority_percentage > 0.90) {
+                    qual += 'K';
+                } else if (majority_percentage > 0.70) {
+                    qual += 'A';
+                } else if (majority_percentage > 0.50) {
+                    qual += '.';
+                } else {
+                    qual += '$';
+                }
             }
         }
         ofastq << "@" << header.str() << '\n';
