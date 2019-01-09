@@ -177,6 +177,10 @@ make simulate num_molecules=1000
 
 Will generate paired-end reads using all the default simulation parameters (check Makefile header) but with `num_molecules` of 1000. 
 
+# Citation
+
+Baraa Orabi, Emre Erhan, Brian McConeghy, Stanislav V Volik, Stephane Le Bihan, Robert Bell, Colin C Collins, Cedric Chauve, Faraz Hach; Alignment-free clustering of UMI tagged DNA molecules, Bioinformatics, , bty888, https://doi.org/10.1093/bioinformatics/bty888
+
 # Reporting issues and bugs
 
 If you have any issues, questions, or bug reports, please [open an issue](https://github.com/vpc-ccg/calib/issues/new) and will try to address promptly.
