@@ -121,7 +121,7 @@ void lsh_mask(size_t mask_remainder) {
     time_t build_time = 0, process_time = 0;
     node_id_to_node_id_vector_of_vectors local_graph(node_count);
     char masked_barcode_buffer[150];
-    masked_barcode_buffer[barcode_length*2-error_tolerance] = '\0';
+    masked_barcode_buffer[barcode_length_1+barcode_length_2-error_tolerance] = '\0';
     stringstream stream;
     for (int i = 0; i < all_masks.size(); i++) {
         if (i % thread_count != mask_remainder) {
@@ -217,11 +217,11 @@ void barcode_similarity(){
     valid_base['t'] = true;
 
     size_t mask_count = 1;
-    vector<bool> mask(barcode_length*2, false);
+    vector<bool> mask(barcode_length_1+barcode_length_2, false);
     std::fill(mask.begin() + error_tolerance, mask.end(), true);
-    for (int i = barcode_length*2; i > barcode_length*2 - error_tolerance; i--) {
+    for (int i = barcode_length_1+barcode_length_2; i > barcode_length_1+barcode_length_2 - error_tolerance; i--) {
         mask_count *= i;
-        mask_count /= barcode_length*2 - i + 1;
+        mask_count /= barcode_length_1+barcode_length_2 - i + 1;
     }
     all_masks.reserve(mask_count);
     do{
@@ -277,7 +277,7 @@ void barcode_similarity(){
 
 string mask_barcode(const string& barcode, const vector<bool>& mask, char* masked_barcode_buffer){
     int pos = 0;
-    for (int i = 0; i < barcode_length*2; i++) {
+    for (int i = 0; i < barcode_length_1+barcode_length_2; i++) {
         if (mask[i]) {
             if (valid_base[(uint8_t) barcode.at(i)] == false) {
                 return "0";

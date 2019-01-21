@@ -103,16 +103,16 @@ void extract_barcodes_and_minimizers() {
 
         NodePtr current_node_ptr = new Node();
         // Extracting the barcode from the start of both mates
-        if (s1_length >= barcode_length && s2_length >= barcode_length) {
+        if (s1_length >= barcode_length_1 && s2_length >= barcode_length_2) {
             current_node_ptr->barcode =
-                sequence_1.substr(0, barcode_length) +
-                sequence_2.substr(0, barcode_length);
+                sequence_1.substr(0, barcode_length_1) +
+                sequence_2.substr(0, barcode_length_2);
         } else {
-            current_node_ptr->barcode = string (barcode_length*2, 'N');
+            current_node_ptr->barcode = string (barcode_length_1 + barcode_length_2, 'N');
         }
 
-        s1_length -= barcode_length;
-        s2_length -= barcode_length;
+        s1_length -= barcode_length_1;
+        s2_length -= barcode_length_2;
 
         s1_length -= ignored_sequence_prefix_length;
         s2_length -= ignored_sequence_prefix_length;
@@ -120,7 +120,7 @@ void extract_barcodes_and_minimizers() {
         // Splitting the remaining sequence into ~ equally sized segments, and extracting minimizers from each
         int s1_seg_length = s1_length / minimizer_count;
         if (s1_seg_length >= kmer_size) {
-            int start = barcode_length + ignored_sequence_prefix_length;
+            int start = barcode_length_1 + ignored_sequence_prefix_length;
             for (int i = 0; i < minimizer_count; i++) {
                 current_node_ptr->minimizers[i] = minimizer(sequence_1, start, s1_seg_length);
                 start += s1_seg_length;
@@ -133,7 +133,7 @@ void extract_barcodes_and_minimizers() {
 
         int s2_seg_length = s2_length / minimizer_count;
         if (s2_seg_length >= kmer_size) {
-            int start = barcode_length + ignored_sequence_prefix_length;
+            int start = barcode_length_2 + ignored_sequence_prefix_length;
             for (int i = minimizer_count; i < minimizer_count*2; i++) {
                 current_node_ptr->minimizers[i] = minimizer(sequence_2, start, s2_seg_length);
                 start += s2_seg_length;
