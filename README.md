@@ -36,6 +36,7 @@ First, clone this repository:
 
 ```bash
 git clone https://github.com/vpc-ccg/calib.git calib
+git checkout v0.2
 ```
 
 To install Calib clustering module:
