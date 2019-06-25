@@ -142,7 +142,7 @@ void parse_flags(int argc, char *argv[]){
                 error_tolerance     = 1;
                 kmer_size           = 4;
                 minimizer_count     = 6;
-                minimizer_threshold = 1;
+                minimizer_threshold = 2;
             }
             if (mean_read_size >= 101 && mean_read_size <= 150) {
                 error_tolerance     = 1;
