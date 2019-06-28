@@ -44,9 +44,17 @@ def parse_args():
     parser.add_argument("-b",
                         "--bed",
                         type=str,
+                        default=None,
                         help="bed file that determines targeted regions of genome")
     args = parser.parse_args()
     return args
+
+def get_chr_pos_from_abs_postion(position, lengths):
+    for chr,length in lengths.items():
+        if position > length:
+            position -= length
+        else:
+            return chr,position
 
 def generate_molecules_from_bed(genome_file_path,
                                 bed_file_path,
@@ -59,26 +67,35 @@ def generate_molecules_from_bed(genome_file_path,
     random.seed(random_seed)
     genome_obj = Fasta(genome_file_path)
     genome = dict()
+    chrom_lengths = dict()
+    genome_length = 0
     for key in genome_obj.keys():
-        genome[key] = str(genome_obj[key])
+        genome[key]        = str(genome_obj[key])
+        chrom_lengths[key] = len(genome_obj[key])
+        genome_length     += len(genome_obj[key])
     del genome_obj
     bed_positions = set()
-    for line in open(bed_file_path).readlines()[1:]:
-        line = line.rstrip().split('\t')
-        chr = line[0]
-        start = int(line[1])
-        end = int(line[2])
-        gene = line[3]
-        for idx in range(start, end + 1):
-            bed_positions.add((chr, idx, gene))
-    bed_positions = list(bed_positions)
+    if bed_file_path != None:
+        for line in open(bed_file_path).readlines()[1:]:
+            line = line.rstrip().split('\t')
+            chr = line[0]
+            start = int(line[1])
+            end = int(line[2])
+            gene = line[3]
+            for idx in range(start, end + 1):
+                bed_positions.add((chr, idx, gene))
+        bed_positions = list(bed_positions)
 
     molecules = list()
     while len(molecules) < number_of_molecules:
         mol_len = math.floor(random.normalvariate(mu=molecule_size_mean, sigma=molecule_size_standard_dev))
         if mol_len < min_molecule_size:
             continue
-        chr, pos, gene = random.choice(bed_positions)
+        if len(bed_positions) > 0:
+            chr, pos, gene = random.choice(bed_positions)
+        else:
+            chr,pos = get_chr_pos_from_abs_postion(position=random.randint(1,genome_length), lengths=chrom_lengths)
+            gene = 'no_gene'
         start = pos - math.floor(random.normalvariate(mu=mol_len/2, sigma=15))
         end   = pos + mol_len
         if start <= 0 or end > len(genome[chr]):
@@ -103,15 +120,14 @@ def generate_molecules_from_bed(genome_file_path,
 
 def main():
     args = parse_args()
-    if args.bed:
-        generate_molecules_from_bed(genome_file_path=args.reference,
-                                    bed_file_path=args.bed,
-                                    molecule_size_mean=args.molecule_size_mean,
-                                    molecule_size_standard_dev=args.molecule_size_standard_dev,
-                                    number_of_molecules=args.number_of_molecules,
-                                    random_seed=args.random_seed,
-                                    min_molecule_size=args.min_molecule_size,
-                                    output_file_path=args.output_molecules)
+    generate_molecules_from_bed(genome_file_path=args.reference,
+                                bed_file_path=args.bed,
+                                molecule_size_mean=args.molecule_size_mean,
+                                molecule_size_standard_dev=args.molecule_size_standard_dev,
+                                number_of_molecules=args.number_of_molecules,
+                                random_seed=args.random_seed,
+                                min_molecule_size=args.min_molecule_size,
+                                output_file_path=args.output_molecules)
 
 
 if __name__ == "__main__":
