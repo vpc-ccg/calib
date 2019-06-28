@@ -12,11 +12,15 @@ simulating_path?=$(current_dir)simulating/
 
 SHELL=/bin/bash -o pipefail
 
-cc?=g++
+CXX?=g++
+CXXFLAGS=-std=c++11 -pthread -I clustering/ -lz -Wall -Wextra
+SOURCES:=$(wildcard clustering/*.cc)
+OBJECTS:=$(SOURCES:.cc=.o)
+EXECUTABLE=calib
+DBG_OBJECTS:=$(SOURCES:.cc=.dbg)
+DEBUGGABLE=$(EXECUTABLE)_dbg
+
 python3?= PYTHONHASHSEED=0 python3
-cc_files?= $(clustering_path)*.cc $(clustering_path)*.h
-cc_flags?=
-cc_args?= $(cc_flags)-std=c++11 -O3 -pthread
 art_illumina?=art_illumina
 CONVERT_FASTQ=$(simulating_path)convert_fastq_to_true_cluster.sh
 
@@ -107,8 +111,17 @@ output_accuracy_results?=$(calib_output_prefix)accuracy
 .DELETE_ON_ERROR:
 .SECONDARY:
 .PHONY: help clean simulate_clean simulate cluster accuracy
-calib: $(cc_files)
-	$(cc) $(cc_files) $(cc_args) -o $(current_dir)calib
+$(EXECUTABLE): $(EXECUTABLE).cc $(OBJECTS) Makefile
+	$(CXX) $(OBJECTS) -O2 $< $(CXXFLAGS) -o $@
+
+$(DEBUGGABLE): $(EXECUTABLE).cc $(DBG_OBJECTS) Makefile
+	$(CXX) $(CXXFLAGS) $(DBG_OBJECTS) -g -O0 $< -o $@ -DGITINFO="\"$(GITINFO)\""
+
+%.o: %.cc Makefile
+	$(CXX) $(CXXFLAGS) -O2 -c $< -o $@
+
+%.dbg: %.cc Makefile
+	$(CXX) $(CXXFLAGS) -g -O0 -c $< -o $@
 
 help:
 	@echo 'calib: Clustering without alignment using LSH and MinHashing of barcoded reads'
@@ -192,6 +205,7 @@ endif
 
 
 $(molecules): $(reference) $(panel)
+	@echo $(panel)
 	@echo "Simulating molecules"
 	mkdir -p $(molecules_prefix)
 	$(python3) $(simulating_path)generate_molecules.py \
@@ -274,9 +288,9 @@ cluster: calib $(forward_reads) $(reverse_reads)
 		--kmer-size $(kmer_size) \
 		--error-tolerance $(barcode_error_tolerance) \
 		--minimizer-threshold $(minimizers_threshold) \
-		--thread-count $(thread_count) \
+		--threads $(thread_count) \
 		$(silent) \
-		$(no-sort)
+		# $(no_sort)
 
 accuracy: $(cluster_file) $(true_cluster)
 	$(python3) $(simulating_path)rand_index.py \
