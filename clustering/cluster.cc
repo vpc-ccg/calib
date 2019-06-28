@@ -3,8 +3,10 @@
 //
 
 #include "cluster.h"
+#include "kseq.h"
 
 // #include <pthread.h>
+#include <zlib.h>
 #include <thread>
 #include <mutex>
 #include <stack>
@@ -15,6 +17,8 @@
 // Debug includes
 #include <sstream>
 #include <iomanip>
+
+KSEQ_INIT(gzFile, gzread)
 
 using namespace std;
 
@@ -123,7 +127,7 @@ void lsh_mask(size_t mask_remainder) {
     char masked_barcode_buffer[150];
     masked_barcode_buffer[barcode_length_1+barcode_length_2-error_tolerance] = '\0';
     stringstream stream;
-    for (int i = 0; i < all_masks.size(); i++) {
+    for (size_t i = 0; i < all_masks.size(); i++) {
         if (i % thread_count != mask_remainder) {
             continue;
         }
@@ -232,17 +236,17 @@ void barcode_similarity(){
         cout << "Number of masks is " << all_masks.size() << "\n";
     }
 
-    thread* thread_array;
+    thread* thread_array = NULL;
     time_t start = time(NULL);
     if (thread_count > 1) {
         thread_array = new thread[thread_count];
-        for (size_t t_id = 0; t_id < thread_count; t_id++) {
+        for (int t_id = 0; t_id < thread_count; t_id++) {
             thread_array[t_id] = thread(lsh_mask, t_id);
             stringstream stream;
             stream << "Created thread " << t_id << "\n";
             cout << stream.str();
         }
-        for (size_t t_id = 0; t_id < thread_count; t_id++) {
+        for (int t_id = 0; t_id < thread_count; t_id++) {
             thread_array[t_id].join();
             stringstream stream;
             stream << "Joined thread " << t_id << "\n";
@@ -257,10 +261,10 @@ void barcode_similarity(){
     // barcodes are no longer needed
     delete barcodes_ptr;
     if (thread_count > 1) {
-        for (size_t t_id = 0; t_id < thread_count; t_id++) {
+        for (int t_id = 0; t_id < thread_count; t_id++) {
             thread_array[t_id] = thread(process_identical_barcode_nodes, t_id);
         }
-        for (size_t t_id = 0; t_id < thread_count; t_id++) {
+        for (int t_id = 0; t_id < thread_count; t_id++) {
             thread_array[t_id].join();
             stringstream stream;
             stream << "Joined thread " << t_id << "\n";
@@ -337,24 +341,60 @@ void extract_clusters(){
 }
 
 void output_clusters(){
+    ifstream fastq1;
+    ifstream fastq2;
+    gzFile fastq1_gz = Z_NULL;
+    gzFile fastq2_gz = Z_NULL;
+    kseq_t* fastq1_gz_reader = NULL;
+    kseq_t* fastq2_gz_reader = NULL;
+    if (!gz_input) {
+        fastq1.open (input_1);
+        fastq2.open (input_2);
+    } else {
+        fastq1_gz = gzopen(input_1.c_str(), "r");
+        fastq2_gz = gzopen(input_2.c_str(), "r");
+        fastq1_gz_reader = kseq_init(fastq1_gz);
+        fastq2_gz_reader = kseq_init(fastq2_gz);
+    }
+    string name_1, quality_1, sequence_1, name_2, quality_2, sequence_2, trash;
     if (no_sort) {
         read_id_t current_read = 0;
         ofstream clusters;
-        ifstream fastq1;
-        ifstream fastq2;
-        fastq1.open (input_1);
-        fastq2.open (input_2);
-        string name_1, quality_1, sequence_1, name_2, quality_2, sequence_2, trash;
 
         clusters = ofstream(output_prefix + "cluster");
-        while (getline(fastq1, name_1)) {
-            getline(fastq1, sequence_1);
-            getline(fastq1, trash);
-            getline(fastq1, quality_1);
-            getline(fastq2, name_2);
-            getline(fastq2, sequence_2);
-            getline(fastq2, trash);
-            getline(fastq2, quality_2);
+        while (true) {
+            if (!gz_input) {
+                bool valid_txt_line = true;
+                valid_txt_line = valid_txt_line && getline(fastq1, name_1);
+                valid_txt_line = valid_txt_line && getline(fastq1, sequence_1);
+                valid_txt_line = valid_txt_line && getline(fastq1, trash);
+                valid_txt_line = valid_txt_line && getline(fastq1, quality_1);
+                valid_txt_line = valid_txt_line && getline(fastq2, name_2);
+                valid_txt_line = valid_txt_line && getline(fastq2, sequence_2);
+                valid_txt_line = valid_txt_line && getline(fastq2, trash);
+                valid_txt_line = valid_txt_line && getline(fastq2, quality_2);
+                if (!valid_txt_line) {
+                    break;
+                }
+            } else {
+                int valid_gz_line = 0;
+                valid_gz_line = kseq_read(fastq1_gz_reader);
+                if (valid_gz_line < 0) {
+                    break;
+                }
+                valid_gz_line = kseq_read(fastq2_gz_reader);
+                if (valid_gz_line < 0) {
+                    break;
+                }
+                name_1     = "@";
+                name_1     += fastq1_gz_reader->name.s;
+                sequence_1 = fastq1_gz_reader->seq.s;
+                quality_1  = fastq1_gz_reader->qual.s;
+                name_2     = "@";
+                name_2     += fastq2_gz_reader->name.s;
+                sequence_2 = fastq2_gz_reader->seq.s;
+                quality_2  = fastq2_gz_reader->qual.s;
+            }
 
             if (name_1.size() != name_2.size() || sequence_1.size() != quality_1.size() || sequence_2.size() != quality_2.size()) {
                 cerr << "ERROR: Something is fishy with read:\n";
@@ -389,25 +429,44 @@ void output_clusters(){
         cout << "There are " << temp_out_count << " temp files\n";
         vector<ofstream> temp_out_files(temp_out_count);
         vector<string> temp_out_names(temp_out_count);
-        ifstream fastq1;
-        ifstream fastq2;
-
-        fastq1.open (input_1);
-        fastq2.open (input_2);
         for (size_t i = 0; i < temp_out_count; i++) {
             temp_out_names[i] = output_prefix + "temp_" + to_string(i);
             temp_out_files[i] = ofstream(temp_out_names[i]);
         }
 
-        string name_1, quality_1, sequence_1, name_2, quality_2, sequence_2, trash;
-        while (getline(fastq1, name_1)) {
-            getline(fastq1, sequence_1);
-            getline(fastq1, trash);
-            getline(fastq1, quality_1);
-            getline(fastq2, name_2);
-            getline(fastq2, sequence_2);
-            getline(fastq2, trash);
-            getline(fastq2, quality_2);
+        while (true) {
+            if (!gz_input) {
+                bool valid_txt_line = true;
+                valid_txt_line = valid_txt_line && getline(fastq1, name_1);
+                valid_txt_line = valid_txt_line && getline(fastq1, sequence_1);
+                valid_txt_line = valid_txt_line && getline(fastq1, trash);
+                valid_txt_line = valid_txt_line && getline(fastq1, quality_1);
+                valid_txt_line = valid_txt_line && getline(fastq2, name_2);
+                valid_txt_line = valid_txt_line && getline(fastq2, sequence_2);
+                valid_txt_line = valid_txt_line && getline(fastq2, trash);
+                valid_txt_line = valid_txt_line && getline(fastq2, quality_2);
+                if (!valid_txt_line) {
+                    break;
+                }
+            } else {
+                int valid_gz_line;
+                valid_gz_line = kseq_read(fastq1_gz_reader);
+                if (valid_gz_line < 0) {
+                    break;
+                }
+                valid_gz_line = kseq_read(fastq2_gz_reader);
+                if (valid_gz_line < 0) {
+                    break;
+                }
+                name_1     = "@";
+                name_1     += fastq1_gz_reader->name.s;
+                sequence_1 = fastq1_gz_reader->seq.s;
+                quality_1  = fastq1_gz_reader->qual.s;
+                name_2     = "@";
+                name_2     += fastq2_gz_reader->name.s;
+                sequence_2 = fastq2_gz_reader->seq.s;
+                quality_2  = fastq2_gz_reader->qual.s;
+            }
 
             node_id_t current_read_node = read_to_node_vector[current_read];
             size_t current_temp_out_id = node_to_cluster_vector[current_read_node] % temp_out_count;

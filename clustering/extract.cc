@@ -4,6 +4,8 @@
 
 #include "extract.h"
 #include "global.h"
+#include "kseq.h"
+#include <zlib.h>
 #include <algorithm>
 
 // Debug includes
@@ -12,6 +14,7 @@
 
 using namespace std;
 
+KSEQ_INIT(gzFile, gzread)
 
 #define ASCII_SIZE 128
 #define BYTE_SIZE 8
@@ -81,8 +84,19 @@ void extract_barcodes_and_minimizers() {
 
     ifstream fastq1;
     ifstream fastq2;
-    fastq1.open (input_1);
-    fastq2.open (input_2);
+    gzFile fastq1_gz = Z_NULL;
+    gzFile fastq2_gz = Z_NULL;
+    kseq_t* fastq1_gz_reader = NULL;
+    kseq_t* fastq2_gz_reader = NULL;
+    if (!gz_input) {
+        fastq1.open (input_1);
+        fastq2.open (input_2);
+    } else {
+        fastq1_gz = gzopen(input_1.c_str(), "r");
+        fastq2_gz = gzopen(input_2.c_str(), "r");
+        fastq1_gz_reader = kseq_init(fastq1_gz);
+        fastq2_gz_reader = kseq_init(fastq2_gz);
+    }
 
     read_count = 0;
     if (!silent){
@@ -90,14 +104,38 @@ void extract_barcodes_and_minimizers() {
     }
     // Processing FASTQ files one read at a time
     string name_1, sequence_1, name_2, sequence_2, trash;
-    while (getline(fastq1, name_1)) {
-        getline(fastq1, sequence_1);
-        getline(fastq1, trash);
-        getline(fastq1, trash);
-        getline(fastq2, name_2);
-        getline(fastq2, sequence_2);
-        getline(fastq2, trash);
-        getline(fastq2, trash);
+    while (true) {
+        if (!gz_input) {
+            bool valid_txt_line = true;
+            valid_txt_line = valid_txt_line && getline(fastq1, name_1);
+            valid_txt_line = valid_txt_line && getline(fastq1, sequence_1);
+            valid_txt_line = valid_txt_line && getline(fastq1, trash);
+            valid_txt_line = valid_txt_line && getline(fastq1, trash);
+            valid_txt_line = valid_txt_line && getline(fastq2, name_2);
+            valid_txt_line = valid_txt_line && getline(fastq2, sequence_2);
+            valid_txt_line = valid_txt_line && getline(fastq2, trash);
+            valid_txt_line = valid_txt_line && getline(fastq2, trash);
+            if (!valid_txt_line) {
+                break;
+            }
+        } else {
+            int valid_gz_line = 0;
+            valid_gz_line = kseq_read(fastq1_gz_reader);
+            if (valid_gz_line < 0) {
+                break;
+            }
+            valid_gz_line = kseq_read(fastq2_gz_reader);
+            if (valid_gz_line < 0) {
+                break;
+            }
+            name_1     = "@";
+            name_1     += fastq1_gz_reader->name.s;
+            sequence_1 = fastq1_gz_reader->seq.s;
+            name_2     = "@";
+            name_2     += fastq2_gz_reader->name.s;
+            sequence_2 = fastq2_gz_reader->seq.s;
+        }
+
         int s1_length = sequence_1.size();
         int s2_length = sequence_2.size();
 
@@ -151,6 +189,15 @@ void extract_barcodes_and_minimizers() {
             node_to_read_map.emplace(current_node_ptr, vector<read_id_t>{read_count});
         }
         read_count++;
+    }
+    if (!gz_input) {
+        fastq1.close();
+        fastq2.close();
+    } else {
+        kseq_destroy(fastq1_gz_reader);
+        gzclose(fastq1_gz);
+        kseq_destroy(fastq2_gz_reader);
+        gzclose(fastq2_gz);
     }
     if (!silent){
         cout << "Memory right after reading FASTQ:\n\t" << get_memory_use() << "MB\n";

@@ -3,6 +3,10 @@
 //
 
 #include "commandline.h"
+#include "kseq.h"
+#include <zlib.h>
+
+KSEQ_INIT(gzFile, gzread)
 
 using namespace std;
 
@@ -14,6 +18,7 @@ string input_2 = "";
 string output_prefix = "";
 bool silent = false;
 bool no_sort = false;
+bool gz_input = false;
 int barcode_length_1 = -1;
 int barcode_length_2 = -1;
 int ignored_sequence_prefix_length = -1;
@@ -52,6 +57,10 @@ void parse_flags(int argc, char *argv[]){
         }
         if ((no_sort == false) && (current_param == "-q" || current_param == "--no-sort")) {
             no_sort = true;
+            continue;
+        }
+        if ((gz_input == false) && (current_param == "-g" || current_param == "--gzip-input")) {
+            gz_input = true;
             continue;
         }
         if ((barcode_length == -1) && (barcode_length_1 == -1) && (barcode_length_2 == -1) && (current_param == "-l" || current_param == "--barcode-length")) {
@@ -124,17 +133,53 @@ void parse_flags(int argc, char *argv[]){
     if (error_tolerance == -1 && kmer_size == -1 &&  minimizer_count == -1 && minimizer_threshold == -1) {
         cout << "No error or minimizer parameters passed. Selecting parameters based on barcode and inferred read length\n";
         ifstream fastq1;
-        fastq1.open (input_1);
-        string line;
+        gzFile fastq1_gz = NULL;
+        kseq_t* fastq1_gz_reader = NULL;
+        if (!gz_input) {
+            fastq1.open (input_1);
+            if (!fastq1.is_open()) {
+                cout << "Could not open file " << input_1 << "\n";
+                exit(-1);
+            }
+        } else {
+            fastq1_gz = gzopen(input_1.c_str(), "r");
+            if (fastq1_gz == Z_NULL) {
+                cout << "Could not open file " << input_1 << "\n";
+                exit(-1);
+            }
+            fastq1_gz_reader = kseq_init(fastq1_gz);
+        }
+        string sequence_1, trash;
         size_t sample_read_count = 0;
         size_t total_reads_size = 0;
-        while (getline(fastq1, line) && sample_read_count < READ_SIZE_SAMPLE_SIZE) {
-            getline(fastq1, line);
-            total_reads_size+=line.size();
-            getline(fastq1, line);
-            getline(fastq1, line);
+        while (sample_read_count < READ_SIZE_SAMPLE_SIZE) {
+            if (!gz_input) {
+                bool valid_line = true;
+                valid_line = valid_line && getline(fastq1, trash);
+                valid_line = valid_line && getline(fastq1, sequence_1);
+                valid_line = valid_line && getline(fastq1, trash);
+                valid_line = valid_line && getline(fastq1, trash);
+                if (!valid_line) {
+                    break;
+                }
+            } else {
+                int valid_gz_line = 0;
+                valid_gz_line = kseq_read(fastq1_gz_reader);
+                if (valid_gz_line < 0) {
+                    break;
+                }
+                sequence_1 = fastq1_gz_reader->seq.s;
+            }
+            total_reads_size+=sequence_1.size();
             sample_read_count++;
         }
+        if (!gz_input) {
+            fastq1.close();
+        } else {
+            kseq_destroy(fastq1_gz_reader);
+            gzclose(fastq1_gz);
+        }
+
         size_t mean_read_size = total_reads_size/sample_read_count;
         int barcode_length = (barcode_length_1 + barcode_length_2)/2;
         if (barcode_length >= 1 && barcode_length <= 6) {

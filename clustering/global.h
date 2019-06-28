@@ -29,6 +29,7 @@ extern int minimizer_threshold;
 extern int thread_count;
 extern bool silent;
 extern bool no_sort;
+extern bool gz_input;
 
 int get_memory_use();
 
