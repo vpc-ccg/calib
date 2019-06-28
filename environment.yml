@@ -1,0 +1,15 @@
+name: calib_env
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - art=2016.06.05=gsl2.2_1
+  - biopython=1.73=py37h14c3975_0
+  - numpy=1.16.4=py37h95a1406_0
+  - pandas=0.24.2=py37hb3f55d8_0
+  - pyfaidx=0.5.5.2=py_1
+  - python=3.7.3=h5b0a415_0
+  - scikit-learn=0.21.2=py37hcdab131_1
+  - scipy=1.3.0=py37h921218d_0
+  - zlib=1.2.11=h14c3975_1004
