@@ -294,6 +294,7 @@ void print_help(){
     cout << "\t-o    --output-prefix                 \t(type: string;   REQUIRED paramter)\n";
     cout << "\t-s    --silent                        \t(type: no value; default: unset)\n";
     cout << "\t-q    --no-sort                       \t(type: no value; default:  unset)\n";
+    cout << "\t-g    --gzip-input                    \t(type: no value; default:  unset)\n";
     cout << "\t-l    --barcode-length                \t(type: int;      REQUIRED paramter unless -l1 and -l2 are provided)\n";
     cout << "\t-l1   --barcode-length-1              \t(type: int;      REQUIRED paramter unless -l is provided)\n";
     cout << "\t-l2   --barcode-length-2              \t(type: int;      REQUIRED paramter unless -l is provided)\n";
