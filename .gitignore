@@ -8,6 +8,7 @@
 *.lo
 *.o
 *.obj
+*.dbg
 
 # Precompiled Headers
 *.gch
