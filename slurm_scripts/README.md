@@ -61,8 +61,8 @@ cd <CALIB_ROOT_DIRECTORY>
 slurm_scripts/real_tests.sh <R1.fastq> <R2.fastq> <panel.hg19.bed> <output_directory>
 ```
 
-`<R1.fastq>` and `<R2.fastq>` are the real dataset FASTQ files which can be downloaded from [here (BROKEN LINK)]().
-`panel.hg19.bed` is the panel of targeted regions used to pull down material for sequencing which.
+`<R1.fastq>` and `<R2.fastq>` are the real dataset FASTQ files which can be downloaded from [here](https://trace.ncbi.nlm.nih.gov/Traces/sra/?run=SRR7903524).
+`panel.hg19.bed` is the panel of targeted regions used to pull down material for sequencing.
 Finally, output directory is where the results will be put of running the complete pipeline.
 
 ### Notes
