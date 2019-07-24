@@ -299,4 +299,4 @@ accuracy: $(cluster_file) $(true_cluster)
 		--output-accuracy-results $(output_accuracy_results)
 
 clean:
-	rm -f $(current_dir)calib
+	rm -f $(EXECUTABLE) $(DEBUGGABLE) $(OBJECTS) $(SOURCES:.cc=.h.gch) $(DBG_OBJECTS)
