@@ -13,7 +13,7 @@ simulating_path?=$(current_dir)simulating/
 SHELL=/bin/bash -o pipefail
 
 CXX?=g++
-CXXFLAGS=-std=c++11 -pthread -I clustering/ -lz -Wall -Wextra
+CXXFLAGS=-std=c++11 -pthread -I clustering/ -lz -Wall -Wextra ${LDFLAGS} ${LIBS}
 SOURCES:=$(wildcard clustering/*.cc)
 OBJECTS:=$(SOURCES:.cc=.o)
 EXECUTABLE=calib
