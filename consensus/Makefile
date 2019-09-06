@@ -2,7 +2,7 @@
 my_mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 my_current_dir :=  $(patsubst %/,%,$(dir $(my_mkfile_path)))/
 
-cc?=g++
+CXX?=g++
 cc_files?= calib_cons.cc
 cc_flags?=
 cc_args?= $(cc_flags)-std=c++11 -O3 -pthread -Ispoa_v1.1.3/include/ -Lspoa_v1.1.3/build/lib/ -lspoa
@@ -19,7 +19,7 @@ else
 endif
 
 calib_cons: $(cc_files) spoa_v1.1.3/build/
-	$(cc) $(cc_files) $(cc_args) -o calib_cons
+	$(CXX) $(cc_files) $(cc_args) -o calib_cons
 
 
 spoa_v1.1.3/build/: $(CMAKE)
