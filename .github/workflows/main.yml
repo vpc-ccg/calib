@@ -1,0 +1,77 @@
+# This file defines workflow actions to perform following a repository event (e.g. push/pull_request).
+# https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    #timeout-minutes: 360
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Calib clustering module
+      run: |
+        make
+        ./calib --help
+    - name: Install Calib error correction module
+      # FIXME: do not autoinstall cmake
+      run: |
+        apt update && apt install -y cmake
+        cmake --version
+        cmake --version | awk '{split($NF, a, "."); if (int(a[1]) == 3 && int(a[2]) >= 2 || int(nums[1]) > 3) {print 100}}'
+        echo make -C consensus/
+        echo ./consensus/calib_cons --help
+
+  # Running `eval "$(conda shell.bash hook)"` before `conda activate <environment name>` resolves the following error:
+  # [Can't execute `conda activate` from bash script #7980](https://github.com/conda/conda/issues/7980)
+  #
+  #     CommandNotFoundError: Your shell has not been properly configured to use 'conda activate'.
+  #     To initialize your shell, run
+  #
+  #         $ conda init <SHELL_NAME>
+  #
+  #     Currently supported shells are:
+  #       - bash
+  #       - fish
+  #       - tcsh
+  #       - xonsh
+  #       - zsh
+  #       - powershell
+  #
+  #     See 'conda init --help' for more information and options.
+  #
+  #     IMPORTANT: You may need to close and restart your shell after running 'conda init'.
+  #
+  # ----------------------------------------------------------------------------
+  #
+  # FIXME: add samtools conda dependency
+  conda_env:
+    #timeout-minutes: 360
+    # https://hub.docker.com/r/continuumio/miniconda3/tags
+    container: continuumio/miniconda3:latest
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: conda install
+      run: |
+        conda env create -q -f environment.yml
+        conda env list
+        eval "$(conda shell.bash hook)"
+        conda activate calib_env
+
+  # FIXME: /bin/bash: samtools: command not found
+  simulate:
+    #timeout-minutes: 360
+    container: continuumio/miniconda3:latest
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        eval "$(conda shell.bash hook)"
+        conda create -q -y -n calib -c conda-forge -c bioconda samtools cmake make
+    - name: Run simulation module
+      run: |
+        eval "$(conda shell.bash hook)"
+        conda activate calib
+        make simulate num_molecules=1000
