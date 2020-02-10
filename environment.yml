@@ -15,9 +15,8 @@ dependencies:
   - zlib=1.2.11=h14c3975_1004
   - bam-readcount=0.8
   - bwa=0.7.17
-  - cdhit=4.8.1
-  - dunovo=2.15
-  - rainbow=2.0.4
+  - cd-hit=4.8.1
+  #- dunovo=2.15
   - rainbow=2.0.4
   - samtools=1.10
   - starcode=1.3
