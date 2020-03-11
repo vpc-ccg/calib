@@ -18,6 +18,7 @@
 
 int thread_count = 4;
 int min_reads_per_cluster = 2;
+int max_reads_per_cluster = 1000;
 std::string cluster_filename = "";
 std::vector<std::string> fastq_filenames;
 std::vector<std::string> output_filenames;
@@ -69,6 +70,11 @@ void parse_flags(int argc, char *argv[]){
             min_reads_per_cluster = atoi(argv[i]);
             continue;
         }
+        if (current_param == "-x" || current_param == "--max-reads-per-cluster") {
+            i++;
+            max_reads_per_cluster = atoi(argv[i]);
+            continue;
+        }
         if (current_param == "-q" || current_param == "--fastq") {
             i++;
             for (; i < argc; i++) {
@@ -102,6 +108,11 @@ void parse_flags(int argc, char *argv[]){
         print_help();
         exit(-1);
     }
+    if (max_reads_per_cluster < 0 ) {
+        std::cout << "Minimum reads per cluster ("<<max_reads_per_cluster<<") must be positive value." << '\n';
+        print_help();
+        exit(-1);
+    }
     if (thread_count < 0 || thread_count > 16) {
         std::cout << "Thread count must be between 1 and 16." << '\n';
         print_help();
@@ -125,6 +136,9 @@ void process_clusters(const std::vector<std::string>& read_to_sequence, const st
     std::ofstream omsa(o_filename_prefix + ".msa" + std::to_string(thread_id));
     for (cluster_id_t cid = thread_id; cid < cluster_to_reads.size(); cid+=thread_count) {
         if (cluster_to_reads[cid].size() < min_reads_per_cluster) {
+            continue;
+        }
+        if (cluster_to_reads[cid].size() > max_reads_per_cluster) {
             continue;
         }
         auto alignment_engine = spoa::createAlignmentEngine(
