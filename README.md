@@ -104,8 +104,9 @@ Changing these parameters is might not be very obvious. We recommend checking wi
 
 Calib clustering is can run multi-threaded using:
 
-- `--threads` or `c`: positive integer no larger than 8
+- `--threads` or `c`: positive integer no larger than 8.
 
+Note that Calib's runtime and memory do not scale well with increased number of threads.
 Please check our [thread scalability experiments](experiments/scalability/) to have an idea on the time vs. memory tradeoff of Calib clustering multithreading.
 
 #### Other clustering parameters
@@ -113,7 +114,8 @@ Please check our [thread scalability experiments](experiments/scalability/) to h
 Finally, Calib clustering has these parameters that are added for convenience:
 
 - `--ignored-sequence-prefix-length` or `p`:  nonnegative integer for the number of bases to ignore in clustering after the barcode tag in the read sequences.
-- `--no-sort`: A flag to tell Calib to keep the original order of the reads in the output file instead of grouping the reads of the same clusters together.
+- `--no-sort`: A flag to tell Calib to keep the original order of the reads in the output file instead of grouping the reads of the same clusters together. Use this flag if you want a bit of speed-up and don't care about sorting (`calib_cons` module does not care about sorting).
+- `-g` or  `--gzip-input`: set this flag if the input is gzipped
 
 ### Error Correction
 
