@@ -1,0 +1,89 @@
+# This file defines workflow actions to perform following a repository event (e.g. push/pull_request).
+# https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    #timeout-minutes: 360
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout submodules
+      # https://github.com/actions/checkout#checkout-submodules
+      shell: bash
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+    - name: Install Calib clustering module
+      run: |
+        make
+        ./calib --help
+    - name: Install Calib error correction module
+      run: |
+        apt update && apt install -y cmake
+        make -C consensus/
+        ./consensus/calib_cons --help
+
+  # Running `eval "$(conda shell.bash hook)"` before `conda activate <environment name>` resolves the following error:
+  # [Can't execute `conda activate` from bash script #7980](https://github.com/conda/conda/issues/7980)
+  #
+  #     CommandNotFoundError: Your shell has not been properly configured to use 'conda activate'.
+  #     To initialize your shell, run
+  #
+  #         $ conda init <SHELL_NAME>
+  #
+  #     Currently supported shells are:
+  #       - bash
+  #       - fish
+  #       - tcsh
+  #       - xonsh
+  #       - zsh
+  #       - powershell
+  #
+  #     See 'conda init --help' for more information and options.
+  #
+  #     IMPORTANT: You may need to close and restart your shell after running 'conda init'.
+  #
+  # ----------------------------------------------------------------------------
+  #
+  # FIXME: conda conflict encountered on OSX:
+  #   Solving environment: -
+  #   Found conflicts! Looking for incompatible packages.
+  #   This can take several minutes.  Press CTRL-C to abort.
+  conda_env:
+    #timeout-minutes: 360
+    # https://hub.docker.com/r/continuumio/miniconda3/tags
+    container: continuumio/miniconda3:latest
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: conda install
+      run: |
+        conda env create -q -f environment.yml
+        conda env list
+        eval "$(conda shell.bash hook)"
+        conda activate calib_env
+
+  simulate:
+    #timeout-minutes: 360
+    container: continuumio/miniconda3:latest
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        eval "$(conda shell.bash hook)"
+        conda create -q -y -n calib -c conda-forge -c bioconda \
+          art \
+          cmake \
+          make \
+          numpy \
+          pyfaidx \
+          samtools
+    - name: Run simulation module
+      run: |
+        eval "$(conda shell.bash hook)"
+        conda activate calib
+        make simulate num_molecules=1000

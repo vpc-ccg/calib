@@ -25,3 +25,6 @@
 [submodule "aux/other_tools/UMI-tools"]
 	path = aux/other_tools/UMI-tools
 	url = https://github.com/CGATOxford/UMI-tools.git
+[submodule "consensus/spoa"]
+	path = consensus/spoa
+	url = https://github.com/rvaser/spoa.git

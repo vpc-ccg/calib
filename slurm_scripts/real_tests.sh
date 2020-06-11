@@ -4,23 +4,29 @@ panel=$3
 out_dir=${4%/}
 barcode_length=8
 # Pipeline components
-gtime="aux/other_tools/time-1.9/time"
+#gtime="aux/other_tools/time-1.9/time"
+gtime="time"
 calib_cons_directory="calib_cons/"
 calib_cons="consensus/calib_cons"
-bam_readcount_directory="aux/other_tools/bam-readcount_v0.8.0/"
-bam_readcount="aux/other_tools/bam-readcount_v0.8.0/bin/bam-readcount"
-bwa_directory="aux/other_tools/bwa/"
-bwa="aux/other_tools/bwa/bwa"
+#bam_readcount_directory="aux/other_tools/bam-readcount_v0.8.0/"
+#bam_readcount="aux/other_tools/bam-readcount_v0.8.0/bin/bam-readcount"
+bam_readcount=bam-readcount
+#bwa_directory="aux/other_tools/bwa/"
+#bwa="aux/other_tools/bwa/bwa"
+bwa=bwa
 ref="simulating/genomes/hg19.fa"
 samtools="samtools"
 sinvict_directory="aux/other_tools/sinvict/"
 sinvict="aux/other_tools/sinvict/sinvict"
 # Clustering tools and scripts
 calib="./calib"
-starcode_umi="aux/other_tools/starcode/starcode-umi"
-starcode="aux/other_tools/starcode/starcode"
+#starcode_umi="aux/other_tools/starcode/starcode-umi"
+starcode_umi="starcode-umi"
+#starcode="aux/other_tools/starcode/starcode"
+starcode="starcode"
 convert_starcode="aux/convert_starcode_to_cluster.sh"
-rainbow="aux/other_tools/rainbow/rainbow"
+#rainbow="aux/other_tools/rainbow/rainbow"
+rainbow="rainbow"
 run_rainbow="aux/run_rainbow.sh"
 convert_rainbow="aux/convert_rainbow_to_cluster.sh"
 run_umitools="aux/run_umitools.sh"
@@ -33,8 +39,8 @@ reported_snv="experiments/real_tests/SNV.on_panel.reported.hg19.tsv"
 
 ./benchmark starcode rainbow umitools bwa calib $gtime
 make -C $calib_cons_directory
-make -C $bwa_directory
-make -C $bam_readcount_directory
+#make -C $bwa_directory
+#make -C $bam_readcount_directory
 make -C $sinvict_directory
 
 if [ ! -f $ref ]; then
