@@ -3,42 +3,26 @@ Calib clusters paired-end reads using their barcodes and sequences. Calib is sui
 
 Calib stands for Clustering without alignment using (locality sensitive hashing) LSH and MinHashing of barcoded reads. Calib comes for the Arabic word [قالب](https://en.wiktionary.org/wiki/قالب) /IPA:qaːlib/ which means template and is a reference to Calib's use of LSH templates.
 
-## Prerequisites
+## Installation
+Calib has two main executables: `calib` and `calib_cons`.
+You can install Calib directly from source, or from `conda`.
 
-### Calib clustering
+### From source
+
 Calib main module has one prerequisite:
-
 - GCC with version 5.2 or higher
 
-### Calib error correction
-Calib error correction depends [SPOA](https://github.com/rvaser/spoa) v1.1.3 which in turn depends on CMake v3. 
+Calib error correction module depends on [SPOA](https://github.com/rvaser/spoa) v1.1.3 which in turn depends on CMake v3. 
 The Makefile for Calib error correction assumes that `cmake` is in the path variable.
-However, you can also point to a specific CMake by setting the `$CMAKE` environment variable.
-
-### Calib Simulation
-Calib simulation module has some Python3 prerequisites that can be easily satisfied using [Conda](https://conda.io/) package manager:
-
-- [pyfaidx](https://pypi.python.org/pypi/pyfaidx)
-- [numpy](https://pypi.python.org/pypi/numpy)
-- [scipy](https://pypi.python.org/pypi/scipy)
-- [scikit-learn](https://pypi.python.org/pypi/scikit-learn)
-- [biopython](https://pypi.python.org/pypi/biopython)
-- [pandas](https://pypi.python.org/pypi/pandas)
-- [ART Illumina](https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm) (version 2.5.8)
-
-Finally, if you want to generate the different plots (check this [README](slurm_scripts/)) you need to also have:
-
-- [plotly](http://plot.ly/python/) 
-
-Which can be also easily installed using Conda.
-
-## Installing Calib
-
-First, clone this repository:
+However, you can also point to a specific CMake by setting the `$CMAKE` environment variable:
 
 ```bash
-git clone https://github.com/vpc-ccg/calib.git calib
-git checkout v0.3.1
+export CMAKE=path-to-cmake-v3
+```
+
+Then, clone this repository:
+```bash
+git clone -b v0.3.4 https://github.com/vpc-ccg/calib.git calib
 ```
 
 To install Calib clustering module:
@@ -57,22 +41,50 @@ make -C consensus/
 cd ..
 ```
 
+### From [Conda](https://conda.io/)
+Just run:
+```bash
+conda install -c bioconda calib
+```
+This will install `calib` and `calib_cons` to your conda environment bin folder.
+
+### Other Calib scripts
+Calib repository includes a simulation module that was used to fine-tune Calib's clustering parameters.
+The module files are under `simulation` directory.
+The module has some Python3 prerequisites that can be easily satisfied using [Conda](https://conda.io/) package manager:
+
+- [pyfaidx](https://pypi.python.org/pypi/pyfaidx)
+- [numpy](https://pypi.python.org/pypi/numpy)
+- [scipy](https://pypi.python.org/pypi/scipy)
+- [scikit-learn](https://pypi.python.org/pypi/scikit-learn)
+- [biopython](https://pypi.python.org/pypi/biopython)
+- [pandas](https://pypi.python.org/pypi/pandas)
+- [ART Illumina](https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm) (version 2.5.8)
+
+Finally, if you want to generate the different plots (check this [README](slurm_scripts/)) you need to also have:
+
+- [plotly](http://plot.ly/python/) 
+
+Which can be also easily installed using Conda.
+
+
+
 ## Running Calib
+The following assumes you have `calib` and `calib_cons` in your environment `$PATH` variable.
+This is done automatically by conda.
 
 ### Clustering
 
 To run Calib clustering, run:
 
 ```bash
-cd <CALIB_DIRECTORY>
-./calib -f <reads_1> -r <reads_2> -l <barcode_tag_length> -o <output_file_prefix>
+calib -f <reads_1> -r <reads_2> -l <barcode_tag_length> -o <output_file_prefix>
 ```
 
 For example:
 
 ```bash
-cd calib
-./calib -f R1.fastq -r R2.fastq -l 8 -o R.
+calib -f R1.fastq -r R2.fastq -l 8 -o R.
 ```
 
 Calib will cluster the reads in `<reads_1>` and `<reads_2>` FASTQ files that are tagged with barcode tags of length `<barcode_tag_length>`. Note that this tag length of the length of barcode tag on one mate of the paired-end reads. The output filename will be `<output_file_prefix>cluster`.
@@ -119,23 +131,18 @@ Finally, Calib clustering has these parameters that are added for convenience:
 - `--no-sort`: A flag to tell Calib to keep the original order of the reads in the output file instead of grouping the reads of the same clusters together. Use this flag if you want a bit of speed-up and don't care about sorting (`calib_cons` module does not care about sorting).
 - `-g` or  `--gzip-input`: set this flag if the input is gzipped
 
-### Error Correction
+### Error Correction (consensus module)
 
 To run Calib error correction, run:
 
 ```bash
-cd <CALIB_DIRECTORY>
-./consensus/calib_cons -c <cluster_file> -q <space_separated_FASTQ_list> -o <space_separated_output_prefix_list>
+calib_cons -c <cluster_file> -q <space_separated_FASTQ_list> -o <space_separated_output_prefix_list>
 ```
 
 For example:
 
 ```bash
-cd calib
-./consensus/calib_cons \
-	-c R.cluster \
-	-q R1.fastq R2.fastq \
-	-o R1. R2.
+calib_cons -c R.cluster -q R1.fastq R2.fastq -o R1. R2.
 ```
 
 #### Output format
