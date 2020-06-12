@@ -11,7 +11,9 @@ Calib main module has one prerequisite:
 - GCC with version 5.2 or higher
 
 ### Calib error correction
-Calib error correction depends [SPOA](https://github.com/rvaser/spoa) v1.1.3 which in turn depends on CMake v3.2 or higher. However, Calib error correction installation script automatically detects if `cmake` in the `$PATH` is CMake v3.2 or higher. If it's not, then it downloads CMake and v3.12, installs it. Then the installation script will clone SPOA v1.1.3 and install it using CMake.
+Calib error correction depends [SPOA](https://github.com/rvaser/spoa) v1.1.3 which in turn depends on CMake v3. 
+The Makefile for Calib error correction assumes that `cmake` is in the path variable.
+However, you can also point to a specific CMake by setting the `$CMAKE` environment variable.
 
 ### Calib Simulation
 Calib simulation module has some Python3 prerequisites that can be easily satisfied using [Conda](https://conda.io/) package manager:
