@@ -66,7 +66,7 @@ We then ran Calib on each of these sets using:
   - 7 with thresholds of 2, 3, 4, 5, or 6
 
 The complete results of 68 different parameter sets on the 10 different random seeds of each of the dataset types in this directory's TSV files.
-The results are plotted in these [plots](https://cdn.rawgit.com/vpc-ccg/calib/master/experiments/parameter_tests/parameter_plots.html).
+The results are plotted in these [plots](https://cdn.rawgit.com/vpc-ccg/calib/master/experiments/parameter_tests/parameter_plots.html) (note that the file plots HTML file can also be access by just right-click and saving the link [here](https://raw.githubusercontent.com/vpc-ccg/calib/master/experiments/parameter_tests/parameter_plots.html) ).
 In these plots, we filtered out any parameter set that scored less than 0.99/1.00 in any of the 10 random seeds on a given dataset type.
 
 Based on these results, we preconfigured Calib with the following default parameter selection:
