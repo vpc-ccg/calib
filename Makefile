@@ -115,7 +115,7 @@ $(EXECUTABLE): $(EXECUTABLE).cc $(OBJECTS) Makefile
 	$(CXX) $(OBJECTS) -O2 $< $(CXXFLAGS) -o $@
 
 $(DEBUGGABLE): $(EXECUTABLE).cc $(DBG_OBJECTS) Makefile
-	$(CXX) $(CXXFLAGS) $(DBG_OBJECTS) -g -O0 $< -o $@ -DGITINFO="\"$(GITINFO)\""
+	$(CXX) $(DBG_OBJECTS) -g -O0 $< $(CXXFLAGS) -o $@ -DGITINFO="\"$(GITINFO)\""
 
 %.o: %.cc Makefile
 	$(CXX) $(CXXFLAGS) -O2 -c $< -o $@
