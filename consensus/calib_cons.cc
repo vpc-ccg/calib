@@ -45,6 +45,8 @@ void print_help(){
     std::cout << "                                    default: 4)\n";
     std::cout << "  -m  --min-reads-per-cluster    (positive integer;\n";
     std::cout << "                                    default: 2)\n";
+    std::cout << "  -x  --max-reads-per-cluster    (positive integer;\n";
+    std::cout << "                                    default: 1000)\n";
     std::cout << "  -h  --help\n";
 }
 
