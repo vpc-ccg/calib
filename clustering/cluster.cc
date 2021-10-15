@@ -190,7 +190,9 @@ void lsh_mask(size_t mask_remainder) {
 
 void merge_graphs(node_id_to_node_id_vector_of_vectors* local_graph_ptr) {
     graph_lock.lock();
-    max_memory_use = max((long) (get_memory_use()*1024), (long) max_memory_use);
+    if (sort_clusters) {
+        max_memory_use = max((long) (get_memory_use()*1024), (long) max_memory_use);
+    }
     if ((*graph_ptr).size() == 0) {
         (*graph_ptr) = move(*local_graph_ptr);
         graph_lock.unlock();
@@ -419,6 +421,9 @@ void output_clusters(){
     } else {
         read_id_t current_read = 0;
         ofstream clusters;
+        if (max_memory_use == 0) {
+            max_memory_use = 1024;
+        }
         size_t min_records_per_tmp_file = max_memory_use/4;
         cout << "min_records_per_tmp_file " << min_records_per_tmp_file << "\n";
         size_t temp_out_count;
