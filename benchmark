@@ -138,7 +138,7 @@ $(calib_time): $(GNU_TIME) calib simulate
 		--minimizer-threshold $(minimizers_threshold) \
 		--threads $(thread_count) \
 		$(silent) \
-		$(no_sort)
+		$(sort)
 
 # CD-HIT-EST
 cdhitest_log: $(cdhitest_log_file) $(cdhitest_accuracy)

@@ -99,7 +99,7 @@ void extract_barcodes_and_minimizers() {
     }
 
     read_count = 0;
-    if (!silent){
+    if (!silent && print_mem){
         cout << "Memory before reading FASTQ:\n\t" << get_memory_use() << "MB\n";
     }
     // Processing FASTQ files one read at a time
@@ -199,14 +199,14 @@ void extract_barcodes_and_minimizers() {
         kseq_destroy(fastq2_gz_reader);
         gzclose(fastq2_gz);
     }
-    if (!silent){
+    if (!silent && print_mem){
         cout << "Memory right after reading FASTQ:\n\t" << get_memory_use() << "MB\n";
     }
 
     read_to_node_vector.reserve(read_count);
     (*node_to_minimizers_ptr).reserve(node_to_read_map.size());
 
-    if (!silent){
+    if (!silent && print_mem){
         cout << "Memory after reserving for read_to_node_vector & node_to_minimizers:\n\t" << get_memory_use() << "MB\n";
     }
 
@@ -222,18 +222,18 @@ void extract_barcodes_and_minimizers() {
         }
         node_count++;
     }
-    if (!silent){
+    if (!silent && print_mem){
         cout << "Memory after filling barcode_to_node_map:\n\t" << get_memory_use() << "MB\n";
     }
     node_to_read_id_unordered_map().swap(node_to_read_map);
-    if (!silent){
+    if (!silent && print_mem){
         cout << "Memory after releasing node_to_read_map:\n\t" << get_memory_use() << "MB\n";
     }
 
     barcode_count = barcode_to_node_map.size();
     (*barcodes_ptr).reserve(barcode_count);
     (*barcode_to_nodes_vector_ptr).reserve(barcode_count);
-    if (!silent){
+    if (!silent && print_mem){
         cout << "Memory after reserving barcode_to_nodes_vector:\n\t" << get_memory_use() << "MB\n";
     }
 
@@ -242,11 +242,11 @@ void extract_barcodes_and_minimizers() {
         sort(kv.second.begin(), kv.second.end());
         (*barcode_to_nodes_vector_ptr).emplace_back(move(kv.second));
     }
-    if (!silent){
+    if (!silent && print_mem){
         cout << "Memory after filling barcodes & barcode_to_nodes_vector:\n\t" << get_memory_use() << "MB\n";
     }
     barcode_to_node_id_unordered_map().swap(barcode_to_node_map);
-    if (!silent){
+    if (!silent && print_mem){
         cout << "Memory after releasing barcode_to_node_map:\n\t" << get_memory_use() << "MB\n";
     }
 

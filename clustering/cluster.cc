@@ -48,7 +48,7 @@ void cluster(){
     if (!silent) {
         cout << "Adding edges due to barcodes similarity took: " << difftime(time(NULL), start) << "\n";
     }
-    if (!silent){
+    if (!silent && print_mem){
         cout << "Memory after adding edges:\n\t" << get_memory_use() << "MB\n";
     }
 
@@ -60,11 +60,11 @@ void cluster(){
     if (!silent) {
         cout << "Extracting clusters took: " << difftime(time(NULL), start) << "\n";
     }
-    if (!silent){
+    if (!silent && print_mem){
         cout << "Memory extracting clusters:\n\t" << get_memory_use() << "MB\n";
     }
     delete graph_ptr;
-    if (!silent){
+    if (!silent && print_mem){
         cout << "Memory after releasing graph:\n\t" << get_memory_use() << "MB\n";
     }
 
@@ -357,7 +357,7 @@ void output_clusters(){
         fastq2_gz_reader = kseq_init(fastq2_gz);
     }
     string name_1, quality_1, sequence_1, name_2, quality_2, sequence_2, trash;
-    if (no_sort) {
+    if (!sort_clusters) {
         read_id_t current_read = 0;
         ofstream clusters;
 

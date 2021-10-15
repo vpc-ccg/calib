@@ -19,7 +19,7 @@ int main(int argc, char *argv[]){
         cout << "Extracting minimizers and barcodes...\n";
     }
     extract_barcodes_and_minimizers();
-    if (!silent){
+    if (!silent && print_mem){
         cout << "Memory after exiting extract_barcodes_and_minimizers():\n\t" << get_memory_use() << "MB\n";
     }
 

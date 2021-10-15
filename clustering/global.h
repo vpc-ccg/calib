@@ -27,8 +27,9 @@ extern int kmer_size;
 extern int error_tolerance;
 extern int minimizer_threshold;
 extern int thread_count;
+extern bool print_mem;
 extern bool silent;
-extern bool no_sort;
+extern bool sort_clusters;
 extern bool gz_input;
 
 int get_memory_use();

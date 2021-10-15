@@ -16,8 +16,10 @@ using namespace std;
 string input_1 = "";
 string input_2 = "";
 string output_prefix = "";
+
+bool print_mem = false;
 bool silent = false;
-bool no_sort = false;
+bool sort_clusters = false;
 bool gz_input = false;
 int barcode_length_1 = -1;
 int barcode_length_2 = -1;
@@ -55,8 +57,12 @@ void parse_flags(int argc, char *argv[]){
             silent = true;
             continue;
         }
-        if ((no_sort == false) && (current_param == "-q" || current_param == "--no-sort")) {
-            no_sort = true;
+        if ((sort_clusters == false) && (current_param == "-q" || current_param == "--sort")) {
+            sort_clusters = true;
+            continue;
+        }
+        if ((print_mem == false) && (current_param == "-z" || current_param == "--print_mem")) {
+            print_mem = true;
             continue;
         }
         if ((gz_input == false) && (current_param == "-g" || current_param == "--gzip-input")) {
@@ -293,7 +299,8 @@ void print_help(){
     cout << "\t-r    --input-reverse                 \t(type: string;   REQUIRED paramter)\n";
     cout << "\t-o    --output-prefix                 \t(type: string;   REQUIRED paramter)\n";
     cout << "\t-s    --silent                        \t(type: no value; default: unset)\n";
-    cout << "\t-q    --no-sort                       \t(type: no value; default:  unset)\n";
+    cout << "\t-q    --sort                          \t(type: no value; default:  unset)\n";
+    cout << "\t-z    --print-mem                     \t(type: no value; default:  unset)\n";
     cout << "\t-g    --gzip-input                    \t(type: no value; default:  unset)\n";
     cout << "\t-l    --barcode-length                \t(type: int;      REQUIRED paramter unless -l1 and -l2 are provided)\n";
     cout << "\t-l1   --barcode-length-1              \t(type: int;      REQUIRED paramter unless -l is provided)\n";

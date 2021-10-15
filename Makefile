@@ -96,7 +96,8 @@ minimizers_num?=-1
 kmer_size?=-1
 barcode_error_tolerance?=-1
 minimizers_threshold?=-1
-no_sort?=--no-sort
+print_mem?=--print_mem
+sort?=--sort
 silent?=--silent
 
 calib_params?=l_$(barcode_length).m_$(minimizers_num).k_$(kmer_size).e_$(barcode_error_tolerance).m_$(minimizers_threshold).t_$(thread_count).
@@ -290,7 +291,8 @@ cluster: calib $(forward_reads) $(reverse_reads)
 		--minimizer-threshold $(minimizers_threshold) \
 		--threads $(thread_count) \
 		$(silent) \
-		# $(no_sort)
+		# $(sort) \
+		# $(print_mem)
 
 accuracy: $(cluster_file) $(true_cluster)
 	$(python3) $(simulating_path)rand_index.py \
