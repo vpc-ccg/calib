@@ -97,7 +97,7 @@ def generate_molecules_from_bed(genome_file_path,
             chr,pos = get_chr_pos_from_abs_postion(position=random.randint(1,genome_length), lengths=chrom_lengths)
             gene = 'no_gene'
         start = pos - math.floor(random.normalvariate(mu=mol_len/2, sigma=15))
-        end   = pos + mol_len
+        end   = start + mol_len
         if start <= 0 or end > len(genome[chr]):
             continue
         molecules.append((chr, gene, start, end))
